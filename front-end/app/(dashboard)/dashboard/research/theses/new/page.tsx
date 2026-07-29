@@ -1,0 +1,1 @@
+import {PortalForm} from "@/components/portal-form";import {PortalFormShell} from "@/components/portal-form-shell";export default function Page(){return <PortalFormShell area="research" title="Propose thesis" description="Submit a thesis proposal to the selected supervisor."><PortalForm kind="thesis"/></PortalFormShell>}

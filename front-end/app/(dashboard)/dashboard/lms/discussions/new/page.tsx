@@ -1,0 +1,1 @@
+import {PortalForm} from "@/components/portal-form";import {PortalFormShell} from "@/components/portal-form-shell";export default function Page(){return <PortalFormShell area="lms" title="Create discussion post" description="Start a course-scoped learning conversation."><PortalForm kind="discussion"/></PortalFormShell>}

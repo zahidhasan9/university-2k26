@@ -1,0 +1,1 @@
+import {PortalForm} from "@/components/portal-form";import {PortalFormShell} from "@/components/portal-form-shell";export default function Page(){return <PortalFormShell area="engagement" title="Register alumni profile" description="Join the alumni directory with career and location details."><PortalForm kind="alumni"/></PortalFormShell>}

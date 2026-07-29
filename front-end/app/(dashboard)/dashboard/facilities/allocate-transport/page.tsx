@@ -1,0 +1,3 @@
+import { OperationFormShell } from "@/components/operation-form-shell"
+import { OperationsForm } from "@/components/operations-form"
+export default function Page() { return <OperationFormShell area="facilities" title="Allocate transport" description="Assign a user to a route and pickup stop."><OperationsForm endpoint="facilities/transport-allocations" submitLabel="Allocate transport" fields={[{name:"userId",label:"User ID"},{name:"routeId",label:"Route ID"},{name:"pickupStop",label:"Pickup stop"},{name:"startsAt",label:"Start date",type:"date"}]} transform={v => ({...v, startsAt:new Date(v.startsAt).toISOString()})} /></OperationFormShell> }

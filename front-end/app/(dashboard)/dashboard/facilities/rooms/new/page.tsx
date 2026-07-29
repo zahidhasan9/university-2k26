@@ -1,0 +1,3 @@
+import { OperationFormShell } from "@/components/operation-form-shell"
+import { OperationsForm } from "@/components/operations-form"
+export default function Page() { return <OperationFormShell area="facilities" title="Create room" description="Add room capacity and monthly fee in BDT."><OperationsForm endpoint="facilities/rooms" fields={[{name:"hostelId",label:"Hostel ID"},{name:"roomNumber",label:"Room number"},{name:"floor",label:"Floor",type:"number",required:false},{name:"capacity",label:"Bed capacity",type:"number"},{name:"monthlyFee",label:"Monthly fee (BDT)",type:"number"}]} transform={v => ({...v, floor:v.floor ? Number(v.floor) : undefined, capacity:Number(v.capacity), monthlyFeeMinor:Math.round(Number(v.monthlyFee)*100, )})} /></OperationFormShell> }
