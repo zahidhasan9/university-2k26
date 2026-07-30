@@ -51,7 +51,7 @@ module.exports = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "sans-serif"],
+        sans: ['"Nunito Variable"', '"Segoe UI"', "sans-serif"],
       },
     },
   },

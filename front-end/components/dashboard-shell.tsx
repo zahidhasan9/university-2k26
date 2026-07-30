@@ -18,7 +18,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <div
         className={cn(
           "fixed inset-y-0 left-0 z-40 hidden pt-[72px] transition-[width] duration-300 lg:block",
-          sidebarCollapsed ? "w-[112px]" : "w-[380px]",
+          sidebarCollapsed ? "w-[88px]" : "w-[264px]",
         )}
       >
         <AppSidebar collapsed={sidebarCollapsed} />
@@ -26,7 +26,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <main
         className={cn(
           "min-w-0 px-4 pb-8 pt-[96px] transition-[margin] duration-300 sm:px-7 lg:px-10 lg:pt-[112px] xl:px-12",
-          sidebarCollapsed ? "lg:ml-[112px]" : "lg:ml-[380px]",
+          sidebarCollapsed ? "lg:ml-[88px]" : "lg:ml-[264px]",
         )}
       >
         {children}

@@ -47,7 +47,7 @@ export function DashboardHeader({
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex h-[72px] items-center rounded-b-2xl border-x border-b border-slate-100 bg-white/95 px-4 text-slate-600 shadow-[0_8px_30px_rgba(30,41,59,0.06)] backdrop-blur-xl sm:px-5">
-      <div className="flex h-full items-center gap-5 lg:w-[380px]">
+      <div className="flex h-full items-center gap-5 lg:w-[264px]">
         <Sheet>
           <SheetTrigger
             render={
@@ -63,7 +63,7 @@ export function DashboardHeader({
           </SheetTrigger>
           <SheetContent
             side="left"
-            className="w-[380px] max-w-[92vw] border-0 bg-white p-0 pt-[72px]"
+            className="w-[264px] max-w-[88vw] border-0 bg-white p-0 pt-[72px]"
             showCloseButton
           >
             <AppSidebar />
@@ -72,7 +72,7 @@ export function DashboardHeader({
 
         <Brand className="text-slate-900 [&_span:first-child]:rounded-xl [&_span:first-child]:bg-gradient-to-br [&_span:first-child]:from-violet-500 [&_span:first-child]:to-violet-700 [&_span:last-child]:hidden" />
 
-        <div className="hidden items-center gap-2 text-[12px] text-slate-500 sm:flex">
+        <div className="hidden items-center gap-2 text-[13px] font-semibold text-slate-600 sm:flex">
           <span>UniSphere 2.0</span>
           <button
             type="button"
@@ -130,7 +130,7 @@ export function DashboardHeader({
               />
             }
           >
-            <span className="hidden max-w-28 truncate text-[12px] font-medium text-slate-700 md:block">
+            <span className="hidden max-w-32 truncate text-[13.5px] font-semibold text-slate-700 md:block">
               {fullName}
             </span>
             <Avatar className="size-10 ring-2 ring-white/10">

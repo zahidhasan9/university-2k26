@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import "@fontsource-variable/nunito"
 import "./globals.css"
 import { AppProviders } from "@/components/app-providers"
 

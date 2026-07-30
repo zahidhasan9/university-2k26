@@ -1,5 +1,6 @@
 import type { Types } from "mongoose";
 import { AppError } from "../../utils/AppError";
+import { AuditLogModel } from "../audit/auditLog.model";
 import { AttendanceRecordModel } from "../attendance/attendanceRecord.model";
 import { AttendanceSessionModel } from "../attendance/attendanceSession.model";
 import { CourseOfferingModel } from "../course-offering/courseOffering.model";
@@ -29,6 +30,12 @@ function dateRange(query: Record<string, unknown>) {
 
 export async function adminDashboard(query: Record<string, unknown>) {
   const { from, to } = dateRange(query);
+  const comparisonTo = new Date(to);
+  const comparisonFrom = new Date(to);
+  comparisonFrom.setUTCDate(comparisonFrom.getUTCDate() - 30);
+  const previousFrom = new Date(comparisonFrom);
+  previousFrom.setUTCDate(previousFrom.getUTCDate() - 30);
+
   const [
     studentStatus,
     teacherStatus,
@@ -40,6 +47,18 @@ export async function adminDashboard(query: Record<string, unknown>) {
     departmentCount,
     admissionTrend,
     revenueTrend,
+    activeOfferings,
+    enrollmentTrend,
+    recentActivity,
+    departments,
+    currentStudents,
+    previousStudents,
+    currentTeachers,
+    previousTeachers,
+    currentOfferings,
+    previousOfferings,
+    currentRevenue,
+    previousRevenue,
   ] = await Promise.all([
     StudentModel.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]),
     TeacherModel.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]),
@@ -93,7 +112,75 @@ export async function adminDashboard(query: Record<string, unknown>) {
       },
       { $sort: { "_id.year": 1, "_id.month": 1 } },
     ]),
+    CourseOfferingModel.countDocuments({ status: { $in: ["open", "ongoing"] } }),
+    EnrollmentModel.aggregate([
+      { $match: { enrolledAt: { $gte: from, $lte: to } } },
+      {
+        $group: {
+          _id: { year: { $year: "$enrolledAt" }, month: { $month: "$enrolledAt" } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+    ]),
+    AuditLogModel.aggregate([
+      { $sort: { createdAt: -1 } },
+      { $limit: 8 },
+      {
+        $lookup: {
+          from: "users",
+          localField: "actor",
+          foreignField: "_id",
+          as: "actorUser",
+        },
+      },
+      {
+        $project: {
+          action: 1,
+          resource: 1,
+          resourceId: 1,
+          createdAt: 1,
+          actor: {
+            $let: {
+              vars: { user: { $arrayElemAt: ["$actorUser", 0] } },
+              in: {
+                firstName: "$$user.firstName",
+                lastName: "$$user.lastName",
+                email: "$$user.email",
+              },
+            },
+          },
+        },
+      },
+    ]),
+    departmentPerformance(),
+    StudentModel.countDocuments({ createdAt: { $gte: comparisonFrom, $lte: comparisonTo } }),
+    StudentModel.countDocuments({ createdAt: { $gte: previousFrom, $lt: comparisonFrom } }),
+    TeacherModel.countDocuments({ createdAt: { $gte: comparisonFrom, $lte: comparisonTo } }),
+    TeacherModel.countDocuments({ createdAt: { $gte: previousFrom, $lt: comparisonFrom } }),
+    CourseOfferingModel.countDocuments({
+      createdAt: { $gte: comparisonFrom, $lte: comparisonTo },
+    }),
+    CourseOfferingModel.countDocuments({ createdAt: { $gte: previousFrom, $lt: comparisonFrom } }),
+    PaymentModel.aggregate([
+      { $match: { status: "completed", paidAt: { $gte: comparisonFrom, $lte: comparisonTo } } },
+      { $group: { _id: null, amountMinor: { $sum: "$amountMinor" } } },
+    ]),
+    PaymentModel.aggregate([
+      { $match: { status: "completed", paidAt: { $gte: previousFrom, $lt: comparisonFrom } } },
+      { $group: { _id: null, amountMinor: { $sum: "$amountMinor" } } },
+    ]),
   ]);
+
+  function changePercent(current: number, previous: number) {
+    if (previous === 0) return current === 0 ? 0 : null;
+    return Math.round(((current - previous) / previous) * 10_000) / 100;
+  }
+
+  const totalStudents = studentStatus.reduce((sum, item) => sum + item.count, 0);
+  const totalTeachers = teacherStatus.reduce((sum, item) => sum + item.count, 0);
+  const primaryRevenue = revenue[0];
+
   return {
     period: { from, to },
     students: studentStatus,
@@ -104,6 +191,39 @@ export async function adminDashboard(query: Record<string, unknown>) {
     research: researchStatus,
     activeDepartments: departmentCount,
     trends: { admissions: admissionTrend, revenue: revenueTrend },
+    dashboard: {
+      summary: {
+        totalStudents: {
+          value: totalStudents,
+          changePercent: changePercent(currentStudents, previousStudents),
+        },
+        totalTeachers: {
+          value: totalTeachers,
+          changePercent: changePercent(currentTeachers, previousTeachers),
+        },
+        activeOfferings: {
+          value: activeOfferings,
+          changePercent: changePercent(currentOfferings, previousOfferings),
+        },
+        revenue: {
+          amountMinor: primaryRevenue?.amountMinor ?? 0,
+          currency: primaryRevenue?._id ?? "BDT",
+          changePercent: changePercent(
+            currentRevenue[0]?.amountMinor ?? 0,
+            previousRevenue[0]?.amountMinor ?? 0,
+          ),
+        },
+      },
+      enrollmentTrend,
+      recentActivity,
+      departments: departments.map((department) => ({
+        ...department,
+        performance:
+          department.studentCount > 0
+            ? Math.round((department.activeStudentCount / department.studentCount) * 100)
+            : 0,
+      })),
+    },
   };
 }
 
