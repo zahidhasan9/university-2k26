@@ -1,6 +1,7 @@
 import { Mail, ShieldCheck, UserRound } from "lucide-react"
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { ProfileEditForm } from "@/components/profile-edit-form"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { authenticatedRequest } from "@/lib/auth"
@@ -13,6 +14,16 @@ type ProfileUser = {
   status: string
   roles: Array<{ _id?: string; code?: string; name?: string }>
   createdAt?: string
+  phone?: string
+  avatarUrl?: string
+  address?: {
+    line1?: string
+    line2?: string
+    city?: string
+    state?: string
+    country?: string
+    postalCode?: string
+  }
 }
 
 export default async function ProfilePage() {
@@ -33,6 +44,9 @@ export default async function ProfilePage() {
       <Card>
         <CardHeader className="flex-row items-center gap-4 border-b">
           <Avatar className="size-16">
+            {user.avatarUrl && (
+              <AvatarImage src={user.avatarUrl} alt={`${user.firstName} ${user.lastName}`} />
+            )}
             <AvatarFallback className="bg-blue-100 text-lg font-semibold text-blue-700">
               {initials}
             </AvatarFallback>
@@ -84,6 +98,18 @@ export default async function ProfilePage() {
               )}
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle>Edit contact profile</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Update your profile picture, phone number, and address.
+          </p>
+        </CardHeader>
+        <CardContent className="p-6">
+          <ProfileEditForm user={user} />
         </CardContent>
       </Card>
     </div>

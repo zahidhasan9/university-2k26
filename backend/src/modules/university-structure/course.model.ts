@@ -2,8 +2,19 @@ import { model, Schema } from "mongoose";
 
 const courseSchema = new Schema(
   {
-    program: { type: Schema.Types.ObjectId, ref: "Program", required: true, index: true },
-    code: { type: String, required: true, uppercase: true, trim: true, maxlength: 30 },
+    program: {
+      type: Schema.Types.ObjectId,
+      ref: "Program",
+      required: true,
+      index: true,
+    },
+    code: {
+      type: String,
+      required: true,
+      uppercase: true,
+      trim: true,
+      maxlength: 30,
+    },
     title: { type: String, required: true, trim: true, maxlength: 180 },
     description: { type: String, trim: true, maxlength: 2000 },
     credits: { type: Number, required: true, min: 0, max: 20 },
@@ -14,7 +25,12 @@ const courseSchema = new Schema(
       index: true,
     },
     prerequisites: [{ type: Schema.Types.ObjectId, ref: "Course" }],
-    status: { type: String, enum: ["active", "archived"], default: "active", index: true },
+    status: {
+      type: String,
+      enum: ["active", "archived"],
+      default: "active",
+      index: true,
+    },
   },
   { timestamps: true, versionKey: false },
 );

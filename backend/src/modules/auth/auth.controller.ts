@@ -36,6 +36,16 @@ function publicUser(user: {
   status: string;
   roles: unknown[];
   createdAt?: Date;
+  phone?: string | null;
+  avatarUrl?: string | null;
+  address?: {
+    line1?: string | null;
+    line2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    country?: string | null;
+    postalCode?: string | null;
+  } | null;
 }) {
   return {
     id: String(user._id),
@@ -45,6 +55,18 @@ function publicUser(user: {
     status: user.status,
     roles: user.roles,
     createdAt: user.createdAt,
+    phone: user.phone ?? undefined,
+    avatarUrl: user.avatarUrl ?? undefined,
+    address: user.address
+      ? {
+          line1: user.address.line1 ?? undefined,
+          line2: user.address.line2 ?? undefined,
+          city: user.address.city ?? undefined,
+          state: user.address.state ?? undefined,
+          country: user.address.country ?? undefined,
+          postalCode: user.address.postalCode ?? undefined,
+        }
+      : undefined,
   };
 }
 

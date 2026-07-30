@@ -22,6 +22,23 @@ const envSchema = z.object({
   SMTP_FROM: z.string().default("UniSphere <no-reply@unisphere.local>"),
   SMS_WEBHOOK_URL: z.string().url().optional(),
   SMS_WEBHOOK_TOKEN: z.string().optional(),
+  UPLOAD_DRIVER: z.enum(["local", "cloudinary"]).default("local"),
+  UPLOAD_MAX_MB: z.coerce.number().positive().max(20).default(5),
+  UPLOAD_BASE_URL: z.string().url().optional(),
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
+}).superRefine((value, context) => {
+  if (
+    value.UPLOAD_DRIVER === "cloudinary" &&
+    (!value.CLOUDINARY_CLOUD_NAME || !value.CLOUDINARY_API_KEY || !value.CLOUDINARY_API_SECRET)
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["CLOUDINARY_CLOUD_NAME"],
+      message: "Cloudinary cloud name, API key, and API secret are required",
+    });
+  }
 });
 
 const parsed = envSchema.safeParse(process.env);

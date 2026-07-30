@@ -13,8 +13,10 @@ export const API_ENDPOINTS = {
   users: {
     list: "/users",
     create: "/users",
+    me: "/users/me",
     detail: (id: string) => `/users/${id}`,
   },
+  uploads: { profileImage: "/uploads/profile-image" },
   roles: {
     list: "/roles",
     create: "/roles",

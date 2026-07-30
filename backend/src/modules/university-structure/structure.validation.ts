@@ -1,7 +1,13 @@
 import { z } from "zod";
 
 const objectId = z.string().regex(/^[a-f\d]{24}$/i, "Invalid MongoDB id");
-const code = z.string().trim().min(2).max(30).regex(/^[A-Za-z0-9_-]+$/).transform((v) => v.toUpperCase());
+const code = z
+  .string()
+  .trim()
+  .min(2)
+  .max(30)
+  .regex(/^[A-Za-z0-9_-]+$/)
+  .transform((v) => v.toUpperCase());
 const status = z.enum(["active", "archived"]);
 const description = z.string().trim().max(2000).optional();
 
@@ -47,7 +53,13 @@ export const programCreateSchema = z.object({
     departmentId: objectId,
     name: z.string().trim().min(2).max(180),
     code,
-    degreeType: z.enum(["certificate", "diploma", "bachelor", "master", "doctorate"]),
+    degreeType: z.enum([
+      "certificate",
+      "diploma",
+      "bachelor",
+      "master",
+      "doctorate",
+    ]),
     durationYears: z.number().min(0.5).max(10),
     totalCredits: z.number().min(1).max(400),
     description,
@@ -60,7 +72,9 @@ export const courseCreateSchema = z.object({
     title: z.string().trim().min(2).max(180),
     description,
     credits: z.number().min(0).max(20),
-    courseType: z.enum(["core", "elective", "general", "lab", "thesis"]).default("core"),
+    courseType: z
+      .enum(["core", "elective", "general", "lab", "thesis"])
+      .default("core"),
     prerequisiteIds: z.array(objectId).max(20).default([]),
   }),
 });
@@ -95,7 +109,9 @@ export const programUpdateSchema = z.object({
   body: z.object({
     ...mutable,
     departmentId: objectId.optional(),
-    degreeType: z.enum(["certificate", "diploma", "bachelor", "master", "doctorate"]).optional(),
+    degreeType: z
+      .enum(["certificate", "diploma", "bachelor", "master", "doctorate"])
+      .optional(),
     durationYears: z.number().min(0.5).max(10).optional(),
     totalCredits: z.number().min(1).max(400).optional(),
   }),
@@ -109,7 +125,9 @@ export const courseUpdateSchema = z.object({
     status: status.optional(),
     programId: objectId.optional(),
     credits: z.number().min(0).max(20).optional(),
-    courseType: z.enum(["core", "elective", "general", "lab", "thesis"]).optional(),
+    courseType: z
+      .enum(["core", "elective", "general", "lab", "thesis"])
+      .optional(),
     prerequisiteIds: z.array(objectId).max(20).optional(),
   }),
 });

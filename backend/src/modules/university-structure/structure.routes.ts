@@ -26,8 +26,17 @@ function crudRoutes(
 ): ExpressRouter {
   const router = Router();
   router.use(authenticate);
-  router.get("/", authorize("structure.read"), asyncHandler(controller.list(entity)));
-  router.get("/:id", authorize("structure.read"), validate(idSchema), asyncHandler(controller.getOne(entity)));
+  router.get(
+    "/",
+    authorize("structure.read"),
+    asyncHandler(controller.list(entity)),
+  );
+  router.get(
+    "/:id",
+    authorize("structure.read"),
+    validate(idSchema),
+    asyncHandler(controller.getOne(entity)),
+  );
   router.post(
     "/",
     authorize("structure.manage"),
@@ -49,8 +58,28 @@ function crudRoutes(
   return router;
 }
 
-export const universityRouter = crudRoutes("university", universityCreateSchema, universityUpdateSchema);
-export const facultyRouter = crudRoutes("faculty", facultyCreateSchema, facultyUpdateSchema);
-export const departmentRouter = crudRoutes("department", departmentCreateSchema, departmentUpdateSchema);
-export const programRouter = crudRoutes("program", programCreateSchema, programUpdateSchema);
-export const courseRouter = crudRoutes("course", courseCreateSchema, courseUpdateSchema);
+export const universityRouter = crudRoutes(
+  "university",
+  universityCreateSchema,
+  universityUpdateSchema,
+);
+export const facultyRouter = crudRoutes(
+  "faculty",
+  facultyCreateSchema,
+  facultyUpdateSchema,
+);
+export const departmentRouter = crudRoutes(
+  "department",
+  departmentCreateSchema,
+  departmentUpdateSchema,
+);
+export const programRouter = crudRoutes(
+  "program",
+  programCreateSchema,
+  programUpdateSchema,
+);
+export const courseRouter = crudRoutes(
+  "course",
+  courseCreateSchema,
+  courseUpdateSchema,
+);

@@ -21,6 +21,7 @@ import { resultRouter } from "../modules/result/result.routes";
 import { researchRouter } from "../modules/research/research.routes";
 import { routineRouter } from "../modules/routine/routine.routes";
 import { userRouter } from "../modules/user/user.routes";
+import { uploadRouter } from "../modules/upload/upload.routes";
 import { semesterRouter } from "../modules/semester/semester.routes";
 import { studentRouter } from "../modules/student/student.routes";
 import { teacherRouter } from "../modules/teacher/teacher.routes";
@@ -61,6 +62,7 @@ apiRouter.get("/health/ready", (_req, res, next) => {
 apiRouter.use("/auth", authRouter);
 apiRouter.use("/audit-logs", auditRouter);
 apiRouter.use("/users", userRouter);
+apiRouter.use("/uploads", uploadRouter);
 apiRouter.use("/roles", roleRouter);
 apiRouter.use("/permissions", permissionRouter);
 apiRouter.use("/universities", universityRouter);

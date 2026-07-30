@@ -5,7 +5,12 @@ import { writeAuditLog } from "../audit/audit.service";
 import * as userService from "./user.service";
 
 export async function list(req: Request, res: Response): Promise<Response> {
-  return sendSuccess(res, 200, "Users retrieved", await userService.listUsers(req.query));
+  return sendSuccess(
+    res,
+    200,
+    "Users retrieved",
+    await userService.listUsers(req.query),
+  );
 }
 export async function getOne(req: Request, res: Response): Promise<Response> {
   return sendSuccess(res, 200, "User retrieved", {
@@ -46,4 +51,17 @@ export async function disable(req: Request, res: Response): Promise<Response> {
     resourceId: id,
   });
   return sendSuccess(res, 200, "User disabled", null);
+}
+
+export async function updateMe(req: Request, res: Response): Promise<Response> {
+  if (!req.auth) throw new AppError(401, "Authentication required");
+  const user = await userService.updateOwnProfile(req.auth.userId, req.body);
+  await writeAuditLog(req, {
+    actor: req.auth.userId,
+    action: "user.profile_update",
+    resource: "user",
+    resourceId: req.auth.userId.toString(),
+    metadata: { changedFields: Object.keys(req.body) },
+  });
+  return sendSuccess(res, 200, "Profile updated", { user });
 }

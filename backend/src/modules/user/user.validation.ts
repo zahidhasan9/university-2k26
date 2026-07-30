@@ -15,10 +15,16 @@ export const createUserSchema = z.object({
   body: z.object({
     firstName: z.string().trim().min(1).max(80),
     lastName: z.string().trim().min(1).max(80),
-    email: z.string().trim().email().transform((value) => value.toLowerCase()),
+    email: z
+      .string()
+      .trim()
+      .email()
+      .transform((value) => value.toLowerCase()),
     password,
     roleIds: z.array(objectId).max(20).default([]),
-    status: z.enum(["active", "pending", "suspended", "disabled"]).default("active"),
+    status: z
+      .enum(["active", "pending", "suspended", "disabled"])
+      .default("active"),
   }),
 });
 export const updateUserSchema = z.object({
@@ -30,5 +36,41 @@ export const updateUserSchema = z.object({
       roleIds: z.array(objectId).max(20).optional(),
       status: z.enum(["active", "pending", "suspended", "disabled"]).optional(),
     })
-    .refine((value) => Object.keys(value).length > 0, "At least one field is required"),
+    .refine(
+      (value) => Object.keys(value).length > 0,
+      "At least one field is required",
+    ),
+});
+
+const optionalText = (maximum: number) =>
+  z
+    .string()
+    .trim()
+    .max(maximum)
+    .transform((value) => value || undefined)
+    .optional();
+
+export const updateOwnProfileSchema = z.object({
+  body: z
+    .object({
+      phone: optionalText(30),
+      avatarUrl: z
+        .union([z.string().trim().url().max(2048), z.literal("")])
+        .transform((value) => value || undefined)
+        .optional(),
+      address: z
+        .object({
+          line1: optionalText(160),
+          line2: optionalText(160),
+          city: optionalText(100),
+          state: optionalText(100),
+          country: optionalText(100),
+          postalCode: optionalText(30),
+        })
+        .optional(),
+    })
+    .refine(
+      (value) => Object.keys(value).length > 0,
+      "At least one field is required",
+    ),
 });

@@ -13,7 +13,8 @@ async function validateRoles(ids: string[]): Promise<Types.ObjectId[]> {
   const uniqueIds = [...new Set(ids)];
   const objectIds = uniqueIds.map((id) => toObjectId(id, "role id"));
   const count = await RoleModel.countDocuments({ _id: { $in: objectIds } });
-  if (count !== objectIds.length) throw new AppError(400, "One or more roles do not exist");
+  if (count !== objectIds.length)
+    throw new AppError(400, "One or more roles do not exist");
   return objectIds;
 }
 
@@ -22,12 +23,17 @@ async function protectLastSuperAdmin(
   nextRoleIds?: Types.ObjectId[],
   nextStatus?: string,
 ): Promise<void> {
-  const superAdmin = await RoleModel.findOne({ code: "super_admin" }).select("_id").lean();
+  const superAdmin = await RoleModel.findOne({ code: "super_admin" })
+    .select("_id")
+    .lean();
   if (!superAdmin) return;
-  const current = await UserModel.findById(userId).select("roles status").lean();
+  const current = await UserModel.findById(userId)
+    .select("roles status")
+    .lean();
   if (!current?.roles.some((roleId) => roleId.equals(superAdmin._id))) return;
 
-  const losesRole = nextRoleIds && !nextRoleIds.some((roleId) => roleId.equals(superAdmin._id));
+  const losesRole =
+    nextRoleIds && !nextRoleIds.some((roleId) => roleId.equals(superAdmin._id));
   const losesAccess = nextStatus !== undefined && nextStatus !== "active";
   if (!losesRole && !losesAccess) return;
 
@@ -36,7 +42,8 @@ async function protectLastSuperAdmin(
     roles: superAdmin._id,
     status: "active",
   });
-  if (otherCount === 0) throw new AppError(409, "The final active Super Admin cannot be removed");
+  if (otherCount === 0)
+    throw new AppError(409, "The final active Super Admin cannot be removed");
 }
 
 export async function listUsers(query: Record<string, unknown>) {
@@ -82,7 +89,8 @@ export async function createUser(input: {
   roleIds: string[];
   status: "active" | "pending" | "suspended" | "disabled";
 }) {
-  if (await UserModel.exists({ email: input.email })) throw new AppError(409, "Email already exists");
+  if (await UserModel.exists({ email: input.email }))
+    throw new AppError(409, "Email already exists");
   const roles = await validateRoles(input.roleIds);
   const user = await UserModel.create({
     firstName: input.firstName,
@@ -106,13 +114,21 @@ export async function updateUser(
   },
 ) {
   const userId = toObjectId(id);
-  if (userId.equals(actorId) && (input.roleIds || (input.status && input.status !== "active"))) {
-    throw new AppError(409, "You cannot change your own roles or deactivate your own account");
+  if (
+    userId.equals(actorId) &&
+    (input.roleIds || (input.status && input.status !== "active"))
+  ) {
+    throw new AppError(
+      409,
+      "You cannot change your own roles or deactivate your own account",
+    );
   }
   const user = await UserModel.findById(userId).select("+authVersion");
   if (!user) throw new AppError(404, "User not found");
 
-  const roleIds = input.roleIds ? await validateRoles(input.roleIds) : undefined;
+  const roleIds = input.roleIds
+    ? await validateRoles(input.roleIds)
+    : undefined;
   await protectLastSuperAdmin(userId, roleIds, input.status);
 
   if (input.firstName !== undefined) user.firstName = input.firstName;
@@ -131,6 +147,34 @@ export async function updateUser(
   return getUser(id);
 }
 
-export async function disableUser(id: string, actorId: Types.ObjectId): Promise<void> {
+export async function disableUser(
+  id: string,
+  actorId: Types.ObjectId,
+): Promise<void> {
   await updateUser(id, actorId, { status: "disabled" });
+}
+
+export async function updateOwnProfile(
+  userId: Types.ObjectId,
+  input: {
+    phone?: string;
+    avatarUrl?: string;
+    address?: {
+      line1?: string;
+      line2?: string;
+      city?: string;
+      state?: string;
+      country?: string;
+      postalCode?: string;
+    };
+  },
+) {
+  const user = await UserModel.findById(userId);
+  if (!user) throw new AppError(404, "User not found");
+
+  if ("phone" in input) user.phone = input.phone;
+  if ("avatarUrl" in input) user.avatarUrl = input.avatarUrl;
+  if (input.address) user.address = input.address;
+  await user.save();
+  return getUser(userId.toString());
 }

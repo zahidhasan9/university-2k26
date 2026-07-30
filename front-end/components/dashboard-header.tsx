@@ -7,7 +7,7 @@ import Link from "next/link"
 import { AppSidebar } from "@/components/app-sidebar"
 import { Brand } from "@/components/brand"
 import { LogoutItem } from "@/components/logout-item"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -27,6 +27,7 @@ type CurrentUser = {
   lastName: string
   email: string
   roles: Array<{ code?: string; name?: string }>
+  avatarUrl?: string
 }
 
 export function DashboardHeader({
@@ -134,6 +135,7 @@ export function DashboardHeader({
               {fullName}
             </span>
             <Avatar className="size-10 ring-2 ring-white/10">
+              {user?.avatarUrl && <AvatarImage src={user.avatarUrl} alt={fullName} />}
               <AvatarFallback className="bg-violet-600 text-sm font-semibold text-white">
                 {initials}
               </AvatarFallback>
