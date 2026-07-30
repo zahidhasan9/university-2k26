@@ -33,6 +33,7 @@ export const updateUserSchema = z.object({
     .object({
       firstName: z.string().trim().min(1).max(80).optional(),
       lastName: z.string().trim().min(1).max(80).optional(),
+      email: z.string().trim().email().transform((value) => value.toLowerCase()).optional(),
       roleIds: z.array(objectId).max(20).optional(),
       status: z.enum(["active", "pending", "suspended", "disabled"]).optional(),
     })
@@ -54,6 +55,7 @@ export const updateOwnProfileSchema = z.object({
   body: z
     .object({
       phone: optionalText(30),
+      email: z.string().trim().email().transform((value) => value.toLowerCase()).optional(),
       avatarUrl: z
         .union([z.string().trim().url().max(2048), z.literal("")])
         .transform((value) => value || undefined)

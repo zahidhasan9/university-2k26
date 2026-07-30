@@ -338,7 +338,11 @@ export default async function ReportsPage({ searchParams }: { searchParams: Sear
                         <p className="font-semibold text-slate-700">
                           {student.user.firstName} {student.user.lastName}
                         </p>
-                        <p className="mt-0.5 text-xs text-slate-400">{student.user.email}</p>
+                        <p className="mt-0.5 text-xs text-slate-400">
+                          {student.user.email.endsWith("@pending.unisphere.local")
+                            ? "Email not added"
+                            : student.user.email}
+                        </p>
                       </TableCell>
                       <TableCell className="text-sm text-slate-600">
                         {student.program.department?.name ?? "Not assigned"}

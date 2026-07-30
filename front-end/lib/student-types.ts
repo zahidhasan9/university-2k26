@@ -3,6 +3,8 @@ export type StudentStatus = "active" | "graduated" | "suspended" | "withdrawn" |
 export type Student = {
   _id: string
   studentId: string
+  batch: string
+  section: string
   user: {
     _id: string
     firstName: string

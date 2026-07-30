@@ -4,6 +4,7 @@ import { env } from "../../config/env";
 import { AppError } from "../../utils/AppError";
 import { sendSuccess } from "../../utils/response";
 import { writeAuditLog } from "../audit/audit.service";
+import { StudentModel } from "../student/student.model";
 import { UserModel } from "../user/user.model";
 import { LoginHistoryModel } from "./loginHistory.model";
 import { RefreshTokenModel } from "./refreshToken.model";
@@ -33,6 +34,7 @@ function publicUser(user: {
   firstName: string;
   lastName: string;
   email: string;
+  emailClaimedAt?: Date | null;
   status: string;
   roles: unknown[];
   createdAt?: Date;
@@ -51,7 +53,8 @@ function publicUser(user: {
     id: String(user._id),
     firstName: user.firstName,
     lastName: user.lastName,
-    email: user.email,
+    email: user.email.endsWith("@pending.unisphere.local") ? "" : user.email,
+    canSetEmail: user.email.endsWith("@pending.unisphere.local") && !user.emailClaimedAt,
     status: user.status,
     roles: user.roles,
     createdAt: user.createdAt,
@@ -93,19 +96,28 @@ export async function register(req: Request, res: Response): Promise<Response> {
 }
 
 export async function login(req: Request, res: Response): Promise<Response> {
-  const { email, password } = req.body;
-  const user = await UserModel.findOne({ email }).select("+passwordHash");
+  const identifier = String(req.body.identifier ?? req.body.email).trim();
+  const password = String(req.body.password);
+  const normalizedIdentifier = identifier.toLowerCase();
+  const student = normalizedIdentifier.includes("@")
+    ? null
+    : await StudentModel.findOne({ studentId: identifier.toUpperCase() }).select("user").lean();
+  const user = normalizedIdentifier.includes("@")
+    ? await UserModel.findOne({ email: normalizedIdentifier }).select("+passwordHash")
+    : student
+      ? await UserModel.findById(student.user).select("+passwordHash")
+      : null;
   const valid = user ? await bcrypt.compare(password, user.passwordHash) : false;
 
   if (!user || !valid) {
     await LoginHistoryModel.create({
-      email,
+      email: identifier,
       successful: false,
       failureReason: "invalid_credentials",
       ipAddress: req.ip,
       userAgent: req.get("user-agent"),
     });
-    throw new AppError(401, "Invalid email or password");
+    throw new AppError(401, "Invalid email, Student ID, or password");
   }
   if (user.status !== "active") throw new AppError(403, "User account is not active");
 
@@ -117,7 +129,7 @@ export async function login(req: Request, res: Response): Promise<Response> {
   await user.save();
   await LoginHistoryModel.create({
     user: user._id,
-    email,
+    email: user.email,
     successful: true,
     ipAddress: req.ip,
     userAgent: req.get("user-agent"),

@@ -26,7 +26,7 @@ export function LoginForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: form.get("email"),
+          identifier: form.get("identifier"),
           password: form.get("password"),
         }),
       })
@@ -44,8 +44,15 @@ export function LoginForm() {
   return (
     <form className="space-y-5" onSubmit={submit}>
       <div className="space-y-2">
-        <Label htmlFor="email">University email</Label>
-        <Input id="email" name="email" type="email" placeholder="name@university.edu" required />
+        <Label htmlFor="identifier">Email or Student ID</Label>
+        <Input
+          id="identifier"
+          name="identifier"
+          type="text"
+          placeholder="name@university.edu or 2026-0001"
+          autoComplete="username"
+          required
+        />
       </div>
       <div className="space-y-2">
         <div className="flex items-center justify-between">

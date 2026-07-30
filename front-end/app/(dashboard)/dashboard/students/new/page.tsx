@@ -7,7 +7,6 @@ import { authenticatedRequest } from "@/lib/auth"
 export const metadata: Metadata = { title: "Add student" }
 
 type List<T> = { items: T[] }
-type UserOption = { _id: string; firstName: string; lastName: string; email: string }
 type ProgramOption = { _id: string; name: string; code: string }
 type SemesterOption = {
   _id: string
@@ -18,8 +17,7 @@ type SemesterOption = {
 }
 
 export default async function NewStudentPage() {
-  const [users, programs, semesters] = await Promise.all([
-    authenticatedRequest<List<UserOption>>("/users?status=active&limit=100"),
+  const [programs, semesters] = await Promise.all([
     authenticatedRequest<List<ProgramOption>>("/programs?status=active&limit=100"),
     authenticatedRequest<List<SemesterOption>>("/semesters?limit=100"),
   ])
@@ -27,11 +25,10 @@ export default async function NewStudentPage() {
   return (
     <StudentFormPage
       title="Add a new student"
-      description="Create a student profile from an existing active user account."
+      description="Provision a student account, academic identity, batch, and section."
       backHref="/dashboard/students"
     >
       <StudentForm
-        users={users.data.items}
         programs={programs.data.items}
         semesters={semesters.data.items.filter((semester) => semester.status !== "archived")}
       />

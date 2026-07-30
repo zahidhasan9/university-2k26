@@ -7,6 +7,8 @@ const studentSchema = new Schema(
     program: { type: Schema.Types.ObjectId, ref: "Program", required: true, index: true },
     admissionSemester: { type: Schema.Types.ObjectId, ref: "Semester", required: true, index: true },
     admissionApplication: { type: Schema.Types.ObjectId, ref: "Admission", unique: true, sparse: true },
+    batch: { type: String, required: true, default: "Unassigned", trim: true, maxlength: 40, index: true },
+    section: { type: String, required: true, default: "Unassigned", trim: true, maxlength: 20 },
     dateOfBirth: { type: Date },
     gender: { type: String, enum: ["male", "female", "other", "prefer_not_to_say"] },
     phone: { type: String, trim: true, maxlength: 30 },

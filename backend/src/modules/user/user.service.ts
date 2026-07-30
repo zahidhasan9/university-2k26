@@ -109,6 +109,7 @@ export async function updateUser(
   input: {
     firstName?: string;
     lastName?: string;
+    email?: string;
     roleIds?: string[];
     status?: "active" | "pending" | "suspended" | "disabled";
   },
@@ -133,6 +134,13 @@ export async function updateUser(
 
   if (input.firstName !== undefined) user.firstName = input.firstName;
   if (input.lastName !== undefined) user.lastName = input.lastName;
+  if (input.email !== undefined) {
+    if (await UserModel.exists({ email: input.email, _id: { $ne: userId } })) {
+      throw new AppError(409, "Email already exists");
+    }
+    user.email = input.email;
+    user.emailClaimedAt = new Date();
+  }
   if (roleIds) user.roles = roleIds;
   if (input.status !== undefined) user.status = input.status;
   if (roleIds || input.status !== undefined) user.authVersion += 1;
@@ -157,6 +165,7 @@ export async function disableUser(
 export async function updateOwnProfile(
   userId: Types.ObjectId,
   input: {
+    email?: string;
     phone?: string;
     avatarUrl?: string;
     address?: {
@@ -172,6 +181,16 @@ export async function updateOwnProfile(
   const user = await UserModel.findById(userId);
   if (!user) throw new AppError(404, "User not found");
 
+  if ("email" in input) {
+    if (!user.email.endsWith("@pending.unisphere.local") || user.emailClaimedAt) {
+      throw new AppError(403, "Email can only be set once; contact an administrator to change it");
+    }
+    if (await UserModel.exists({ email: input.email, _id: { $ne: user._id } })) {
+      throw new AppError(409, "Email already exists");
+    }
+    user.email = String(input.email);
+    user.emailClaimedAt = new Date();
+  }
   if ("phone" in input) user.phone = input.phone;
   if ("avatarUrl" in input) user.avatarUrl = input.avatarUrl;
   if (input.address) user.address = input.address;

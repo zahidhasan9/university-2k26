@@ -57,12 +57,10 @@ function Field({
 
 export function StudentForm({
   student,
-  users = [],
   programs,
   semesters = [],
 }: {
   student?: Student
-  users?: Option[]
   programs: Option[]
   semesters?: Option[]
 }) {
@@ -90,6 +88,11 @@ export function StudentForm({
     }
     const payload = editing
       ? {
+          firstName: String(form.get("firstName")),
+          lastName: String(form.get("lastName")),
+          email: optional(form, "email"),
+          batch: String(form.get("batch")),
+          section: String(form.get("section")),
           programId: String(form.get("programId")),
           currentSemesterNumber: Number(form.get("currentSemesterNumber")),
           dateOfBirth: optional(form, "dateOfBirth"),
@@ -100,8 +103,12 @@ export function StudentForm({
           address,
         }
       : {
-          userId: String(form.get("userId")),
+          firstName: String(form.get("firstName")),
+          lastName: String(form.get("lastName")),
+          temporaryPassword: String(form.get("temporaryPassword")),
           studentId: String(form.get("studentId")),
+          batch: String(form.get("batch")),
+          section: String(form.get("section")),
           programId: String(form.get("programId")),
           admissionSemesterId: String(form.get("admissionSemesterId")),
           dateOfBirth: optional(form, "dateOfBirth"),
@@ -139,25 +146,28 @@ export function StudentForm({
 
   return (
     <form onSubmit={submit} className="space-y-8">
-      {!editing && (
-        <section className="space-y-5">
-          <GroupTitle
-            title="Account & identity"
-            description="Connect an existing active user account to a student profile."
-          />
-          <div className="grid gap-5 md:grid-cols-2">
-            <Field label="User account" name="userId">
-              <select id="userId" name="userId" className={selectClass} required defaultValue="">
-                <option value="" disabled>
-                  Select a user
-                </option>
-                {users.map((user) => (
-                  <option key={user._id} value={user._id}>
-                    {user.firstName} {user.lastName} · {user.email}
-                  </option>
-                ))}
-              </select>
-            </Field>
+      <section className="space-y-5">
+        <GroupTitle
+          title="Account & identity"
+          description={
+            editing
+              ? "Only an administrator can change identity details or a claimed email."
+              : "The student will sign in with this Student ID and temporary password."
+          }
+        />
+        <div className="grid gap-5 md:grid-cols-2">
+          <Field label="First name" name="firstName">
+            <Input
+              id="firstName"
+              name="firstName"
+              defaultValue={student?.user.firstName}
+              required
+            />
+          </Field>
+          <Field label="Last name" name="lastName">
+            <Input id="lastName" name="lastName" defaultValue={student?.user.lastName} required />
+          </Field>
+          {!editing && (
             <Field label="Student ID" name="studentId">
               <Input
                 id="studentId"
@@ -167,9 +177,53 @@ export function StudentForm({
                 required
               />
             </Field>
-          </div>
-        </section>
-      )}
+          )}
+          {editing ? (
+            <Field label="Student email" name="email">
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                defaultValue={
+                  student?.user.email.endsWith("@pending.unisphere.local")
+                    ? ""
+                    : student?.user.email
+                }
+              />
+            </Field>
+          ) : (
+            <Field label="Temporary password" name="temporaryPassword">
+              <Input
+                id="temporaryPassword"
+                name="temporaryPassword"
+                type="password"
+                minLength={12}
+                autoComplete="new-password"
+                placeholder="Minimum 12 characters"
+                required
+              />
+            </Field>
+          )}
+          <Field label="Batch" name="batch">
+            <Input
+              id="batch"
+              name="batch"
+              defaultValue={student?.batch}
+              placeholder="e.g. 2026"
+              required
+            />
+          </Field>
+          <Field label="Section" name="section">
+            <Input
+              id="section"
+              name="section"
+              defaultValue={student?.section}
+              placeholder="e.g. A"
+              required
+            />
+          </Field>
+        </div>
+      </section>
 
       <section className="space-y-5">
         <GroupTitle

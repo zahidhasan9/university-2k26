@@ -20,8 +20,12 @@ export const registerSchema = z.object({
 
 export const loginSchema = z.object({
   body: z.object({
-    email: z.string().trim().email().transform((value) => value.toLowerCase()),
+    identifier: z.string().trim().min(3).max(160).optional(),
+    email: z.string().trim().min(3).max(160).optional(),
     password: z.string().min(1).max(128),
+  }).refine((value) => value.identifier || value.email, {
+    message: "Email or Student ID is required",
+    path: ["identifier"],
   }),
 });
 

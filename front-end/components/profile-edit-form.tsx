@@ -25,6 +25,8 @@ type Address = {
 export type EditableProfile = {
   firstName: string
   lastName: string
+  email?: string
+  canSetEmail?: boolean
   phone?: string
   avatarUrl?: string
   address?: Address
@@ -38,7 +40,12 @@ export function ProfileEditForm({ user }: { user: EditableProfile }) {
   const [cropSource, setCropSource] = useState<string | null>(null)
 
   const mutation = useMutation({
-    mutationFn: (payload: { phone?: string; avatarUrl?: string; address: Address }) =>
+    mutationFn: (payload: {
+      email?: string
+      phone?: string
+      avatarUrl?: string
+      address: Address
+    }) =>
       apiRequest<{ user: EditableProfile }>(API_ENDPOINTS.users.me, {
         method: "PATCH",
         data: payload,
@@ -83,6 +90,7 @@ export function ProfileEditForm({ user }: { user: EditableProfile }) {
     >
     const optional = (value: string) => value.trim() || undefined
     mutation.mutate({
+      ...(user.canSetEmail ? { email: optional(values.email) } : {}),
       phone: optional(values.phone),
       avatarUrl: optional(values.avatarUrl),
       address: {
@@ -161,6 +169,15 @@ export function ProfileEditForm({ user }: { user: EditableProfile }) {
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
+        {user.canSetEmail && (
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="email">Email address</Label>
+            <Input id="email" name="email" type="email" placeholder="you@example.com" required />
+            <p className="text-xs text-amber-600">
+              You can add your email once. After saving, only an administrator can change it.
+            </p>
+          </div>
+        )}
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="phone">Phone</Label>
           <Input

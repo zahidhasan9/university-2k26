@@ -21,6 +21,7 @@ const userSchema = new Schema(
       index: true,
     },
     emailVerifiedAt: { type: Date },
+    emailClaimedAt: { type: Date },
     phone: { type: String, trim: true, maxlength: 30 },
     avatarUrl: { type: String, trim: true, maxlength: 2048 },
     address: {

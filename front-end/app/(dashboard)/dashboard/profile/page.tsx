@@ -1,6 +1,7 @@
 import { Mail, ShieldCheck, UserRound } from "lucide-react"
 
 import { ProfileEditForm } from "@/components/profile-edit-form"
+import { ChangePasswordForm } from "@/components/change-password-form"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,7 +11,8 @@ type ProfileUser = {
   id: string
   firstName: string
   lastName: string
-  email: string
+  email?: string
+  canSetEmail?: boolean
   status: string
   roles: Array<{ _id?: string; code?: string; name?: string }>
   createdAt?: string
@@ -55,7 +57,9 @@ export default async function ProfilePage() {
             <CardTitle className="text-xl">
               {user.firstName} {user.lastName}
             </CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {user.email || "Email not added yet"}
+            </p>
           </div>
           <Badge
             className="ml-auto capitalize"
@@ -70,7 +74,7 @@ export default async function ProfilePage() {
             <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Email
             </p>
-            <p className="mt-1 font-medium">{user.email}</p>
+            <p className="mt-1 font-medium">{user.email || "Not added yet"}</p>
           </div>
           <div className="rounded-xl border p-4">
             <UserRound className="size-5 text-primary" />
@@ -110,6 +114,18 @@ export default async function ProfilePage() {
         </CardHeader>
         <CardContent className="p-6">
           <ProfileEditForm user={user} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle>Change password</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Replace the temporary password after your first sign-in.
+          </p>
+        </CardHeader>
+        <CardContent className="p-6">
+          <ChangePasswordForm />
         </CardContent>
       </Card>
     </div>

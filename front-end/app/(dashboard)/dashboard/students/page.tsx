@@ -138,7 +138,11 @@ export default async function StudentsPage({ searchParams }: { searchParams: Sea
                             </Avatar>
                             <div>
                               <p className="font-medium">{name}</p>
-                              <p className="text-xs text-muted-foreground">{student.user.email}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {student.user.email.endsWith("@pending.unisphere.local")
+                                  ? "Email not added"
+                                  : student.user.email}
+                              </p>
                             </div>
                           </div>
                         </TableCell>

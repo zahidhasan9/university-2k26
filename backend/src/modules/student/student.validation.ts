@@ -23,8 +23,13 @@ const address = z
 export const studentIdParamSchema = z.object({ params: z.object({ id: objectId }) });
 export const studentCreateSchema = z.object({
   body: z.object({
-    userId: objectId,
+    userId: objectId.optional(),
+    firstName: z.string().trim().min(1).max(80).optional(),
+    lastName: z.string().trim().min(1).max(80).optional(),
+    temporaryPassword: z.string().min(12).max(128).optional(),
     studentId: z.string().trim().min(3).max(40).regex(/^[A-Za-z0-9_-]+$/).transform((v) => v.toUpperCase()),
+    batch: z.string().trim().min(1).max(40).default("Unassigned"),
+    section: z.string().trim().min(1).max(20).default("Unassigned"),
     programId: objectId,
     admissionSemesterId: objectId,
     admissionApplicationId: objectId.optional(),
@@ -33,6 +38,14 @@ export const studentCreateSchema = z.object({
     phone: z.string().trim().max(30).optional(),
     guardian,
     address,
+  }).superRefine((value, context) => {
+    if (!value.userId && (!value.firstName || !value.lastName || !value.temporaryPassword)) {
+      context.addIssue({
+        code: "custom",
+        path: ["firstName"],
+        message: "Name and temporary password are required when provisioning a student account",
+      });
+    }
   }),
 });
 export const studentUpdateSchema = z.object({
@@ -40,6 +53,11 @@ export const studentUpdateSchema = z.object({
   body: z
     .object({
       programId: objectId.optional(),
+      firstName: z.string().trim().min(1).max(80).optional(),
+      lastName: z.string().trim().min(1).max(80).optional(),
+      email: z.string().trim().email().transform((value) => value.toLowerCase()).optional(),
+      batch: z.string().trim().min(1).max(40).optional(),
+      section: z.string().trim().min(1).max(20).optional(),
       currentSemesterNumber: z.number().int().min(1).max(30).optional(),
       dateOfBirth: z.coerce.date().optional(),
       gender: z.enum(["male", "female", "other", "prefer_not_to_say"]).optional(),

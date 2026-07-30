@@ -111,6 +111,8 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                 {student.admissionSemester.name} · {student.admissionSemester.academicYear}
               </Info>
               <Info label="Current semester">Semester {student.currentSemesterNumber}</Info>
+              <Info label="Batch">{value(student.batch)}</Info>
+              <Info label="Section">{value(student.section)}</Info>
               <Info label="Record created">
                 {new Intl.DateTimeFormat("en-BD", { dateStyle: "medium" }).format(
                   new Date(student.createdAt),
@@ -134,7 +136,11 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
               <Mail className="mt-0.5 size-4 text-muted-foreground" />
               <div>
                 <p className="text-xs text-muted-foreground">Email</p>
-                <p className="break-all text-sm font-medium">{student.user.email}</p>
+                <p className="break-all text-sm font-medium">
+                  {student.user.email.endsWith("@pending.unisphere.local")
+                    ? "Not added yet"
+                    : student.user.email}
+                </p>
               </div>
             </div>
             <div className="flex gap-3">
