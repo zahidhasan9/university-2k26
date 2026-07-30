@@ -16,7 +16,11 @@ export async function listStudents(query: Record<string, unknown>) {
   const [items, total] = await Promise.all([
     StudentModel.find(filter)
       .populate("user", "firstName lastName email status")
-      .populate("program", "name code department")
+      .populate({
+        path: "program",
+        select: "name code department",
+        populate: { path: "department", select: "name code" },
+      })
       .populate("admissionSemester", "name code academicYear")
       .sort({ createdAt: -1 })
       .skip(skip)
