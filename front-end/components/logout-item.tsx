@@ -1,5 +1,7 @@
 "use client"
 
+import { apiResponseRequest } from "@/lib/http-client"
+
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { LoaderCircle } from "lucide-react"
@@ -12,7 +14,7 @@ export function LogoutItem() {
 
   async function logout() {
     setLoading(true)
-    await fetch("/api/auth/logout", { method: "POST" })
+    await apiResponseRequest("/api/auth/logout", { method: "POST" })
     router.replace("/login")
     router.refresh()
   }

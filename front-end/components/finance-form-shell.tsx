@@ -1,15 +1,15 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 export function FinanceFormShell({
   title,
   description,
   children,
 }: {
-  title: string;
-  description: string;
-  children: React.ReactNode;
+  title: string
+  description: string
+  children: React.ReactNode
 }) {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -27,5 +27,5 @@ export function FinanceFormShell({
         <CardContent>{children}</CardContent>
       </Card>
     </div>
-  );
+  )
 }

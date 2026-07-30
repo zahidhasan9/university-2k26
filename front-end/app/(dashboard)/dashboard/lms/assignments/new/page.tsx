@@ -1,1 +1,13 @@
-import {PortalForm} from "@/components/portal-form";import {PortalFormShell} from "@/components/portal-form-shell";export default function Page(){return <PortalFormShell area="lms" title="Create assignment" description="Set instructions, deadline, score, and publication state."><PortalForm kind="assignment"/></PortalFormShell>}
+import { PortalForm } from "@/components/portal-form"
+import { PortalFormShell } from "@/components/portal-form-shell"
+export default function Page() {
+  return (
+    <PortalFormShell
+      area="lms"
+      title="Create assignment"
+      description="Set instructions, deadline, score, and publication state."
+    >
+      <PortalForm kind="assignment" />
+    </PortalFormShell>
+  )
+}

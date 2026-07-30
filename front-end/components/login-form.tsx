@@ -1,5 +1,7 @@
 "use client"
 
+import { apiResponseRequest } from "@/lib/http-client"
+
 import { FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, LoaderCircle } from "lucide-react"
@@ -20,7 +22,7 @@ export function LoginForm() {
     setLoading(true)
     setError("")
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await apiResponseRequest("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

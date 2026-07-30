@@ -6,7 +6,10 @@ import { API_URL } from "@/lib/api"
 async function forward(request: Request, context: { params: Promise<{ path: string[] }> }) {
   const token = (await cookies()).get(ACCESS_COOKIE)?.value
   if (!token) {
-    return Response.json({ success: false, message: "Authentication required", data: null }, { status: 401 })
+    return Response.json(
+      { success: false, message: "Authentication required", data: null },
+      { status: 401 },
+    )
   }
   const { path } = await context.params
   const sourceUrl = new URL(request.url)

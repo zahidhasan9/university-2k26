@@ -13,5 +13,13 @@ export default async function NewTeacherPage() {
     authenticatedRequest<Users>("/users?status=active&limit=100"),
     authenticatedRequest<AcademicList>("/departments?status=active&limit=100"),
   ])
-  return <AcademicFormShell title="Add faculty member" description="Connect an active user account and create the academic employment profile." backHref="/dashboard/faculty"><TeacherForm users={users.data.items} departments={departments.data.items} /></AcademicFormShell>
+  return (
+    <AcademicFormShell
+      title="Add faculty member"
+      description="Connect an active user account and create the academic employment profile."
+      backHref="/dashboard/faculty"
+    >
+      <TeacherForm users={users.data.items} departments={departments.data.items} />
+    </AcademicFormShell>
+  )
 }

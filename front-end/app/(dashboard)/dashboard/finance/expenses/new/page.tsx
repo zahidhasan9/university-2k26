@@ -1,5 +1,5 @@
-import { ExpenseForm } from "@/components/finance-form";
-import { FinanceFormShell } from "@/components/finance-form-shell";
+import { ExpenseForm } from "@/components/finance-form"
+import { FinanceFormShell } from "@/components/finance-form-shell"
 export default function NewExpensePage() {
   return (
     <FinanceFormShell
@@ -8,5 +8,5 @@ export default function NewExpensePage() {
     >
       <ExpenseForm />
     </FinanceFormShell>
-  );
+  )
 }

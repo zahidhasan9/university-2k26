@@ -2,17 +2,249 @@ import { BookCopy, BookOpen, LibraryBig, Repeat2 } from "lucide-react"
 import { ReturnBook } from "@/components/library-actions"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { authenticatedRequest } from "@/lib/auth"
-type Book = { _id: string; isbn?: string; title: string; authors: string[]; publisher?: string; publicationYear?: number; categories: string[]; status: string; copies: Record<string, number> }
-type Copy = { _id: string; accessionNumber: string; barcode?: string; shelfLocation?: string; condition: string; status: string; book: { title: string; authors: string[] } }
-type Transaction = { _id: string; transactionNumber: string; book: { title: string; authors: string[] }; copy: { accessionNumber: string }; borrower: { firstName: string; lastName: string; email: string }; borrowerType: string; issuedAt: string; dueAt: string; returnedAt?: string; fineMinor: number; currency: string; status: string }
-type Policy = { _id: string; borrowerType: string; maxActiveLoans: number; loanDays: number; finePerDayMinor: number; currency: string }
+type Book = {
+  _id: string
+  isbn?: string
+  title: string
+  authors: string[]
+  publisher?: string
+  publicationYear?: number
+  categories: string[]
+  status: string
+  copies: Record<string, number>
+}
+type Copy = {
+  _id: string
+  accessionNumber: string
+  barcode?: string
+  shelfLocation?: string
+  condition: string
+  status: string
+  book: { title: string; authors: string[] }
+}
+type Transaction = {
+  _id: string
+  transactionNumber: string
+  book: { title: string; authors: string[] }
+  copy: { accessionNumber: string }
+  borrower: { firstName: string; lastName: string; email: string }
+  borrowerType: string
+  issuedAt: string
+  dueAt: string
+  returnedAt?: string
+  fineMinor: number
+  currency: string
+  status: string
+}
+type Policy = {
+  _id: string
+  borrowerType: string
+  maxActiveLoans: number
+  loanDays: number
+  finePerDayMinor: number
+  currency: string
+}
 export default async function LibraryPage() {
-  let books: Book[] = [], copies: Copy[] = [], transactions: Transaction[] = [], policies: Policy[] = [], error = ""
-  try { const responses = await Promise.all([authenticatedRequest<{ items: Book[] }>("/library/books?limit=12"), authenticatedRequest<{ copies: Copy[] }>("/library/copies"), authenticatedRequest<{ items: Transaction[] }>("/library/transactions?limit=12"), authenticatedRequest<{ policies: Policy[] }>("/library/policies")]); books = responses[0].data.items; copies = responses[1].data.copies; transactions = responses[2].data.items; policies = responses[3].data.policies } catch (cause) { error = cause instanceof Error ? cause.message : "Library data unavailable" }
-  const available = copies.filter((copy) => copy.status === "available").length, issued = copies.filter((copy) => copy.status === "issued").length
-  return <div className="mx-auto max-w-[1600px] space-y-6"><div><p className="text-sm font-medium text-primary">Library operations</p><h1 className="mt-1 text-3xl font-bold">Library</h1><p className="mt-1 text-sm text-muted-foreground">Catalog, physical inventory, circulation, due dates, and fines.</p></div>{error && <p className="rounded-xl bg-destructive/10 p-4 text-destructive">{error}</p>}<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Card><CardContent className="p-5"><LibraryBig className="size-5 text-blue-600" /><p className="mt-4 text-2xl font-bold">{books.length}</p><p className="text-sm text-muted-foreground">Catalog titles shown</p></CardContent></Card><Card><CardContent className="p-5"><BookCopy className="size-5 text-emerald-600" /><p className="mt-4 text-2xl font-bold">{available}</p><p className="text-sm text-muted-foreground">Available copies</p></CardContent></Card><Card><CardContent className="p-5"><Repeat2 className="size-5 text-amber-600" /><p className="mt-4 text-2xl font-bold">{issued}</p><p className="text-sm text-muted-foreground">Issued copies</p></CardContent></Card><Card><CardContent className="p-5"><BookOpen className="size-5 text-violet-600" /><p className="mt-4 text-2xl font-bold">{policies.length}</p><p className="text-sm text-muted-foreground">Borrowing policies</p></CardContent></Card></div>
-  <Card><CardHeader><CardTitle>Book catalog</CardTitle></CardHeader><CardContent className="p-0"><Table><TableHeader><TableRow><TableHead>Title</TableHead><TableHead>ISBN</TableHead><TableHead>Publisher</TableHead><TableHead>Categories</TableHead><TableHead>Available</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{books.map((book) => <TableRow key={book._id}><TableCell><p className="font-medium">{book.title}</p><p className="text-xs text-muted-foreground">{book.authors.join(", ")}</p></TableCell><TableCell className="font-mono text-xs">{book.isbn ?? "—"}</TableCell><TableCell>{book.publisher ?? "—"} {book.publicationYear ? `(${book.publicationYear})` : ""}</TableCell><TableCell><div className="flex flex-wrap gap-1">{book.categories.slice(0, 2).map((category) => <Badge key={category} variant="secondary">{category}</Badge>)}</div></TableCell><TableCell>{book.copies.available ?? 0}</TableCell><TableCell><Badge variant="outline" className="capitalize">{book.status}</Badge></TableCell></TableRow>)}</TableBody></Table></CardContent></Card>
-  <div className="grid gap-6 xl:grid-cols-[1.35fr_.65fr]"><Card><CardHeader><CardTitle>Circulation</CardTitle></CardHeader><CardContent className="p-0"><Table><TableHeader><TableRow><TableHead>Transaction</TableHead><TableHead>Book & borrower</TableHead><TableHead>Due</TableHead><TableHead>Fine</TableHead><TableHead>Status</TableHead><TableHead /></TableRow></TableHeader><TableBody>{transactions.map((item) => <TableRow key={item._id}><TableCell><p className="font-mono text-xs font-semibold">{item.transactionNumber}</p><p className="text-xs text-muted-foreground">{item.copy.accessionNumber}</p></TableCell><TableCell><p className="font-medium">{item.book.title}</p><p className="text-xs text-muted-foreground">{item.borrower.firstName} {item.borrower.lastName} · {item.borrowerType}</p></TableCell><TableCell className={item.status === "issued" && new Date(item.dueAt) < new Date() ? "text-rose-700" : ""}>{new Date(item.dueAt).toLocaleDateString()}</TableCell><TableCell>{new Intl.NumberFormat("en-BD", { style: "currency", currency: item.currency }).format(item.fineMinor / 100)}</TableCell><TableCell><Badge variant="outline">{item.status}</Badge></TableCell><TableCell>{item.status === "issued" && <ReturnBook id={item._id} />}</TableCell></TableRow>)}</TableBody></Table></CardContent></Card><Card><CardHeader><CardTitle>Borrowing policies</CardTitle></CardHeader><CardContent className="space-y-4">{policies.map((policy) => <div key={policy._id} className="rounded-xl border p-4"><div className="flex justify-between"><p className="font-semibold capitalize">{policy.borrowerType}</p><Badge variant="secondary">{policy.maxActiveLoans} books</Badge></div><p className="mt-3 text-sm text-muted-foreground">{policy.loanDays} loan days · {new Intl.NumberFormat("en-BD", { style: "currency", currency: policy.currency }).format(policy.finePerDayMinor / 100)} fine/day</p></div>)}</CardContent></Card></div></div>
+  let books: Book[] = [],
+    copies: Copy[] = [],
+    transactions: Transaction[] = [],
+    policies: Policy[] = [],
+    error = ""
+  try {
+    const responses = await Promise.all([
+      authenticatedRequest<{ items: Book[] }>("/library/books?limit=12"),
+      authenticatedRequest<{ copies: Copy[] }>("/library/copies"),
+      authenticatedRequest<{ items: Transaction[] }>("/library/transactions?limit=12"),
+      authenticatedRequest<{ policies: Policy[] }>("/library/policies"),
+    ])
+    books = responses[0].data.items
+    copies = responses[1].data.copies
+    transactions = responses[2].data.items
+    policies = responses[3].data.policies
+  } catch (cause) {
+    error = cause instanceof Error ? cause.message : "Library data unavailable"
+  }
+  const available = copies.filter((copy) => copy.status === "available").length,
+    issued = copies.filter((copy) => copy.status === "issued").length
+  return (
+    <div className="mx-auto max-w-[1600px] space-y-6">
+      <div>
+        <p className="text-sm font-medium text-primary">Library operations</p>
+        <h1 className="mt-1 text-3xl font-bold">Library</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Catalog, physical inventory, circulation, due dates, and fines.
+        </p>
+      </div>
+      {error && <p className="rounded-xl bg-destructive/10 p-4 text-destructive">{error}</p>}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Card>
+          <CardContent className="p-5">
+            <LibraryBig className="size-5 text-blue-600" />
+            <p className="mt-4 text-2xl font-bold">{books.length}</p>
+            <p className="text-sm text-muted-foreground">Catalog titles shown</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <BookCopy className="size-5 text-emerald-600" />
+            <p className="mt-4 text-2xl font-bold">{available}</p>
+            <p className="text-sm text-muted-foreground">Available copies</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <Repeat2 className="size-5 text-amber-600" />
+            <p className="mt-4 text-2xl font-bold">{issued}</p>
+            <p className="text-sm text-muted-foreground">Issued copies</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <BookOpen className="size-5 text-violet-600" />
+            <p className="mt-4 text-2xl font-bold">{policies.length}</p>
+            <p className="text-sm text-muted-foreground">Borrowing policies</p>
+          </CardContent>
+        </Card>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Book catalog</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>ISBN</TableHead>
+                <TableHead>Publisher</TableHead>
+                <TableHead>Categories</TableHead>
+                <TableHead>Available</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {books.map((book) => (
+                <TableRow key={book._id}>
+                  <TableCell>
+                    <p className="font-medium">{book.title}</p>
+                    <p className="text-xs text-muted-foreground">{book.authors.join(", ")}</p>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">{book.isbn ?? "—"}</TableCell>
+                  <TableCell>
+                    {book.publisher ?? "—"}{" "}
+                    {book.publicationYear ? `(${book.publicationYear})` : ""}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {book.categories.slice(0, 2).map((category) => (
+                        <Badge key={category} variant="secondary">
+                          {category}
+                        </Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>{book.copies.available ?? 0}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="capitalize">
+                      {book.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      <div className="grid gap-6 xl:grid-cols-[1.35fr_.65fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle>Circulation</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Transaction</TableHead>
+                  <TableHead>Book & borrower</TableHead>
+                  <TableHead>Due</TableHead>
+                  <TableHead>Fine</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {transactions.map((item) => (
+                  <TableRow key={item._id}>
+                    <TableCell>
+                      <p className="font-mono text-xs font-semibold">{item.transactionNumber}</p>
+                      <p className="text-xs text-muted-foreground">{item.copy.accessionNumber}</p>
+                    </TableCell>
+                    <TableCell>
+                      <p className="font-medium">{item.book.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.borrower.firstName} {item.borrower.lastName} · {item.borrowerType}
+                      </p>
+                    </TableCell>
+                    <TableCell
+                      className={
+                        item.status === "issued" && new Date(item.dueAt) < new Date()
+                          ? "text-rose-700"
+                          : ""
+                      }
+                    >
+                      {new Date(item.dueAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      {new Intl.NumberFormat("en-BD", {
+                        style: "currency",
+                        currency: item.currency,
+                      }).format(item.fineMinor / 100)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{item.status}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {item.status === "issued" && <ReturnBook id={item._id} />}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Borrowing policies</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {policies.map((policy) => (
+              <div key={policy._id} className="rounded-xl border p-4">
+                <div className="flex justify-between">
+                  <p className="font-semibold capitalize">{policy.borrowerType}</p>
+                  <Badge variant="secondary">{policy.maxActiveLoans} books</Badge>
+                </div>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  {policy.loanDays} loan days ·{" "}
+                  {new Intl.NumberFormat("en-BD", {
+                    style: "currency",
+                    currency: policy.currency,
+                  }).format(policy.finePerDayMinor / 100)}{" "}
+                  fine/day
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
 }

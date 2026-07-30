@@ -6,7 +6,7 @@ import { LoaderCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useApi } from "@/components/api-provider"
+import { apiRequest } from "@/lib/http-client"
 
 type Field = {
   name: string
@@ -28,7 +28,6 @@ export function OperationsForm({
   submitLabel?: string
 }) {
   const router = useRouter()
-  const { request } = useApi()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -36,12 +35,20 @@ export function OperationsForm({
     event.preventDefault()
     setLoading(true)
     setError("")
-    const values = Object.fromEntries(new FormData(event.currentTarget).entries()) as Record<string, string>
+    const values = Object.fromEntries(new FormData(event.currentTarget).entries()) as Record<
+      string,
+      string
+    >
     try {
-      await request(endpoint, { method: "POST", body: transform ? transform(values) : values })
+      await apiRequest(endpoint, {
+        method: "POST",
+        data: transform ? transform(values) : values,
+      })
     } catch (cause) {
       setLoading(false)
-      return setError(cause instanceof Error ? cause.message : "The operation could not be completed")
+      return setError(
+        cause instanceof Error ? cause.message : "The operation could not be completed",
+      )
     }
     setLoading(false)
     router.push(endpoint.startsWith("inventory") ? "/dashboard/inventory" : "/dashboard/facilities")
@@ -54,11 +61,19 @@ export function OperationsForm({
         {fields.map((field) => (
           <div key={field.name} className="space-y-2">
             <Label htmlFor={field.name}>{field.label}</Label>
-            <Input id={field.name} name={field.name} type={field.type} placeholder={field.placeholder} required={field.required !== false} />
+            <Input
+              id={field.name}
+              name={field.name}
+              type={field.type}
+              placeholder={field.placeholder}
+              required={field.required !== false}
+            />
           </div>
         ))}
       </div>
-      {error && <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
+      {error && (
+        <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</p>
+      )}
       <Button disabled={loading} type="submit">
         {loading && <LoaderCircle className="animate-spin" />}
         {submitLabel}

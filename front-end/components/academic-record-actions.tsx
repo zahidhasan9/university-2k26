@@ -1,38 +1,41 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Archive, LoaderCircle, Pencil } from "lucide-react";
+import { Archive, Pencil } from "lucide-react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
-import { Button } from "@/components/ui/button";
-import type { AcademicEntity } from "@/lib/academic-types";
+import { ActionDialog } from "@/components/ui/action-dialog"
+import { Button } from "@/components/ui/button"
+import type { AcademicEntity } from "@/lib/academic-types"
+import { errorMessage, useEndpointMutation } from "@/lib/api-hooks"
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 
 export function AcademicRecordActions({
   entity,
   id,
   archived,
 }: {
-  entity: AcademicEntity;
-  id: string;
-  archived: boolean;
+  entity: AcademicEntity
+  id: string
+  archived: boolean
 }) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [error, setError] = useState("")
+  const mutation = useEndpointMutation(API_ENDPOINTS.academics.detail(entity, id), {
+    method: "DELETE",
+  })
 
   async function archive() {
-    if (
-      !window.confirm(
-        "Archive this record? Existing historical references will be preserved.",
-      )
-    )
-      return;
-    setLoading(true);
-    const response = await fetch(`/api/backend/${entity}/${id}`, {
-      method: "DELETE",
-    });
-    setLoading(false);
-    if (response.ok) router.refresh();
+    setError("")
+    try {
+      await mutation.mutateAsync(undefined)
+      setOpen(false)
+      router.refresh()
+    } catch (cause) {
+      setError(errorMessage(cause, "Record could not be archived"))
+    }
   }
 
   return (
@@ -46,16 +49,28 @@ export function AcademicRecordActions({
         <Pencil />
       </Button>
       {entity !== "semesters" && !archived && (
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Archive record"
-          disabled={loading}
-          onClick={archive}
-        >
-          {loading ? <LoaderCircle className="animate-spin" /> : <Archive />}
-        </Button>
+        <>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Archive record"
+            onClick={() => setOpen(true)}
+          >
+            <Archive />
+          </Button>
+          <ActionDialog
+            open={open}
+            title="Archive this record?"
+            description="Existing historical references will be preserved."
+            confirmLabel="Archive"
+            destructive
+            pending={mutation.isPending}
+            error={error}
+            onClose={() => setOpen(false)}
+            onConfirm={archive}
+          />
+        </>
       )}
     </div>
-  );
+  )
 }

@@ -8,7 +8,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { authenticatedRequest } from "@/lib/auth"
 import type { StudentListData } from "@/lib/student-types"
 
@@ -59,13 +66,23 @@ export default async function StudentsPage({ searchParams }: { searchParams: Sea
               <Users className="size-5 text-primary" /> Student directory
             </CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">
-              {result ? `${result.pagination.total.toLocaleString()} student records` : "University records"}
+              {result
+                ? `${result.pagination.total.toLocaleString()} student records`
+                : "University records"}
             </p>
           </div>
-          <form className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row" action="/dashboard/students">
+          <form
+            className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row"
+            action="/dashboard/students"
+          >
             <div className="relative sm:w-64">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input name="search" defaultValue={search} className="pl-9" placeholder="Search student ID..." />
+              <Input
+                name="search"
+                defaultValue={search}
+                className="pl-9"
+                placeholder="Search student ID..."
+              />
             </div>
             <div className="relative">
               <Filter className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -82,7 +99,9 @@ export default async function StudentsPage({ searchParams }: { searchParams: Sea
                 <option value="archived">Archived</option>
               </select>
             </div>
-            <Button type="submit" variant="secondary">Apply</Button>
+            <Button type="submit" variant="secondary">
+              Apply
+            </Button>
           </form>
         </CardHeader>
         <CardContent className="p-0">
@@ -113,7 +132,8 @@ export default async function StudentsPage({ searchParams }: { searchParams: Sea
                           <div className="flex items-center gap-3">
                             <Avatar className="size-9">
                               <AvatarFallback className="bg-blue-50 text-xs font-semibold text-blue-700">
-                                {student.user.firstName[0]}{student.user.lastName[0]}
+                                {student.user.firstName[0]}
+                                {student.user.lastName[0]}
                               </AvatarFallback>
                             </Avatar>
                             <div>
@@ -122,15 +142,25 @@ export default async function StudentsPage({ searchParams }: { searchParams: Sea
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="font-mono text-xs font-medium">{student.studentId}</TableCell>
+                        <TableCell className="font-mono text-xs font-medium">
+                          {student.studentId}
+                        </TableCell>
                         <TableCell>
                           <p className="font-medium">{student.program.code}</p>
-                          <p className="max-w-48 truncate text-xs text-muted-foreground">{student.program.name}</p>
+                          <p className="max-w-48 truncate text-xs text-muted-foreground">
+                            {student.program.name}
+                          </p>
                         </TableCell>
                         <TableCell>Semester {student.currentSemesterNumber}</TableCell>
-                        <TableCell><StudentStatusBadge status={student.status} /></TableCell>
+                        <TableCell>
+                          <StudentStatusBadge status={student.status} />
+                        </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" render={<Link href={`/dashboard/students/${student._id}`} />}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            render={<Link href={`/dashboard/students/${student._id}`} />}
+                          >
                             View
                           </Button>
                         </TableCell>
@@ -150,7 +180,9 @@ export default async function StudentsPage({ searchParams }: { searchParams: Sea
             <div className="p-12 text-center">
               <Users className="mx-auto size-10 text-muted-foreground/50" />
               <p className="mt-3 font-medium">No students found</p>
-              <p className="mt-1 text-sm text-muted-foreground">Try changing the search or status filter.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Try changing the search or status filter.
+              </p>
             </div>
           )}
         </CardContent>

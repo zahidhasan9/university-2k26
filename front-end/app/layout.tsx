@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import { ApiProvider } from "@/components/api-provider";
+import type { Metadata } from "next"
+import "./globals.css"
+import { AppProviders } from "@/components/app-providers"
 
 export const metadata: Metadata = {
   title: {
@@ -8,16 +8,18 @@ export const metadata: Metadata = {
     template: "%s | UniSphere",
   },
   description: "A unified university management platform",
-};
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <html lang="en">
-      <body><ApiProvider>{children}</ApiProvider></body>
+      <body>
+        <AppProviders>{children}</AppProviders>
+      </body>
     </html>
-  );
+  )
 }

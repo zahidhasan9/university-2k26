@@ -4,15 +4,146 @@ import { LeaveDecision } from "@/components/leave-decision"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { authenticatedRequest } from "@/lib/auth"
 
-type Leave = { _id: string; employee: { employeeId: string; designation: string; user: { firstName: string; lastName: string; email: string } }; type: string; startsAt: string; endsAt: string; totalDays: number; reason: string; status: string; reviewedBy?: { firstName: string; lastName: string }; reviewNote?: string }
+type Leave = {
+  _id: string
+  employee: {
+    employeeId: string
+    designation: string
+    user: { firstName: string; lastName: string; email: string }
+  }
+  type: string
+  startsAt: string
+  endsAt: string
+  totalDays: number
+  reason: string
+  status: string
+  reviewedBy?: { firstName: string; lastName: string }
+  reviewNote?: string
+}
 
-export default async function LeavesPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+export default async function LeavesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>
+}) {
   const status = (await searchParams).status ?? ""
   const query = status ? `?status=${encodeURIComponent(status)}` : ""
-  let leaves: Leave[] = [], error = ""
-  try { leaves = (await authenticatedRequest<{ leaves: Leave[] }>(`/hr/leaves${query}`)).data.leaves } catch (cause) { error = cause instanceof Error ? cause.message : "Leave requests unavailable" }
-  return <div className="mx-auto max-w-[1400px] space-y-6"><Button variant="ghost" render={<Link href="/dashboard/faculty/hr" />}><ArrowLeft /> HR workspace</Button><div><p className="text-sm font-medium text-primary">Leave administration</p><h1 className="mt-1 text-3xl font-bold">Leave requests</h1></div><Card><CardHeader className="flex-row items-center justify-between border-b"><div><CardTitle className="flex items-center gap-2"><ClipboardList className="size-5 text-primary" /> Approval queue</CardTitle><p className="mt-1 text-sm text-muted-foreground">{leaves.length} requests</p></div><form><select name="status" defaultValue={status} className="h-9 rounded-lg border bg-background px-3 text-sm"><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="cancelled">Cancelled</option></select><Button type="submit" variant="secondary" className="ml-2">Apply</Button></form></CardHeader><CardContent className="p-0">{error ? <p className="p-10 text-center text-sm text-destructive">{error}</p> : leaves.length ? <Table><TableHeader><TableRow><TableHead>Employee</TableHead><TableHead>Type</TableHead><TableHead>Period</TableHead><TableHead>Reason</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Decision</TableHead></TableRow></TableHeader><TableBody>{leaves.map((leave) => <TableRow key={leave._id}><TableCell><p className="font-medium">{leave.employee.user.firstName} {leave.employee.user.lastName}</p><p className="text-xs text-muted-foreground">{leave.employee.employeeId} · {leave.employee.designation}</p></TableCell><TableCell className="capitalize">{leave.type}</TableCell><TableCell><p className="text-sm">{new Date(leave.startsAt).toLocaleDateString()} – {new Date(leave.endsAt).toLocaleDateString()}</p><p className="text-xs text-muted-foreground">{leave.totalDays} day(s)</p></TableCell><TableCell className="max-w-xs"><p className="truncate text-sm">{leave.reason}</p></TableCell><TableCell><Badge variant="outline" className="capitalize">{leave.status}</Badge></TableCell><TableCell>{leave.status === "pending" ? <LeaveDecision id={leave._id} /> : <span className="block text-right text-xs text-muted-foreground">{leave.reviewedBy ? `${leave.reviewedBy.firstName} ${leave.reviewedBy.lastName}` : "—"}</span>}</TableCell></TableRow>)}</TableBody></Table> : <div className="p-12 text-center"><ClipboardList className="mx-auto size-10 text-muted-foreground/50" /><p className="mt-3 font-medium">No leave requests</p></div>}</CardContent></Card></div>
+  let leaves: Leave[] = [],
+    error = ""
+  try {
+    leaves = (await authenticatedRequest<{ leaves: Leave[] }>(`/hr/leaves${query}`)).data.leaves
+  } catch (cause) {
+    error = cause instanceof Error ? cause.message : "Leave requests unavailable"
+  }
+  return (
+    <div className="mx-auto max-w-[1400px] space-y-6">
+      <Button variant="ghost" render={<Link href="/dashboard/faculty/hr" />}>
+        <ArrowLeft /> HR workspace
+      </Button>
+      <div>
+        <p className="text-sm font-medium text-primary">Leave administration</p>
+        <h1 className="mt-1 text-3xl font-bold">Leave requests</h1>
+      </div>
+      <Card>
+        <CardHeader className="flex-row items-center justify-between border-b">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <ClipboardList className="size-5 text-primary" /> Approval queue
+            </CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">{leaves.length} requests</p>
+          </div>
+          <form>
+            <select
+              name="status"
+              defaultValue={status}
+              className="h-9 rounded-lg border bg-background px-3 text-sm"
+            >
+              <option value="">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <Button type="submit" variant="secondary" className="ml-2">
+              Apply
+            </Button>
+          </form>
+        </CardHeader>
+        <CardContent className="p-0">
+          {error ? (
+            <p className="p-10 text-center text-sm text-destructive">{error}</p>
+          ) : leaves.length ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Employee</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Period</TableHead>
+                  <TableHead>Reason</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Decision</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {leaves.map((leave) => (
+                  <TableRow key={leave._id}>
+                    <TableCell>
+                      <p className="font-medium">
+                        {leave.employee.user.firstName} {leave.employee.user.lastName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {leave.employee.employeeId} · {leave.employee.designation}
+                      </p>
+                    </TableCell>
+                    <TableCell className="capitalize">{leave.type}</TableCell>
+                    <TableCell>
+                      <p className="text-sm">
+                        {new Date(leave.startsAt).toLocaleDateString()} –{" "}
+                        {new Date(leave.endsAt).toLocaleDateString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{leave.totalDays} day(s)</p>
+                    </TableCell>
+                    <TableCell className="max-w-xs">
+                      <p className="truncate text-sm">{leave.reason}</p>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="capitalize">
+                        {leave.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {leave.status === "pending" ? (
+                        <LeaveDecision id={leave._id} />
+                      ) : (
+                        <span className="block text-right text-xs text-muted-foreground">
+                          {leave.reviewedBy
+                            ? `${leave.reviewedBy.firstName} ${leave.reviewedBy.lastName}`
+                            : "—"}
+                        </span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="p-12 text-center">
+              <ClipboardList className="mx-auto size-10 text-muted-foreground/50" />
+              <p className="mt-3 font-medium">No leave requests</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
 }

@@ -1,1 +1,13 @@
-import {PortalForm} from "@/components/portal-form";import {PortalFormShell} from "@/components/portal-form-shell";export default function Page(){return <PortalFormShell area="research" title="Create research project" description="Register investigators, timeline, abstract, and funding."><PortalForm kind="project"/></PortalFormShell>}
+import { PortalForm } from "@/components/portal-form"
+import { PortalFormShell } from "@/components/portal-form-shell"
+export default function Page() {
+  return (
+    <PortalFormShell
+      area="research"
+      title="Create research project"
+      description="Register investigators, timeline, abstract, and funding."
+    >
+      <PortalForm kind="project" />
+    </PortalFormShell>
+  )
+}

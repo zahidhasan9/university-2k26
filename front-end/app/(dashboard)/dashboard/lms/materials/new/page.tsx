@@ -1,1 +1,13 @@
-import {PortalForm} from "@/components/portal-form";import {PortalFormShell} from "@/components/portal-form-shell";export default function Page(){return <PortalFormShell area="lms" title="Add course material" description="Publish a document, video, slide, or external resource."><PortalForm kind="material"/></PortalFormShell>}
+import { PortalForm } from "@/components/portal-form"
+import { PortalFormShell } from "@/components/portal-form-shell"
+export default function Page() {
+  return (
+    <PortalFormShell
+      area="lms"
+      title="Add course material"
+      description="Publish a document, video, slide, or external resource."
+    >
+      <PortalForm kind="material" />
+    </PortalFormShell>
+  )
+}

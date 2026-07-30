@@ -1,11 +1,170 @@
-import {CircleDollarSign,ClipboardCheck,FileText,FlaskConical,GraduationCap,Users} from "lucide-react"
-import {Badge} from "@/components/ui/badge"
-import {Card,CardContent,CardHeader,CardTitle} from "@/components/ui/card"
-import {Table,TableBody,TableCell,TableHead,TableHeader,TableRow} from "@/components/ui/table"
-import {authenticatedRequest} from "@/lib/auth"
-type Count={_id:string;count:number}
-type Analytics={period:{from:string;to:string};students:Count[];teachers:Count[];admissions:Count[];attendance:Count[];research:Count[];activeDepartments:number;finance:{revenue:{_id:string;amountMinor:number;count:number}[];invoices:{_id:string;billedMinor:number;paidMinor:number;dueMinor:number}[]};trends:{admissions:{_id:{year:number;month:number};applications:number;approved:number}[];revenue:{_id:{year:number;month:number;currency:string};amountMinor:number}[]}}
-const total=(items:Count[])=>items.reduce((sum,item)=>sum+item.count,0)
-export default async function Page(){let data:Analytics|undefined,error="";try{data=(await authenticatedRequest<Analytics>("/analytics/admin")).data}catch(c){error=c instanceof Error?c.message:"Analytics unavailable"}const revenue=data?.finance.revenue.reduce((s,x)=>s+x.amountMinor,0)??0;return <div className="mx-auto max-w-[1500px] space-y-6"><div><p className="text-sm font-medium text-primary">Institution intelligence</p><h1 className="mt-1 text-3xl font-bold">Analytics</h1><p className="mt-1 text-sm text-muted-foreground">{data?`${new Date(data.period.from).toLocaleDateString()} – ${new Date(data.period.to).toLocaleDateString()}`:"Live institutional performance overview"}</p></div>{error&&<p className="rounded-xl bg-destructive/10 p-4 text-destructive">{error}</p>}<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric icon={<GraduationCap/>} value={total(data?.students??[])} label="Students"/><Metric icon={<Users/>} value={total(data?.teachers??[])} label="Teachers"/><Metric icon={<FileText/>} value={total(data?.admissions??[])} label="Admissions"/><Metric icon={<CircleDollarSign/>} value={`৳${(revenue/100).toLocaleString()}`} label="Revenue"/></div><div className="grid gap-6 lg:grid-cols-2"><Breakdown title="Student status" icon={<GraduationCap/>} items={data?.students??[]}/><Breakdown title="Attendance status" icon={<ClipboardCheck/>} items={data?.attendance??[]}/><Breakdown title="Admission pipeline" icon={<FileText/>} items={data?.admissions??[]}/><Breakdown title="Research portfolio" icon={<FlaskConical/>} items={data?.research??[]}/></div><Card><CardHeader><CardTitle>Admission trend</CardTitle></CardHeader><CardContent className="p-0"><Table><TableHeader><TableRow><TableHead>Month</TableHead><TableHead>Applications</TableHead><TableHead>Approved</TableHead><TableHead>Approval rate</TableHead></TableRow></TableHeader><TableBody>{data?.trends.admissions.map(x=><TableRow key={`${x._id.year}-${x._id.month}`}><TableCell>{new Date(x._id.year,x._id.month-1).toLocaleString("en",{month:"long",year:"numeric"})}</TableCell><TableCell>{x.applications}</TableCell><TableCell>{x.approved}</TableCell><TableCell>{x.applications?Math.round(x.approved/x.applications*100):0}%</TableCell></TableRow>)}</TableBody></Table></CardContent></Card></div>}
-function Metric({icon,value,label}:{icon:React.ReactNode;value:number|string;label:string}){return <Card><CardContent className="p-5"><div className="text-primary [&_svg]:size-5">{icon}</div><p className="mt-4 text-2xl font-bold">{value}</p><p className="text-sm text-muted-foreground">{label}</p></CardContent></Card>}
-function Breakdown({title,icon,items}:{title:string;icon:React.ReactNode;items:Count[]}){return <Card><CardHeader><div className="flex items-center gap-2"><span className="text-primary [&_svg]:size-5">{icon}</span><CardTitle>{title}</CardTitle></div></CardHeader><CardContent className="flex flex-wrap gap-2">{items.length===0?<p className="text-sm text-muted-foreground">No records in this period.</p>:items.map(x=><Badge key={x._id} variant="secondary" className="capitalize">{x._id.replaceAll("_"," ")} · {x.count}</Badge>)}</CardContent></Card>}
+import {
+  CircleDollarSign,
+  ClipboardCheck,
+  FileText,
+  FlaskConical,
+  GraduationCap,
+  Users,
+} from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { authenticatedRequest } from "@/lib/auth"
+type Count = { _id: string; count: number }
+type Analytics = {
+  period: { from: string; to: string }
+  students: Count[]
+  teachers: Count[]
+  admissions: Count[]
+  attendance: Count[]
+  research: Count[]
+  activeDepartments: number
+  finance: {
+    revenue: { _id: string; amountMinor: number; count: number }[]
+    invoices: { _id: string; billedMinor: number; paidMinor: number; dueMinor: number }[]
+  }
+  trends: {
+    admissions: { _id: { year: number; month: number }; applications: number; approved: number }[]
+    revenue: { _id: { year: number; month: number; currency: string }; amountMinor: number }[]
+  }
+}
+const total = (items: Count[]) => items.reduce((sum, item) => sum + item.count, 0)
+export default async function Page() {
+  let data: Analytics | undefined,
+    error = ""
+  try {
+    data = (await authenticatedRequest<Analytics>("/analytics/admin")).data
+  } catch (c) {
+    error = c instanceof Error ? c.message : "Analytics unavailable"
+  }
+  const revenue = data?.finance.revenue.reduce((s, x) => s + x.amountMinor, 0) ?? 0
+  return (
+    <div className="mx-auto max-w-[1500px] space-y-6">
+      <div>
+        <p className="text-sm font-medium text-primary">Institution intelligence</p>
+        <h1 className="mt-1 text-3xl font-bold">Analytics</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {data
+            ? `${new Date(data.period.from).toLocaleDateString()} – ${new Date(data.period.to).toLocaleDateString()}`
+            : "Live institutional performance overview"}
+        </p>
+      </div>
+      {error && <p className="rounded-xl bg-destructive/10 p-4 text-destructive">{error}</p>}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Metric icon={<GraduationCap />} value={total(data?.students ?? [])} label="Students" />
+        <Metric icon={<Users />} value={total(data?.teachers ?? [])} label="Teachers" />
+        <Metric icon={<FileText />} value={total(data?.admissions ?? [])} label="Admissions" />
+        <Metric
+          icon={<CircleDollarSign />}
+          value={`৳${(revenue / 100).toLocaleString()}`}
+          label="Revenue"
+        />
+      </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Breakdown title="Student status" icon={<GraduationCap />} items={data?.students ?? []} />
+        <Breakdown
+          title="Attendance status"
+          icon={<ClipboardCheck />}
+          items={data?.attendance ?? []}
+        />
+        <Breakdown title="Admission pipeline" icon={<FileText />} items={data?.admissions ?? []} />
+        <Breakdown
+          title="Research portfolio"
+          icon={<FlaskConical />}
+          items={data?.research ?? []}
+        />
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Admission trend</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Month</TableHead>
+                <TableHead>Applications</TableHead>
+                <TableHead>Approved</TableHead>
+                <TableHead>Approval rate</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data?.trends.admissions.map((x) => (
+                <TableRow key={`${x._id.year}-${x._id.month}`}>
+                  <TableCell>
+                    {new Date(x._id.year, x._id.month - 1).toLocaleString("en", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </TableCell>
+                  <TableCell>{x.applications}</TableCell>
+                  <TableCell>{x.approved}</TableCell>
+                  <TableCell>
+                    {x.applications ? Math.round((x.approved / x.applications) * 100) : 0}%
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+function Metric({
+  icon,
+  value,
+  label,
+}: {
+  icon: React.ReactNode
+  value: number | string
+  label: string
+}) {
+  return (
+    <Card>
+      <CardContent className="p-5">
+        <div className="text-primary [&_svg]:size-5">{icon}</div>
+        <p className="mt-4 text-2xl font-bold">{value}</p>
+        <p className="text-sm text-muted-foreground">{label}</p>
+      </CardContent>
+    </Card>
+  )
+}
+function Breakdown({
+  title,
+  icon,
+  items,
+}: {
+  title: string
+  icon: React.ReactNode
+  items: Count[]
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <span className="text-primary [&_svg]:size-5">{icon}</span>
+          <CardTitle>{title}</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-wrap gap-2">
+        {items.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No records in this period.</p>
+        ) : (
+          items.map((x) => (
+            <Badge key={x._id} variant="secondary" className="capitalize">
+              {x._id.replaceAll("_", " ")} · {x.count}
+            </Badge>
+          ))
+        )}
+      </CardContent>
+    </Card>
+  )
+}

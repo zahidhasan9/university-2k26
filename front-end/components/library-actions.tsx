@@ -1,10 +1,70 @@
 "use client"
-import { useState } from "react"
+
+import { Undo2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { LoaderCircle, Undo2 } from "lucide-react"
+import { useState } from "react"
+
+import { ActionDialog } from "@/components/ui/action-dialog"
 import { Button } from "@/components/ui/button"
+import { errorMessage, useEndpointMutation } from "@/lib/api-hooks"
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
+
+type ReturnPayload = {
+  condition: string
+  note?: string
+}
+
 export function ReturnBook({ id }: { id: string }) {
-  const router = useRouter(), [loading, setLoading] = useState(false)
-  async function returnBook() { const condition = prompt("Return condition: new, good, fair, or damaged", "good"); if (!condition || !["new", "good", "fair", "damaged"].includes(condition)) return; const note = prompt("Optional return note:"); if (note === null) return; setLoading(true); const response = await fetch(`/api/backend/library/transactions/${id}/return`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ condition, ...(note.trim() ? { note: note.trim() } : {}) }) }); setLoading(false); if (response.ok) router.refresh() }
-  return <Button size="sm" variant="outline" disabled={loading} onClick={returnBook}>{loading ? <LoaderCircle className="animate-spin" /> : <Undo2 />}Return</Button>
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [error, setError] = useState("")
+  const mutation = useEndpointMutation<unknown, ReturnPayload>(
+    API_ENDPOINTS.library.returnTransaction(id),
+  )
+
+  async function returnBook(values: Record<string, string>) {
+    setError("")
+    try {
+      await mutation.mutateAsync({
+        condition: values.condition,
+        note: values.note.trim() || undefined,
+      })
+      setOpen(false)
+      router.refresh()
+    } catch (cause) {
+      setError(errorMessage(cause, "Book return could not be recorded"))
+    }
+  }
+
+  return (
+    <>
+      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+        <Undo2 />
+        Return
+      </Button>
+      <ActionDialog
+        open={open}
+        title="Return library book"
+        description="Record the physical condition before completing the return."
+        confirmLabel="Complete return"
+        pending={mutation.isPending}
+        error={error}
+        fields={[
+          {
+            name: "condition",
+            label: "Return condition",
+            defaultValue: "good",
+            required: true,
+            options: ["new", "good", "fair", "damaged"].map((value) => ({
+              label: value[0].toUpperCase() + value.slice(1),
+              value,
+            })),
+          },
+          { name: "note", label: "Return note", placeholder: "Optional note" },
+        ]}
+        onClose={() => setOpen(false)}
+        onConfirm={returnBook}
+      />
+    </>
+  )
 }

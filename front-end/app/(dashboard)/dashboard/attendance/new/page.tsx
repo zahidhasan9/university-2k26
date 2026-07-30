@@ -6,6 +6,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { authenticatedRequest } from "@/lib/auth"
 type Offering = { _id: string; section: string; course: { code: string; title: string } }
 export default async function NewAttendancePage() {
-  const data = (await authenticatedRequest<{ items: Offering[] }>("/course-offerings?status=ongoing&limit=100")).data
-  return <div className="mx-auto max-w-2xl space-y-6"><Button variant="ghost" render={<Link href="/dashboard/attendance" />}><ArrowLeft /> Attendance</Button><div><h1 className="text-3xl font-bold">New attendance session</h1><p className="mt-1 text-sm text-muted-foreground">Open a daily session for an active course offering.</p></div><Card><CardHeader><CardTitle>Session information</CardTitle></CardHeader><CardContent><AttendanceSessionForm offerings={data.items} /></CardContent></Card></div>
+  const data = (
+    await authenticatedRequest<{ items: Offering[] }>("/course-offerings?status=ongoing&limit=100")
+  ).data
+  return (
+    <div className="mx-auto max-w-2xl space-y-6">
+      <Button variant="ghost" render={<Link href="/dashboard/attendance" />}>
+        <ArrowLeft /> Attendance
+      </Button>
+      <div>
+        <h1 className="text-3xl font-bold">New attendance session</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Open a daily session for an active course offering.
+        </p>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Session information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AttendanceSessionForm offerings={data.items} />
+        </CardContent>
+      </Card>
+    </div>
+  )
 }

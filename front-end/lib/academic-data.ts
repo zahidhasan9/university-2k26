@@ -11,7 +11,9 @@ export const entityResponseKey: Record<AcademicEntity, string> = {
 }
 
 export async function academicOptions(entity: AcademicEntity) {
-  const parentEndpoint: Partial<Record<AcademicEntity, "universities" | "faculties" | "departments" | "programs">> = {
+  const parentEndpoint: Partial<
+    Record<AcademicEntity, "universities" | "faculties" | "departments" | "programs">
+  > = {
     faculties: "universities",
     departments: "faculties",
     programs: "departments",

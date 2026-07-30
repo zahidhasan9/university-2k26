@@ -1,10 +1,10 @@
-import Link from "next/link";
-import { CalendarCheck2, Plus } from "lucide-react";
-import { AttendanceActions } from "@/components/attendance-actions";
-import { PaginationLinks } from "@/components/pagination-links";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link"
+import { CalendarCheck2, Plus } from "lucide-react"
+import { AttendanceActions } from "@/components/attendance-actions"
+import { PaginationLinks } from "@/components/pagination-links"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -12,48 +12,46 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { authenticatedRequest } from "@/lib/auth";
+} from "@/components/ui/table"
+import { authenticatedRequest } from "@/lib/auth"
 type Session = {
-  _id: string;
-  offering: { section: string; course: { code: string; title: string } };
-  date: string;
-  topic?: string;
-  status: string;
-};
+  _id: string
+  offering: { section: string; course: { code: string; title: string } }
+  date: string
+  topic?: string
+  status: string
+}
 type Data = {
-  items: Session[];
+  items: Session[]
   pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-};
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+  }
+}
 export default async function AttendancePage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; status?: string }>;
+  searchParams: Promise<{ page?: string; status?: string }>
 }) {
   const raw = await searchParams,
     page = Math.max(1, Number(raw.page) || 1),
-    status = raw.status ?? "";
-  const query = new URLSearchParams({ page: String(page), limit: "12" });
-  if (status) query.set("status", status);
+    status = raw.status ?? ""
+  const query = new URLSearchParams({ page: String(page), limit: "12" })
+  if (status) query.set("status", status)
   let data: Data | null = null,
-    error = "";
+    error = ""
   try {
-    data = (await authenticatedRequest<Data>(`/attendance?${query}`)).data;
+    data = (await authenticatedRequest<Data>(`/attendance?${query}`)).data
   } catch (cause) {
-    error = cause instanceof Error ? cause.message : "Attendance unavailable";
+    error = cause instanceof Error ? cause.message : "Attendance unavailable"
   }
   return (
     <div className="mx-auto max-w-[1400px] space-y-6">
       <div className="flex items-end justify-between">
         <div>
-          <p className="text-sm font-medium text-primary">
-            Academic operations
-          </p>
+          <p className="text-sm font-medium text-primary">Academic operations</p>
           <h1 className="mt-1 text-3xl font-bold">Student attendance</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Manage class sessions, records, and QR check-ins.
@@ -109,17 +107,13 @@ export default async function AttendancePage({
                   {data.items.map((session) => (
                     <TableRow key={session._id}>
                       <TableCell>
-                        <p className="font-medium">
-                          {session.offering.course.code}
-                        </p>
+                        <p className="font-medium">{session.offering.course.code}</p>
                         <p className="text-xs text-muted-foreground">
                           {session.offering.course.title}
                         </p>
                       </TableCell>
                       <TableCell>{session.offering.section}</TableCell>
-                      <TableCell>
-                        {new Date(session.date).toLocaleDateString()}
-                      </TableCell>
+                      <TableCell>{new Date(session.date).toLocaleDateString()}</TableCell>
                       <TableCell>{session.topic ?? "—"}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className="capitalize">
@@ -127,10 +121,7 @@ export default async function AttendancePage({
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <AttendanceActions
-                          id={session._id}
-                          status={session.status}
-                        />
+                        <AttendanceActions id={session._id} status={session.status} />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -152,5 +143,5 @@ export default async function AttendancePage({
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

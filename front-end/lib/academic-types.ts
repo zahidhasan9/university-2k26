@@ -1,62 +1,57 @@
 export type AcademicEntity =
-  | "universities"
-  | "faculties"
-  | "departments"
-  | "programs"
-  | "courses"
-  | "semesters";
+  "universities" | "faculties" | "departments" | "programs" | "courses" | "semesters"
 
 export type AcademicItem = {
-  _id: string;
-  name?: string;
-  title?: string;
-  code: string;
-  status: string;
-  description?: string;
-  shortName?: string;
-  email?: string;
-  phone?: string;
-  website?: string;
+  _id: string
+  name?: string
+  title?: string
+  code: string
+  status: string
+  description?: string
+  shortName?: string
+  email?: string
+  phone?: string
+  website?: string
   address?: {
-    line1?: string;
-    line2?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    postalCode?: string;
-  };
-  degreeType?: string;
-  durationYears?: number;
-  totalCredits?: number;
-  credits?: number;
-  courseType?: string;
-  academicYear?: string;
-  term?: string;
-  startsAt?: string;
-  endsAt?: string;
-  registrationStartsAt?: string;
-  registrationEndsAt?: string;
-  university?: { _id: string; name: string; code: string };
-  faculty?: { _id: string; name: string; code: string };
-  department?: { _id: string; name: string; code: string };
-  program?: { _id: string; name: string; code: string };
-};
+    line1?: string
+    line2?: string
+    city?: string
+    state?: string
+    country?: string
+    postalCode?: string
+  }
+  degreeType?: string
+  durationYears?: number
+  totalCredits?: number
+  credits?: number
+  courseType?: string
+  academicYear?: string
+  term?: string
+  startsAt?: string
+  endsAt?: string
+  registrationStartsAt?: string
+  registrationEndsAt?: string
+  university?: { _id: string; name: string; code: string }
+  faculty?: { _id: string; name: string; code: string }
+  department?: { _id: string; name: string; code: string }
+  program?: { _id: string; name: string; code: string }
+}
 
 export type AcademicList = {
-  items: AcademicItem[];
+  items: AcademicItem[]
   pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-};
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+  }
+}
 
 export const academicEntities: {
-  key: AcademicEntity;
-  label: string;
-  singular: string;
-  description: string;
+  key: AcademicEntity
+  label: string
+  singular: string
+  description: string
 }[] = [
   {
     key: "universities",
@@ -94,4 +89,4 @@ export const academicEntities: {
     singular: "Semester",
     description: "Academic terms and timelines",
   },
-];
+]

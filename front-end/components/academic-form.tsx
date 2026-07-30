@@ -1,24 +1,24 @@
-"use client";
+"use client"
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
-import { LoaderCircle, Save } from "lucide-react";
+import { apiResponseRequest } from "@/lib/http-client"
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import type { AcademicEntity, AcademicItem } from "@/lib/academic-types";
+import { FormEvent, useState } from "react"
+import { useRouter } from "next/navigation"
+import { LoaderCircle, Save } from "lucide-react"
 
-type Option = { _id: string; name?: string; title?: string; code: string };
-type Options = Partial<
-  Record<"universities" | "faculties" | "departments" | "programs", Option[]>
->;
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import type { AcademicEntity, AcademicItem } from "@/lib/academic-types"
+
+type Option = { _id: string; name?: string; title?: string; code: string }
+type Options = Partial<Record<"universities" | "faculties" | "departments" | "programs", Option[]>>
 const selectClass =
-  "h-9 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/20";
+  "h-9 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/20"
 
 function optional(form: FormData, key: string) {
-  const value = String(form.get(key) ?? "").trim();
-  return value || undefined;
+  const value = String(form.get(key) ?? "").trim()
+  return value || undefined
 }
 
 function Field({
@@ -26,16 +26,16 @@ function Field({
   name,
   children,
 }: {
-  label: string;
-  name: string;
-  children: React.ReactNode;
+  label: string
+  name: string
+  children: React.ReactNode
 }) {
   return (
     <div className="space-y-2">
       <Label htmlFor={name}>{label}</Label>
       {children}
     </div>
-  );
+  )
 }
 
 function ParentSelect({
@@ -44,10 +44,10 @@ function ParentSelect({
   items,
   defaultValue,
 }: {
-  name: string;
-  label: string;
-  items: Option[];
-  defaultValue?: string;
+  name: string
+  label: string
+  items: Option[]
+  defaultValue?: string
 }) {
   return (
     <Field label={label} name={name}>
@@ -68,11 +68,11 @@ function ParentSelect({
         ))}
       </select>
     </Field>
-  );
+  )
 }
 
 function dateValue(value?: string) {
-  return value?.slice(0, 10);
+  return value?.slice(0, 10)
 }
 
 export function AcademicForm({
@@ -80,24 +80,24 @@ export function AcademicForm({
   item,
   options,
 }: {
-  entity: AcademicEntity;
-  item?: AcademicItem;
-  options: Options;
+  entity: AcademicEntity
+  item?: AcademicItem
+  options: Options
 }) {
-  const router = useRouter();
-  const editing = Boolean(item);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const router = useRouter()
+  const editing = Boolean(item)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
 
   async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
     const base = {
       name: optional(form, "name"),
       code: optional(form, "code"),
       description: optional(form, "description"),
-    };
-    let payload: Record<string, unknown> = base;
+    }
+    let payload: Record<string, unknown> = base
     if (entity === "universities") {
       payload = {
         ...base,
@@ -112,11 +112,11 @@ export function AcademicForm({
           country: optional(form, "country"),
           postalCode: optional(form, "postalCode"),
         },
-      };
+      }
     } else if (entity === "faculties")
-      payload = { ...base, universityId: String(form.get("universityId")) };
+      payload = { ...base, universityId: String(form.get("universityId")) }
     else if (entity === "departments")
-      payload = { ...base, facultyId: String(form.get("facultyId")) };
+      payload = { ...base, facultyId: String(form.get("facultyId")) }
     else if (entity === "programs")
       payload = {
         ...base,
@@ -124,7 +124,7 @@ export function AcademicForm({
         degreeType: String(form.get("degreeType")),
         durationYears: Number(form.get("durationYears")),
         totalCredits: Number(form.get("totalCredits")),
-      };
+      }
     else if (entity === "courses")
       payload = {
         code: base.code,
@@ -134,13 +134,11 @@ export function AcademicForm({
         credits: Number(form.get("credits")),
         courseType: String(form.get("courseType")),
         ...(!editing ? { prerequisiteIds: [] } : {}),
-      };
+      }
     else
       payload = {
         name: base.name,
-        ...(!editing
-          ? { code: base.code, universityId: String(form.get("universityId")) }
-          : {}),
+        ...(!editing ? { code: base.code, universityId: String(form.get("universityId")) } : {}),
         academicYear: String(form.get("academicYear")),
         term: String(form.get("term")),
         startsAt: String(form.get("startsAt")),
@@ -148,40 +146,30 @@ export function AcademicForm({
         registrationStartsAt: String(form.get("registrationStartsAt")),
         registrationEndsAt: String(form.get("registrationEndsAt")),
         ...(editing ? { status: String(form.get("status")) } : {}),
-      };
-    if (editing && entity !== "semesters")
-      payload.status = String(form.get("status"));
+      }
+    if (editing && entity !== "semesters") payload.status = String(form.get("status"))
 
-    setSaving(true);
-    setError("");
+    setSaving(true)
+    setError("")
     try {
-      const response = await fetch(
-        `/api/backend/${entity}${editing ? `/${item?._id}` : ""}`,
-        {
-          method: editing ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      );
-      const body = (await response.json()) as { message: string };
-      if (!response.ok)
-        throw new Error(body.message || "Record could not be saved");
-      router.push(`/dashboard/academics/${entity}`);
-      router.refresh();
+      const response = await apiResponseRequest(`/${entity}${editing ? `/${item?._id}` : ""}`, {
+        method: editing ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      const body = (await response.json()) as { message: string }
+      if (!response.ok) throw new Error(body.message || "Record could not be saved")
+      router.push(`/dashboard/academics/${entity}`)
+      router.refresh()
     } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : "Record could not be saved",
-      );
+      setError(cause instanceof Error ? cause.message : "Record could not be saved")
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
   }
 
   const parentId =
-    item?.program?._id ??
-    item?.department?._id ??
-    item?.faculty?._id ??
-    item?.university?._id;
+    item?.program?._id ?? item?.department?._id ?? item?.faculty?._id ?? item?.university?._id
 
   return (
     <form onSubmit={submit} className="space-y-7">
@@ -255,61 +243,31 @@ export function AcademicForm({
         {entity === "universities" && (
           <>
             <Field label="Short name" name="shortName">
-              <Input
-                id="shortName"
-                name="shortName"
-                defaultValue={item?.shortName}
-              />
+              <Input id="shortName" name="shortName" defaultValue={item?.shortName} />
             </Field>
             <Field label="Email" name="email">
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                defaultValue={item?.email}
-              />
+              <Input id="email" name="email" type="email" defaultValue={item?.email} />
             </Field>
             <Field label="Phone" name="phone">
               <Input id="phone" name="phone" defaultValue={item?.phone} />
             </Field>
             <Field label="Website" name="website">
-              <Input
-                id="website"
-                name="website"
-                type="url"
-                defaultValue={item?.website}
-              />
+              <Input id="website" name="website" type="url" defaultValue={item?.website} />
             </Field>
             <Field label="Address" name="line1">
-              <Input
-                id="line1"
-                name="line1"
-                defaultValue={item?.address?.line1}
-              />
+              <Input id="line1" name="line1" defaultValue={item?.address?.line1} />
             </Field>
             <Field label="City" name="city">
               <Input id="city" name="city" defaultValue={item?.address?.city} />
             </Field>
             <Field label="State / division" name="state">
-              <Input
-                id="state"
-                name="state"
-                defaultValue={item?.address?.state}
-              />
+              <Input id="state" name="state" defaultValue={item?.address?.state} />
             </Field>
             <Field label="Country" name="country">
-              <Input
-                id="country"
-                name="country"
-                defaultValue={item?.address?.country}
-              />
+              <Input id="country" name="country" defaultValue={item?.address?.country} />
             </Field>
             <Field label="Postal code" name="postalCode">
-              <Input
-                id="postalCode"
-                name="postalCode"
-                defaultValue={item?.address?.postalCode}
-              />
+              <Input id="postalCode" name="postalCode" defaultValue={item?.address?.postalCode} />
             </Field>
           </>
         )}
@@ -323,13 +281,7 @@ export function AcademicForm({
                 required
                 defaultValue={item?.degreeType ?? "bachelor"}
               >
-                {[
-                  "certificate",
-                  "diploma",
-                  "bachelor",
-                  "master",
-                  "doctorate",
-                ].map((value) => (
+                {["certificate", "diploma", "bachelor", "master", "doctorate"].map((value) => (
                   <option key={value} value={value} className="capitalize">
                     {value}
                   </option>
@@ -383,13 +335,11 @@ export function AcademicForm({
                 required
                 defaultValue={item?.courseType ?? "core"}
               >
-                {["core", "elective", "general", "lab", "thesis"].map(
-                  (value) => (
-                    <option key={value} value={value}>
-                      {value}
-                    </option>
-                  ),
-                )}
+                {["core", "elective", "general", "lab", "thesis"].map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
               </select>
             </Field>
           </>
@@ -414,13 +364,11 @@ export function AcademicForm({
                 required
                 defaultValue={item?.term ?? "spring"}
               >
-                {["spring", "summer", "fall", "winter", "annual"].map(
-                  (value) => (
-                    <option key={value} value={value}>
-                      {value}
-                    </option>
-                  ),
-                )}
+                {["spring", "summer", "fall", "winter", "annual"].map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
               </select>
             </Field>
             <Field label="Semester starts" name="startsAt">
@@ -463,20 +411,9 @@ export function AcademicForm({
         )}
         {editing && (
           <Field label="Status" name="status">
-            <select
-              id="status"
-              name="status"
-              className={selectClass}
-              defaultValue={item?.status}
-            >
+            <select id="status" name="status" className={selectClass} defaultValue={item?.status}>
               {entity === "semesters" ? (
-                [
-                  "planned",
-                  "registration",
-                  "ongoing",
-                  "completed",
-                  "archived",
-                ].map((value) => (
+                ["planned", "registration", "ongoing", "completed", "archived"].map((value) => (
                   <option key={value} value={value}>
                     {value.replaceAll("_", " ")}
                   </option>
@@ -503,10 +440,7 @@ export function AcademicForm({
         </Field>
       )}
       {error && (
-        <p
-          role="alert"
-          className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive"
-        >
+        <p role="alert" className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </p>
       )}
@@ -517,5 +451,5 @@ export function AcademicForm({
         </Button>
       </div>
     </form>
-  );
+  )
 }

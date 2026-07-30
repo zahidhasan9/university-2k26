@@ -1,22 +1,56 @@
 "use client"
 
-import { useState } from "react"
+import { ShieldAlert } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { LoaderCircle, ShieldAlert } from "lucide-react"
+import { useState } from "react"
+
 import { Button } from "@/components/ui/button"
+import { ActionDialog } from "@/components/ui/action-dialog"
+import { errorMessage, useEndpointMutation } from "@/lib/api-hooks"
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 
 export function UserStatusAction({ id, status }: { id: string; status: string }) {
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
+  const [open, setOpen] = useState(false)
+  const [error, setError] = useState("")
+  const nextStatus = status === "active" ? "suspended" : "active"
+  const mutation = useEndpointMutation<unknown, { status: string }>(
+    API_ENDPOINTS.users.detail(id),
+    {
+      method: "PATCH",
+    },
+  )
+
   async function update() {
-    const next = status === "active" ? "suspended" : "active"
-    if (!confirm(`${next === "active" ? "Activate" : "Suspend"} this user? Active sessions may be revoked.`)) return
-    setLoading(true)
-    const response = await fetch(`/api/backend/users/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: next }) })
-    const result = await response.json().catch(() => null) as { message?: string } | null
-    setLoading(false)
-    if (!response.ok) return alert(result?.message ?? "Status update failed")
-    router.refresh()
+    setError("")
+    try {
+      await mutation.mutateAsync({ status: nextStatus })
+      setOpen(false)
+      router.refresh()
+    } catch (cause) {
+      setError(errorMessage(cause, "Status update failed"))
+    }
   }
-  return <Button size="sm" variant="outline" disabled={loading} onClick={update}>{loading ? <LoaderCircle className="animate-spin" /> : <ShieldAlert />}{status === "active" ? "Suspend" : "Activate"}</Button>
+
+  const actionLabel = nextStatus === "active" ? "Activate" : "Suspend"
+
+  return (
+    <>
+      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+        <ShieldAlert />
+        {actionLabel}
+      </Button>
+      <ActionDialog
+        open={open}
+        title={`${actionLabel} this user?`}
+        description="Active sessions may be revoked when the account status changes."
+        confirmLabel={actionLabel}
+        destructive={nextStatus === "suspended"}
+        pending={mutation.isPending}
+        error={error}
+        onClose={() => setOpen(false)}
+        onConfirm={update}
+      />
+    </>
+  )
 }

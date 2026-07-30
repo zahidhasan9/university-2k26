@@ -24,5 +24,13 @@ export default async function EditTeacherPage({ params }: { params: Promise<{ id
     if (error instanceof Error && error.message === "Teacher not found") notFound()
     throw error
   }
-  return <AcademicFormShell title={`Edit ${teacher.user.firstName} ${teacher.user.lastName}`} description="Update department, designation, qualifications, and employment status." backHref="/dashboard/faculty"><TeacherForm teacher={teacher} departments={departments.items} /></AcademicFormShell>
+  return (
+    <AcademicFormShell
+      title={`Edit ${teacher.user.firstName} ${teacher.user.lastName}`}
+      description="Update department, designation, qualifications, and employment status."
+      backHref="/dashboard/faculty"
+    >
+      <TeacherForm teacher={teacher} departments={departments.items} />
+    </AcademicFormShell>
+  )
 }

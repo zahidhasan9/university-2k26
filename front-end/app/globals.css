@@ -65,4 +65,9 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  .sidebar-scrollbar {
+    scrollbar-color: hsl(250 20% 88%) transparent;
+    scrollbar-width: thin;
+  }
 }

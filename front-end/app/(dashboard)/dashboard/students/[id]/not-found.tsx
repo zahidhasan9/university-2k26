@@ -11,8 +11,12 @@ export default function StudentNotFound() {
           <UserRoundX className="size-7 text-muted-foreground" />
         </span>
         <h1 className="mt-5 text-2xl font-bold">Student not found</h1>
-        <p className="mt-2 text-sm text-muted-foreground">This profile may have been removed or the link is invalid.</p>
-        <Button className="mt-6" render={<Link href="/dashboard/students" />}>Return to students</Button>
+        <p className="mt-2 text-sm text-muted-foreground">
+          This profile may have been removed or the link is invalid.
+        </p>
+        <Button className="mt-6" render={<Link href="/dashboard/students" />}>
+          Return to students
+        </Button>
       </div>
     </div>
   )

@@ -29,6 +29,7 @@ export const API_ENDPOINTS = {
     courses: "/courses",
     semesters: "/semesters",
     offerings: "/course-offerings",
+    detail: (entity: string, id: string) => `/${entity}/${id}`,
   },
   students: {
     list: "/students",
@@ -54,20 +55,22 @@ export const API_ENDPOINTS = {
   results: {
     exams: "/exams",
     marks: (id: string) => `/exams/${id}/marks`,
-    offeringAction: (id: string, action: string) =>
-      `/results/offerings/${id}/${action}`,
+    offeringAction: (id: string, action: string) => `/results/offerings/${id}/${action}`,
   },
   finance: {
     dashboard: "/finance/dashboard",
     structures: "/finance/fee-structures",
     invoices: "/finance/invoices",
     payments: "/finance/payments",
+    refundPayment: (id: string) => `/finance/payments/${id}/refund`,
     expenses: "/finance/expenses",
+    expenseAction: (id: string) => `/finance/expenses/${id}/action`,
   },
   library: {
     books: "/library/books",
     copies: "/library/copies",
     transactions: "/library/transactions",
+    returnTransaction: (id: string) => `/library/transactions/${id}/return`,
     policies: "/library/policies",
   },
   facilities: {
@@ -77,6 +80,8 @@ export const API_ENDPOINTS = {
     vehicles: "/facilities/vehicles",
     routes: "/facilities/transport-routes",
     transportAllocations: "/facilities/transport-allocations",
+    endAllocation: (type: "hostel" | "transport", id: string) =>
+      `/facilities/${type}-allocations/${id}/end`,
   },
   inventory: {
     items: "/inventory/items",
@@ -86,10 +91,13 @@ export const API_ENDPOINTS = {
     notices: "/communication/notices",
     conversations: "/communication/conversations",
     notifications: "/communication/notifications",
+    dispatchNotification: "/communication/notifications/dispatch",
   },
   lms: {
     materials: "/lms/materials",
     assignments: "/lms/assignments",
+    submitAssignment: (id: string) => `/lms/assignments/${id}/submit`,
+    gradeSubmission: (id: string) => `/lms/submissions/${id}/grade`,
     discussions: "/lms/discussions",
     quizzes: "/lms/quizzes",
   },
@@ -97,27 +105,31 @@ export const API_ENDPOINTS = {
     projects: "/research/projects",
     publications: "/research/publications",
     theses: "/research/theses",
+    thesisAction: (id: string) => `/research/theses/${id}/supervisor-action`,
   },
   engagement: {
     complaints: "/engagement/complaints",
+    complaintAction: (id: string) => `/engagement/complaints/${id}/action`,
     alumni: "/engagement/alumni",
+    alumniStatus: (id: string) => `/engagement/alumni/${id}/status`,
   },
   hr: {
     employees: "/hr/employees",
     attendance: "/hr/attendance",
     leaves: "/hr/leaves",
+    leaveDecision: (id: string) => `/hr/leaves/${id}/decision`,
     payroll: "/hr/payroll-runs",
   },
   audit: { events: "/audit-logs", logins: "/audit-logs/login-history" },
   routine: { list: "/routine" },
   health: { status: "/health", readiness: "/health/ready" },
-} as const;
+} as const
 
 export type PageApiEntry = {
-  page: string;
-  module: string;
-  calls: { method: string; endpoint: string; purpose: string }[];
-};
+  page: string
+  module: string
+  calls: { method: string; endpoint: string; purpose: string }[]
+}
 
 export const PAGE_API_MAP: PageApiEntry[] = [
   {
@@ -187,8 +199,7 @@ export const PAGE_API_MAP: PageApiEntry[] = [
     calls: [
       {
         method: "GET/POST/PATCH",
-        endpoint:
-          "/universities, /faculties, /departments, /programs, /courses, /semesters",
+        endpoint: "/universities, /faculties, /departments, /programs, /courses, /semesters",
         purpose: "Academic structure CRUD",
       },
     ],
@@ -325,15 +336,15 @@ export const PAGE_API_MAP: PageApiEntry[] = [
       },
     ],
   },
-];
+]
 
 export function withQuery(
   path: string,
   query: Record<string, string | number | boolean | undefined>,
 ) {
-  const params = new URLSearchParams();
+  const params = new URLSearchParams()
   for (const [key, value] of Object.entries(query))
-    if (value !== undefined) params.set(key, String(value));
-  const search = params.toString();
-  return search ? `${path}?${search}` : path;
+    if (value !== undefined) params.set(key, String(value))
+  const search = params.toString()
+  return search ? `${path}?${search}` : path
 }

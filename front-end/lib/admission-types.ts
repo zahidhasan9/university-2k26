@@ -1,10 +1,5 @@
 export type AdmissionStatus =
-  | "draft"
-  | "submitted"
-  | "under_review"
-  | "approved"
-  | "rejected"
-  | "cancelled"
+  "draft" | "submitted" | "under_review" | "approved" | "rejected" | "cancelled"
 
 export type Admission = {
   _id: string

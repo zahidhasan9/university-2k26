@@ -1,80 +1,67 @@
-"use client";
+"use client"
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
-import { CheckCircle2, LoaderCircle, SearchCheck, XCircle } from "lucide-react";
+import { apiResponseRequest } from "@/lib/http-client"
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import type { AdmissionStatus } from "@/lib/admission-types";
+import { FormEvent, useState } from "react"
+import { useRouter } from "next/navigation"
+import { CheckCircle2, LoaderCircle, SearchCheck, XCircle } from "lucide-react"
 
-export function AdmissionActions({
-  id,
-  status,
-}: {
-  id: string;
-  status: AdmissionStatus;
-}) {
-  const router = useRouter();
-  const [loading, setLoading] = useState("");
-  const [error, setError] = useState("");
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import type { AdmissionStatus } from "@/lib/admission-types"
+
+export function AdmissionActions({ id, status }: { id: string; status: AdmissionStatus }) {
+  const router = useRouter()
+  const [loading, setLoading] = useState("")
+  const [error, setError] = useState("")
 
   async function send(path: string, payload: object, action: string) {
-    setLoading(action);
-    setError("");
+    setLoading(action)
+    setError("")
     try {
-      const response = await fetch(`/api/backend/admissions/${id}/${path}`, {
+      const response = await apiResponseRequest(`/admissions/${id}/${path}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      });
-      const body = (await response.json()) as { message: string };
-      if (!response.ok)
-        throw new Error(body.message || "Action could not be completed");
-      router.refresh();
+      })
+      const body = (await response.json()) as { message: string }
+      if (!response.ok) throw new Error(body.message || "Action could not be completed")
+      router.refresh()
     } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "Action could not be completed",
-      );
+      setError(cause instanceof Error ? cause.message : "Action could not be completed")
     } finally {
-      setLoading("");
+      setLoading("")
     }
   }
 
   function review(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const note = String(form.get("note") ?? "").trim();
-    void send("review", note ? { note } : {}, "review");
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const note = String(form.get("note") ?? "").trim()
+    void send("review", note ? { note } : {}, "review")
   }
 
-  function decide(
-    event: FormEvent<HTMLFormElement>,
-    decision: "approve" | "reject",
-  ) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const note = String(form.get(`${decision}Note`) ?? "").trim();
-    const studentId = String(form.get("studentId") ?? "").trim();
+  function decide(event: FormEvent<HTMLFormElement>, decision: "approve" | "reject") {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const note = String(form.get(`${decision}Note`) ?? "").trim()
+    const studentId = String(form.get("studentId") ?? "").trim()
     void send(
       "decision",
       decision === "approve"
         ? { decision, studentId, ...(note ? { note } : {}) }
         : { decision, note },
       decision,
-    );
+    )
   }
 
   if (!["submitted", "under_review"].includes(status)) {
     return (
       <div className="rounded-lg bg-muted px-4 py-3 text-sm text-muted-foreground">
-        This application has reached a final state. No review actions are
-        available.
+        This application has reached a final state. No review actions are available.
       </div>
-    );
+    )
   }
 
   return (
@@ -92,11 +79,7 @@ export function AdmissionActions({
             />
           </div>
           <Button type="submit" className="w-full" disabled={Boolean(loading)}>
-            {loading === "review" ? (
-              <LoaderCircle className="animate-spin" />
-            ) : (
-              <SearchCheck />
-            )}
+            {loading === "review" ? <LoaderCircle className="animate-spin" /> : <SearchCheck />}
             Start application review
           </Button>
         </form>
@@ -108,9 +91,7 @@ export function AdmissionActions({
             className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4"
           >
             <div>
-              <h3 className="font-semibold text-emerald-900">
-                Approve application
-              </h3>
+              <h3 className="font-semibold text-emerald-900">Approve application</h3>
               <p className="mt-1 text-xs text-emerald-800/70">
                 This creates the applicant&apos;s student profile.
               </p>
@@ -142,11 +123,7 @@ export function AdmissionActions({
               className="w-full bg-emerald-700 hover:bg-emerald-800"
               disabled={Boolean(loading)}
             >
-              {loading === "approve" ? (
-                <LoaderCircle className="animate-spin" />
-              ) : (
-                <CheckCircle2 />
-              )}{" "}
+              {loading === "approve" ? <LoaderCircle className="animate-spin" /> : <CheckCircle2 />}{" "}
               Approve & create student
             </Button>
           </form>
@@ -155,9 +132,7 @@ export function AdmissionActions({
             className="space-y-3 rounded-xl border border-rose-200 bg-rose-50/50 p-4"
           >
             <div>
-              <h3 className="font-semibold text-rose-900">
-                Reject application
-              </h3>
+              <h3 className="font-semibold text-rose-900">Reject application</h3>
               <p className="mt-1 text-xs text-rose-800/70">
                 A clear reason is required for audit history.
               </p>
@@ -179,24 +154,17 @@ export function AdmissionActions({
               className="w-full"
               disabled={Boolean(loading)}
             >
-              {loading === "reject" ? (
-                <LoaderCircle className="animate-spin" />
-              ) : (
-                <XCircle />
-              )}{" "}
+              {loading === "reject" ? <LoaderCircle className="animate-spin" /> : <XCircle />}{" "}
               Reject application
             </Button>
           </form>
         </div>
       )}
       {error && (
-        <p
-          role="alert"
-          className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive"
-        >
+        <p role="alert" className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </p>
       )}
     </div>
-  );
+  )
 }

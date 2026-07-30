@@ -11,11 +11,7 @@ export const metadata: Metadata = { title: "Edit student" }
 type List<T> = { items: T[] }
 type ProgramOption = { _id: string; name: string; code: string }
 
-export default async function EditStudentPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
+export default async function EditStudentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   let student: Student
   let programs: List<ProgramOption>

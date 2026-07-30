@@ -1,8 +1,118 @@
-import {BarChart3,Building2,GraduationCap,Users} from "lucide-react"
-import {CsvExport} from "@/components/csv-export"
-import {Card,CardContent,CardHeader,CardTitle} from "@/components/ui/card"
-import {Table,TableBody,TableCell,TableHead,TableHeader,TableRow} from "@/components/ui/table"
-import {authenticatedRequest} from "@/lib/auth"
-type Department={_id:string;name:string;code:string;programCount:number;teacherCount:number;studentCount:number;activeStudentCount:number}
-export default async function Page(){let departments:Department[]=[],error="";try{departments=(await authenticatedRequest<{departments:Department[]}>("/analytics/departments")).data.departments}catch(c){error=c instanceof Error?c.message:"Report data unavailable"}const rows=departments.map(({name,code,programCount,teacherCount,studentCount,activeStudentCount})=>({Department:name,Code:code,Programs:programCount,Teachers:teacherCount,Students:studentCount,"Active students":activeStudentCount}));return <div className="mx-auto max-w-[1400px] space-y-6"><div className="flex items-end justify-between"><div><p className="text-sm font-medium text-primary">Decision support</p><h1 className="mt-1 text-3xl font-bold">Reports & export</h1><p className="mt-1 text-sm text-muted-foreground">Department performance report with portable CSV output.</p></div><CsvExport filename="unisphere-department-performance.csv" rows={rows}/></div>{error&&<p className="rounded-xl bg-destructive/10 p-4 text-destructive">{error}</p>}<div className="grid gap-4 sm:grid-cols-4"><Metric icon={<Building2/>} value={departments.length} label="Departments"/><Metric icon={<GraduationCap/>} value={departments.reduce((s,x)=>s+x.programCount,0)} label="Programs"/><Metric icon={<Users/>} value={departments.reduce((s,x)=>s+x.studentCount,0)} label="Students"/><Metric icon={<BarChart3/>} value={departments.reduce((s,x)=>s+x.teacherCount,0)} label="Teachers"/></div><Card><CardHeader><CardTitle>Department performance</CardTitle></CardHeader><CardContent className="p-0"><Table><TableHeader><TableRow><TableHead>Department</TableHead><TableHead>Programs</TableHead><TableHead>Teachers</TableHead><TableHead>Students</TableHead><TableHead>Active students</TableHead></TableRow></TableHeader><TableBody>{departments.map(x=><TableRow key={x._id}><TableCell><p className="font-medium">{x.name}</p><p className="font-mono text-xs text-muted-foreground">{x.code}</p></TableCell><TableCell>{x.programCount}</TableCell><TableCell>{x.teacherCount}</TableCell><TableCell>{x.studentCount}</TableCell><TableCell>{x.activeStudentCount}</TableCell></TableRow>)}</TableBody></Table></CardContent></Card></div>}
-function Metric({icon,value,label}:{icon:React.ReactNode;value:number;label:string}){return <Card><CardContent className="p-5"><div className="text-primary [&_svg]:size-5">{icon}</div><p className="mt-4 text-2xl font-bold">{value}</p><p className="text-sm text-muted-foreground">{label}</p></CardContent></Card>}
+import { BarChart3, Building2, GraduationCap, Users } from "lucide-react"
+import { CsvExport } from "@/components/csv-export"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { authenticatedRequest } from "@/lib/auth"
+type Department = {
+  _id: string
+  name: string
+  code: string
+  programCount: number
+  teacherCount: number
+  studentCount: number
+  activeStudentCount: number
+}
+export default async function Page() {
+  let departments: Department[] = [],
+    error = ""
+  try {
+    departments = (
+      await authenticatedRequest<{ departments: Department[] }>("/analytics/departments")
+    ).data.departments
+  } catch (c) {
+    error = c instanceof Error ? c.message : "Report data unavailable"
+  }
+  const rows = departments.map(
+    ({ name, code, programCount, teacherCount, studentCount, activeStudentCount }) => ({
+      Department: name,
+      Code: code,
+      Programs: programCount,
+      Teachers: teacherCount,
+      Students: studentCount,
+      "Active students": activeStudentCount,
+    }),
+  )
+  return (
+    <div className="mx-auto max-w-[1400px] space-y-6">
+      <div className="flex items-end justify-between">
+        <div>
+          <p className="text-sm font-medium text-primary">Decision support</p>
+          <h1 className="mt-1 text-3xl font-bold">Reports & export</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Department performance report with portable CSV output.
+          </p>
+        </div>
+        <CsvExport filename="unisphere-department-performance.csv" rows={rows} />
+      </div>
+      {error && <p className="rounded-xl bg-destructive/10 p-4 text-destructive">{error}</p>}
+      <div className="grid gap-4 sm:grid-cols-4">
+        <Metric icon={<Building2 />} value={departments.length} label="Departments" />
+        <Metric
+          icon={<GraduationCap />}
+          value={departments.reduce((s, x) => s + x.programCount, 0)}
+          label="Programs"
+        />
+        <Metric
+          icon={<Users />}
+          value={departments.reduce((s, x) => s + x.studentCount, 0)}
+          label="Students"
+        />
+        <Metric
+          icon={<BarChart3 />}
+          value={departments.reduce((s, x) => s + x.teacherCount, 0)}
+          label="Teachers"
+        />
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Department performance</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Department</TableHead>
+                <TableHead>Programs</TableHead>
+                <TableHead>Teachers</TableHead>
+                <TableHead>Students</TableHead>
+                <TableHead>Active students</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {departments.map((x) => (
+                <TableRow key={x._id}>
+                  <TableCell>
+                    <p className="font-medium">{x.name}</p>
+                    <p className="font-mono text-xs text-muted-foreground">{x.code}</p>
+                  </TableCell>
+                  <TableCell>{x.programCount}</TableCell>
+                  <TableCell>{x.teacherCount}</TableCell>
+                  <TableCell>{x.studentCount}</TableCell>
+                  <TableCell>{x.activeStudentCount}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+function Metric({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
+  return (
+    <Card>
+      <CardContent className="p-5">
+        <div className="text-primary [&_svg]:size-5">{icon}</div>
+        <p className="mt-4 text-2xl font-bold">{value}</p>
+        <p className="text-sm text-muted-foreground">{label}</p>
+      </CardContent>
+    </Card>
+  )
+}

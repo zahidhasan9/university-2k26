@@ -2,11 +2,156 @@ import Link from "next/link"
 import { BookMarked, FlaskConical, GraduationCap, Plus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card,CardContent,CardHeader,CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { authenticatedRequest } from "@/lib/auth"
-type Person={firstName:string;lastName:string}
-type Project={_id:string;code:string;title:string;abstract:string;status:string;leadResearcher:{employeeId:string;user:Person};department?:{name:string};startsAt:string;funding?:{amountMinor:number;currency:string}}
-type Publication={_id:string;title:string;type:string;status:string;venue?:string;doi?:string;publishedAt:string;authors:{employeeId:string;user:Person}[]}
-type Thesis={_id:string;title:string;status:string;student?:{studentId:string;user:Person};supervisor?:{employeeId:string;user:Person}}
-export default async function Page(){let projects:Project[]=[],publications:Publication[]=[],theses:Thesis[]=[],error="";try{const d=await Promise.all([authenticatedRequest<{items:Project[]}>("/research/projects?limit=50"),authenticatedRequest<{publications:Publication[]}>("/research/publications"),authenticatedRequest<{theses:Thesis[]}>("/research/theses")]);projects=d[0].data.items;publications=d[1].data.publications;theses=d[2].data.theses}catch(c){error=c instanceof Error?c.message:"Research data unavailable"}return <div className="mx-auto max-w-[1500px] space-y-6"><div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end"><div><p className="text-sm font-medium text-primary">Knowledge & innovation</p><h1 className="mt-1 text-3xl font-bold">Research</h1><p className="mt-1 text-sm text-muted-foreground">Funded projects, scholarly outputs, and thesis lifecycle.</p></div><div className="flex flex-wrap gap-2"><Button render={<Link href="/dashboard/research/projects/new"/>}><Plus/>Project</Button><Button variant="outline" render={<Link href="/dashboard/research/publications/new"/>}><Plus/>Publication</Button><Button variant="outline" render={<Link href="/dashboard/research/theses/new"/>}><GraduationCap/>Propose thesis</Button></div></div>{error&&<p className="rounded-xl bg-destructive/10 p-4 text-destructive">{error}</p>}<div className="grid gap-4 sm:grid-cols-3"><Metric icon={<FlaskConical/>} value={projects.length} label="Research projects"/><Metric icon={<BookMarked/>} value={publications.length} label="Publications"/><Metric icon={<GraduationCap/>} value={theses.length} label="Theses"/></div><Card><CardHeader><CardTitle>Project portfolio</CardTitle></CardHeader><CardContent className="grid gap-4 lg:grid-cols-2">{projects.map(x=><div key={x._id} className="rounded-xl border p-4"><div className="flex justify-between gap-3"><div><p className="font-semibold">{x.title}</p><p className="font-mono text-xs text-muted-foreground">{x.code}</p></div><Badge variant="secondary">{x.status}</Badge></div><p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{x.abstract}</p><p className="mt-3 text-xs text-muted-foreground">Lead: {x.leadResearcher?.user?.firstName} {x.leadResearcher?.user?.lastName}</p></div>)}</CardContent></Card><div className="grid gap-6 lg:grid-cols-2"><Card><CardHeader><CardTitle>Publications</CardTitle></CardHeader><CardContent className="space-y-3">{publications.map(x=><div key={x._id} className="rounded-xl border p-4"><p className="font-semibold">{x.title}</p><p className="mt-1 text-sm text-muted-foreground">{x.venue||x.type} · {new Date(x.publishedAt).getFullYear()}</p><Badge className="mt-3" variant="outline">{x.status}</Badge></div>)}</CardContent></Card><Card><CardHeader><CardTitle>Thesis pipeline</CardTitle></CardHeader><CardContent className="space-y-3">{theses.map(x=><div key={x._id} className="rounded-xl border p-4"><div className="flex justify-between"><p className="font-semibold">{x.title}</p><Badge variant="outline">{x.status}</Badge></div><p className="mt-2 text-xs text-muted-foreground">{x.student?.user?.firstName} {x.student?.user?.lastName} · {x.student?.studentId}</p></div>)}</CardContent></Card></div></div>}
-function Metric({icon,value,label}:{icon:React.ReactNode;value:number;label:string}){return <Card><CardContent className="p-5"><div className="text-primary [&_svg]:size-5">{icon}</div><p className="mt-4 text-2xl font-bold">{value}</p><p className="text-sm text-muted-foreground">{label}</p></CardContent></Card>}
+type Person = { firstName: string; lastName: string }
+type Project = {
+  _id: string
+  code: string
+  title: string
+  abstract: string
+  status: string
+  leadResearcher: { employeeId: string; user: Person }
+  department?: { name: string }
+  startsAt: string
+  funding?: { amountMinor: number; currency: string }
+}
+type Publication = {
+  _id: string
+  title: string
+  type: string
+  status: string
+  venue?: string
+  doi?: string
+  publishedAt: string
+  authors: { employeeId: string; user: Person }[]
+}
+type Thesis = {
+  _id: string
+  title: string
+  status: string
+  student?: { studentId: string; user: Person }
+  supervisor?: { employeeId: string; user: Person }
+}
+export default async function Page() {
+  let projects: Project[] = [],
+    publications: Publication[] = [],
+    theses: Thesis[] = [],
+    error = ""
+  try {
+    const d = await Promise.all([
+      authenticatedRequest<{ items: Project[] }>("/research/projects?limit=50"),
+      authenticatedRequest<{ publications: Publication[] }>("/research/publications"),
+      authenticatedRequest<{ theses: Thesis[] }>("/research/theses"),
+    ])
+    projects = d[0].data.items
+    publications = d[1].data.publications
+    theses = d[2].data.theses
+  } catch (c) {
+    error = c instanceof Error ? c.message : "Research data unavailable"
+  }
+  return (
+    <div className="mx-auto max-w-[1500px] space-y-6">
+      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+        <div>
+          <p className="text-sm font-medium text-primary">Knowledge & innovation</p>
+          <h1 className="mt-1 text-3xl font-bold">Research</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Funded projects, scholarly outputs, and thesis lifecycle.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button render={<Link href="/dashboard/research/projects/new" />}>
+            <Plus />
+            Project
+          </Button>
+          <Button variant="outline" render={<Link href="/dashboard/research/publications/new" />}>
+            <Plus />
+            Publication
+          </Button>
+          <Button variant="outline" render={<Link href="/dashboard/research/theses/new" />}>
+            <GraduationCap />
+            Propose thesis
+          </Button>
+        </div>
+      </div>
+      {error && <p className="rounded-xl bg-destructive/10 p-4 text-destructive">{error}</p>}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Metric icon={<FlaskConical />} value={projects.length} label="Research projects" />
+        <Metric icon={<BookMarked />} value={publications.length} label="Publications" />
+        <Metric icon={<GraduationCap />} value={theses.length} label="Theses" />
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Project portfolio</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 lg:grid-cols-2">
+          {projects.map((x) => (
+            <div key={x._id} className="rounded-xl border p-4">
+              <div className="flex justify-between gap-3">
+                <div>
+                  <p className="font-semibold">{x.title}</p>
+                  <p className="font-mono text-xs text-muted-foreground">{x.code}</p>
+                </div>
+                <Badge variant="secondary">{x.status}</Badge>
+              </div>
+              <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{x.abstract}</p>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Lead: {x.leadResearcher?.user?.firstName} {x.leadResearcher?.user?.lastName}
+              </p>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Publications</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {publications.map((x) => (
+              <div key={x._id} className="rounded-xl border p-4">
+                <p className="font-semibold">{x.title}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {x.venue || x.type} · {new Date(x.publishedAt).getFullYear()}
+                </p>
+                <Badge className="mt-3" variant="outline">
+                  {x.status}
+                </Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Thesis pipeline</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {theses.map((x) => (
+              <div key={x._id} className="rounded-xl border p-4">
+                <div className="flex justify-between">
+                  <p className="font-semibold">{x.title}</p>
+                  <Badge variant="outline">{x.status}</Badge>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {x.student?.user?.firstName} {x.student?.user?.lastName} · {x.student?.studentId}
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+function Metric({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
+  return (
+    <Card>
+      <CardContent className="p-5">
+        <div className="text-primary [&_svg]:size-5">{icon}</div>
+        <p className="mt-4 text-2xl font-bold">{value}</p>
+        <p className="text-sm text-muted-foreground">{label}</p>
+      </CardContent>
+    </Card>
+  )
+}

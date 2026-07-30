@@ -1,6 +1,16 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowLeft, BookOpen, CalendarDays, Mail, MapPin, Pencil, Phone, ShieldCheck, UserRound } from "lucide-react"
+import {
+  ArrowLeft,
+  BookOpen,
+  CalendarDays,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react"
 import { notFound } from "next/navigation"
 
 import { StudentStatusBadge } from "@/components/student-status"
@@ -17,13 +27,7 @@ function value(item?: string | number) {
   return item || <span className="text-muted-foreground">Not provided</span>
 }
 
-function Info({
-  label,
-  children,
-}: {
-  label: string
-  children: React.ReactNode
-}) {
+function Info({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
       <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</dt>
@@ -32,11 +36,7 @@ function Info({
   )
 }
 
-export default async function StudentDetailsPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
+export default async function StudentDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   let student: Student
   try {
@@ -74,7 +74,8 @@ export default async function StudentDetailsPage({
         <CardContent className="relative px-5 pb-6 sm:px-8">
           <Avatar className="-mt-12 size-24 border-4 border-card shadow-sm">
             <AvatarFallback className="bg-blue-100 text-2xl font-bold text-blue-700">
-              {student.user.firstName[0]}{student.user.lastName[0]}
+              {student.user.firstName[0]}
+              {student.user.lastName[0]}
             </AvatarFallback>
           </Avatar>
           <div className="mt-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
@@ -96,34 +97,74 @@ export default async function StudentDetailsPage({
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><BookOpen className="size-5 text-primary" /> Academic information</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="size-5 text-primary" /> Academic information
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="grid gap-6 sm:grid-cols-2">
-              <Info label="Program">{student.program.name} ({student.program.code})</Info>
+              <Info label="Program">
+                {student.program.name} ({student.program.code})
+              </Info>
               <Info label="Department">{value(student.program.department?.name)}</Info>
-              <Info label="Admission semester">{student.admissionSemester.name} · {student.admissionSemester.academicYear}</Info>
+              <Info label="Admission semester">
+                {student.admissionSemester.name} · {student.admissionSemester.academicYear}
+              </Info>
               <Info label="Current semester">Semester {student.currentSemesterNumber}</Info>
-              <Info label="Record created">{new Intl.DateTimeFormat("en-BD", { dateStyle: "medium" }).format(new Date(student.createdAt))}</Info>
-              <Info label="Account status"><span className="capitalize">{student.user.status}</span></Info>
+              <Info label="Record created">
+                {new Intl.DateTimeFormat("en-BD", { dateStyle: "medium" }).format(
+                  new Date(student.createdAt),
+                )}
+              </Info>
+              <Info label="Account status">
+                <span className="capitalize">{student.user.status}</span>
+              </Info>
             </dl>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><UserRound className="size-5 text-primary" /> Contact</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <UserRound className="size-5 text-primary" /> Contact
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-3"><Mail className="mt-0.5 size-4 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">Email</p><p className="break-all text-sm font-medium">{student.user.email}</p></div></div>
-            <div className="flex gap-3"><Phone className="mt-0.5 size-4 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">Phone</p><p className="text-sm font-medium">{value(student.phone)}</p></div></div>
-            <div className="flex gap-3"><CalendarDays className="mt-0.5 size-4 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">Date of birth</p><p className="text-sm font-medium">{student.dateOfBirth ? new Intl.DateTimeFormat("en-BD", { dateStyle: "medium" }).format(new Date(student.dateOfBirth)) : value()}</p></div></div>
+            <div className="flex gap-3">
+              <Mail className="mt-0.5 size-4 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Email</p>
+                <p className="break-all text-sm font-medium">{student.user.email}</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Phone className="mt-0.5 size-4 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Phone</p>
+                <p className="text-sm font-medium">{value(student.phone)}</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <CalendarDays className="mt-0.5 size-4 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Date of birth</p>
+                <p className="text-sm font-medium">
+                  {student.dateOfBirth
+                    ? new Intl.DateTimeFormat("en-BD", { dateStyle: "medium" }).format(
+                        new Date(student.dateOfBirth),
+                      )
+                    : value()}
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><ShieldCheck className="size-5 text-primary" /> Guardian</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck className="size-5 text-primary" /> Guardian
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="grid gap-5">
@@ -137,7 +178,9 @@ export default async function StudentDetailsPage({
 
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><MapPin className="size-5 text-primary" /> Address</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="size-5 text-primary" /> Address
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm leading-6">{value(address)}</p>
