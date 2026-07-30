@@ -24,7 +24,7 @@ async function forward(request: Request, context: { params: Promise<{ path: stri
           ? { "Content-Type": request.headers.get("content-type") as string }
           : {}),
       },
-      body: hasBody ? await request.text() : undefined,
+      body: hasBody ? await request.arrayBuffer() : undefined,
       cache: "no-store",
     })
     return new Response(await upstream.text(), {

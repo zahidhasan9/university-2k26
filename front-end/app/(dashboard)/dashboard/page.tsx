@@ -96,7 +96,11 @@ const panelClass =
   "rounded-[24px] border border-slate-100 bg-white py-0 ring-0 shadow-[0_10px_35px_rgba(30,41,59,0.05)]"
 
 export default async function DashboardPage() {
-  const stats = await dashboardStats()
+  const [stats, currentUserResponse] = await Promise.all([
+    dashboardStats(),
+    authenticatedRequest<{ user: { firstName: string } }>("/auth/me"),
+  ])
+  const firstName = currentUserResponse.data.user.firstName
   const dashboard = stats.data
   const summary = dashboard?.summary
   const items = summary
@@ -146,7 +150,7 @@ export default async function DashboardPage() {
             <span className="text-violet-600">Overview</span>
           </div>
           <h1 className="text-[26px] font-semibold tracking-[-0.025em] text-slate-800 sm:text-[30px]">
-            Good morning, Mamun!
+            Welcome back, {firstName}!
           </h1>
           <p className="mt-1.5 text-sm text-slate-400">
             Here&apos;s what&apos;s happening across your university today

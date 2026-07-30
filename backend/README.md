@@ -7,7 +7,8 @@ Production-oriented Express, TypeScript, MongoDB API for UniSphere ERP.
 1. Copy `.env.example` to `.env` and replace every secret/credential.
 2. Install dependencies with `npm install`.
 3. Start MongoDB, then run `npm run seed:bootstrap` once.
-4. Run `npm run dev`.
+4. Run `npm run seed:demo` to create idempotent, relational demonstration data.
+5. Run `npm run dev`.
 
 ## Quality checks
 

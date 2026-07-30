@@ -43,7 +43,7 @@ export default async function ProfilePage() {
 
       <Card>
         <CardHeader className="flex-row items-center gap-4 border-b">
-          <Avatar className="size-16">
+          <Avatar className="size-24 shadow-sm">
             {user.avatarUrl && (
               <AvatarImage src={user.avatarUrl} alt={`${user.firstName} ${user.lastName}`} />
             )}

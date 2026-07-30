@@ -24,8 +24,12 @@ export function CsvExport({
     URL.revokeObjectURL(url)
   }
   return (
-    <Button variant="outline" onClick={download} disabled={!rows.length}>
-      <Download />
+    <Button
+      onClick={download}
+      disabled={!rows.length}
+      className="h-11 rounded-xl bg-violet-600 px-5 font-semibold text-white shadow-[0_8px_20px_rgba(124,58,237,0.22)] transition-all hover:-translate-y-0.5 hover:bg-violet-700 hover:shadow-[0_12px_24px_rgba(124,58,237,0.28)]"
+    >
+      <Download className="size-4" />
       Export CSV
     </Button>
   )

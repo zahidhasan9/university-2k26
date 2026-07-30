@@ -9,6 +9,7 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "seed:bootstrap": "tsx src/scripts/bootstrap.ts",
+    "seed:demo": "tsx src/scripts/seed-demo.ts",
     "test": "npm run build && node --test tests/http.test.js",
     "worker:notifications": "tsx src/workers/notification.worker.ts",
     "worker:notifications:start": "node dist/workers/notification.worker.js"

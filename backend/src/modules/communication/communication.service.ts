@@ -186,11 +186,12 @@ export async function listNotifications(userId: Types.ObjectId, query: Record<st
   const { page, limit, skip } = getPagination(query);
   const filter: Record<string, unknown> = { user: userId };
   if (query.status) filter.status = query.status;
-  const [items, total] = await Promise.all([
+  const [items, total, unreadCount] = await Promise.all([
     NotificationModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
     NotificationModel.countDocuments(filter),
+    NotificationModel.countDocuments({ user: userId, status: { $ne: "read" } }),
   ]);
-  return { items, pagination: paginationMeta(total, page, limit) };
+  return { items, unreadCount, pagination: paginationMeta(total, page, limit) };
 }
 export async function readNotification(id: string, userId: Types.ObjectId) {
   const notification = await NotificationModel.findOneAndUpdate(

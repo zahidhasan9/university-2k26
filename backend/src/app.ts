@@ -1,6 +1,5 @@
 import cors from "cors";
 import express from "express";
-import path from "node:path";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import swaggerUi from "swagger-ui-express";
@@ -38,6 +37,7 @@ app.use(
     maxAge: "7d",
     setHeaders(res) {
       res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
       res.setHeader("Content-Security-Policy", "default-src 'none'; img-src 'self'");
     },
   }),

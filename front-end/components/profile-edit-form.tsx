@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { FormEvent, useState } from "react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ImageCropDialog } from "@/components/image-crop-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -34,6 +35,7 @@ export function ProfileEditForm({ user }: { user: EditableProfile }) {
   const queryClient = useQueryClient()
   const [avatarPreview, setAvatarPreview] = useState(user.avatarUrl ?? "")
   const [message, setMessage] = useState("")
+  const [cropSource, setCropSource] = useState<string | null>(null)
 
   const mutation = useMutation({
     mutationFn: (payload: { phone?: string; avatarUrl?: string; address: Address }) =>
@@ -96,10 +98,24 @@ export function ProfileEditForm({ user }: { user: EditableProfile }) {
 
   const initials = `${user.firstName[0] ?? ""}${user.lastName[0] ?? ""}`.toUpperCase()
 
+  function closeCropper() {
+    if (cropSource) URL.revokeObjectURL(cropSource)
+    setCropSource(null)
+  }
+
   return (
     <form onSubmit={submit} className="space-y-6">
+      <ImageCropDialog
+        source={cropSource}
+        onCancel={closeCropper}
+        onConfirm={async (blob) => {
+          const file = new File([blob], "profile-picture.webp", { type: "image/webp" })
+          await imageMutation.mutateAsync(file)
+          closeCropper()
+        }}
+      />
       <div className="flex flex-col gap-5 rounded-2xl border border-violet-100 bg-violet-50/40 p-5 sm:flex-row sm:items-center">
-        <Avatar className="size-20 shadow-sm">
+        <Avatar className="size-28 rounded-2xl shadow-sm [&_[data-slot=avatar-fallback]]:rounded-2xl [&_[data-slot=avatar-image]]:rounded-2xl">
           {avatarPreview && <AvatarImage src={avatarPreview} alt="" />}
           <AvatarFallback className="bg-violet-600 text-xl font-semibold text-white">
             {initials}
@@ -116,7 +132,8 @@ export function ProfileEditForm({ user }: { user: EditableProfile }) {
             className="cursor-pointer bg-white file:mr-3 file:font-semibold file:text-violet-600"
             onChange={(event) => {
               const file = event.target.files?.[0]
-              if (file) imageMutation.mutate(file)
+              if (file) setCropSource(URL.createObjectURL(file))
+              event.target.value = ""
             }}
           />
           <div className="flex items-center gap-2 text-xs text-slate-400">
@@ -127,7 +144,7 @@ export function ProfileEditForm({ user }: { user: EditableProfile }) {
             )}
             {imageMutation.isPending
               ? "Uploading profile picture..."
-              : "JPEG, PNG, WebP or GIF. Upload starts automatically."}
+              : "JPEG, PNG, WebP or GIF. Select, crop, then upload."}
           </div>
           <Label htmlFor="avatarUrl" className="pt-1 text-xs text-slate-500">
             Or use an image URL

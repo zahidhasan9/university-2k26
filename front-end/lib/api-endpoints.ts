@@ -93,6 +93,7 @@ export const API_ENDPOINTS = {
     notices: "/communication/notices",
     conversations: "/communication/conversations",
     notifications: "/communication/notifications",
+    readNotification: (id: string) => `/communication/notifications/${id}/read`,
     dispatchNotification: "/communication/notifications/dispatch",
   },
   lms: {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Bell, ChevronDown, Grid2X2, Menu, Search, Sun } from "lucide-react"
 import Link from "next/link"
 
@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import { apiRequest } from "@/lib/http-client"
 
 type CurrentUser = {
@@ -30,6 +31,15 @@ type CurrentUser = {
   avatarUrl?: string
 }
 
+type HeaderNotification = {
+  _id: string
+  title: string
+  body: string
+  type: string
+  status: "queued" | "sent" | "failed" | "read"
+  createdAt: string
+}
+
 export function DashboardHeader({
   sidebarCollapsed,
   onSidebarToggle,
@@ -37,9 +47,25 @@ export function DashboardHeader({
   sidebarCollapsed: boolean
   onSidebarToggle: () => void
 }) {
+  const queryClient = useQueryClient()
   const { data } = useQuery({
     queryKey: ["auth", "me"],
     queryFn: () => apiRequest<{ user: CurrentUser }>("/auth/me"),
+  })
+  const { data: notificationData } = useQuery({
+    queryKey: ["notifications", "header"],
+    queryFn: () =>
+      apiRequest<{ items: HeaderNotification[]; unreadCount: number }>(
+        `${API_ENDPOINTS.communication.notifications}?limit=6`,
+      ),
+    refetchInterval: 60_000,
+  })
+  const notifications = notificationData?.data.items ?? []
+  const unreadCount = notificationData?.data.unreadCount ?? 0
+  const readNotification = useMutation({
+    mutationFn: (id: string) =>
+      apiRequest(API_ENDPOINTS.communication.readNotification(id), { method: "PATCH" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications"] }),
   })
   const user = data?.data.user
   const fullName = user ? `${user.firstName} ${user.lastName}` : "My account"
@@ -104,15 +130,76 @@ export function DashboardHeader({
         >
           <Grid2X2 className="size-[21px]" strokeWidth={1.45} />
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative rounded-full border border-transparent text-slate-500 transition-all duration-200 hover:border-violet-100 hover:bg-violet-50 hover:text-violet-600"
-          aria-label="Notifications"
-        >
-          <Bell className="size-[21px]" strokeWidth={1.45} />
-          <span className="absolute right-2.5 top-2 size-1.5 rounded-full bg-violet-600" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <button
+                className="relative grid size-9 place-items-center rounded-full border border-transparent text-slate-500 transition-all duration-200 hover:border-violet-100 hover:bg-violet-50 hover:text-violet-600"
+                aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}
+              />
+            }
+          >
+            <Bell className="size-[21px]" strokeWidth={1.45} />
+            {unreadCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-violet-600 px-1 text-[9px] font-bold leading-4 text-white ring-2 ring-white">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            sideOffset={12}
+            className="w-[min(92vw,23rem)] rounded-2xl border-slate-100 p-2 shadow-2xl shadow-slate-200/70"
+          >
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="flex items-center justify-between px-3 py-2.5">
+                <span className="text-sm font-semibold text-slate-800">Notifications</span>
+                {unreadCount > 0 && (
+                  <Badge className="bg-violet-50 text-violet-700" variant="secondary">
+                    {unreadCount} unread
+                  </Badge>
+                )}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {notifications.map((notification) => (
+                <DropdownMenuItem
+                  key={notification._id}
+                  className="items-start gap-3 rounded-xl px-3 py-3"
+                  onClick={() => {
+                    if (notification.status !== "read") readNotification.mutate(notification._id)
+                  }}
+                >
+                  <span
+                    className={`mt-1.5 size-2 shrink-0 rounded-full ${
+                      notification.status === "read" ? "bg-slate-200" : "bg-violet-600"
+                    }`}
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13px] font-semibold text-slate-700">
+                      {notification.title}
+                    </span>
+                    <span className="mt-0.5 line-clamp-2 block text-xs leading-5 text-slate-400">
+                      {notification.body}
+                    </span>
+                  </span>
+                </DropdownMenuItem>
+              ))}
+              {notifications.length === 0 && (
+                <div className="px-4 py-10 text-center">
+                  <Bell className="mx-auto size-7 text-slate-300" />
+                  <p className="mt-2 text-sm text-slate-400">No notifications yet</p>
+                </div>
+              )}
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="justify-center rounded-xl py-2.5 font-semibold text-violet-600"
+              render={<Link href="/dashboard/communication" />}
+            >
+              View all notifications
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button
           variant="ghost"
           size="icon"
@@ -134,7 +221,7 @@ export function DashboardHeader({
             <span className="hidden max-w-32 truncate text-[13.5px] font-semibold text-slate-700 md:block">
               {fullName}
             </span>
-            <Avatar className="size-10 ring-2 ring-white/10">
+            <Avatar className="size-11 shadow-sm ring-2 ring-violet-100">
               {user?.avatarUrl && <AvatarImage src={user.avatarUrl} alt={fullName} />}
               <AvatarFallback className="bg-violet-600 text-sm font-semibold text-white">
                 {initials}
