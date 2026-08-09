@@ -23,6 +23,8 @@ export async function listOfferings(query: Record<string, unknown>) {
   if (query.courseId) filter.course = toObjectId(String(query.courseId), "course id");
   if (query.semesterId) filter.semester = toObjectId(String(query.semesterId), "semester id");
   if (query.teacherId) filter.teacher = toObjectId(String(query.teacherId), "teacher id");
+  if (query.batch) filter.batch = String(query.batch);
+  if (query.section) filter.section = String(query.section).toUpperCase();
   if (query.status) filter.status = query.status;
   if (query.search) filter.section = { $regex: escapeRegex(String(query.search)), $options: "i" };
   let findQuery = CourseOfferingModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit);
@@ -47,6 +49,7 @@ export async function createOffering(input: {
   courseId: string;
   semesterId: string;
   teacherId: string;
+  batch: string;
   section: string;
   capacity: number;
   deliveryMode: "in_person" | "online" | "hybrid";
@@ -69,6 +72,7 @@ export async function createOffering(input: {
     course: courseId,
     semester: semesterId,
     teacher: teacherId,
+    batch: input.batch,
     section: input.section,
     capacity: input.capacity,
     deliveryMode: input.deliveryMode,

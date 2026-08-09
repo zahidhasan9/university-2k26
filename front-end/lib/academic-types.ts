@@ -52,41 +52,48 @@ export const academicEntities: {
   label: string
   singular: string
   description: string
+  shortcut: string
 }[] = [
   {
     key: "universities",
     label: "Universities",
     singular: "University",
     description: "Institutional identity and campuses",
+    shortcut: "01",
   },
   {
     key: "faculties",
     label: "Faculties",
     singular: "Faculty",
     description: "Top-level academic divisions",
+    shortcut: "02",
   },
   {
     key: "departments",
     label: "Departments",
     singular: "Department",
     description: "Teaching and research departments",
+    shortcut: "03",
   },
   {
     key: "programs",
     label: "Programs",
     singular: "Program",
     description: "Degrees, duration, and credit plans",
+    shortcut: "04",
   },
   {
     key: "courses",
     label: "Courses",
     singular: "Course",
     description: "Curriculum and course catalog",
+    shortcut: "05",
   },
   {
     key: "semesters",
     label: "Semesters",
     singular: "Semester",
     description: "Academic terms and timelines",
+    shortcut: "06",
   },
 ]

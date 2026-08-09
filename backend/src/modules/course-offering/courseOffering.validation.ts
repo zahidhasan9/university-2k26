@@ -8,6 +8,7 @@ export const offeringCreateSchema = z.object({
     courseId: objectId,
     semesterId: objectId,
     teacherId: objectId,
+    batch: z.string().trim().min(1).max(40).default("Unassigned"),
     section: z.string().trim().min(1).max(20).regex(/^[A-Za-z0-9_-]+$/).transform((v) => v.toUpperCase()),
     capacity: z.number().int().min(1).max(1000),
     deliveryMode: z.enum(["in_person", "online", "hybrid"]).default("in_person"),
@@ -18,6 +19,8 @@ export const offeringUpdateSchema = z.object({
   body: z
     .object({
       teacherId: objectId.optional(),
+      batch: z.string().trim().min(1).max(40).optional(),
+      section: z.string().trim().min(1).max(20).regex(/^[A-Za-z0-9_-]+$/).transform((v) => v.toUpperCase()).optional(),
       capacity: z.number().int().min(1).max(1000).optional(),
       deliveryMode: z.enum(["in_person", "online", "hybrid"]).optional(),
       status: status.optional(),

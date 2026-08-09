@@ -25,4 +25,5 @@ const routineSlotSchema = new Schema(
 
 routineSlotSchema.index({ semester: 1, dayOfWeek: 1, room: 1 });
 routineSlotSchema.index({ teacher: 1, dayOfWeek: 1 });
+routineSlotSchema.index({ semester: 1, dayOfWeek: 1, startMinutes: 1, endMinutes: 1 });
 export const RoutineSlotModel = model("RoutineSlot", routineSlotSchema);

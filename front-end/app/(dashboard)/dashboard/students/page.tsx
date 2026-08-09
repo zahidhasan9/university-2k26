@@ -1,13 +1,13 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Filter, Plus, Search, Users } from "lucide-react"
+import { Plus, Users } from "lucide-react"
 
 import { PaginationLinks } from "@/components/pagination-links"
+import { StudentDirectoryFilters } from "@/components/student-directory-filters"
 import { StudentStatusBadge } from "@/components/student-status"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import {
   Table,
   TableBody,
@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { authenticatedRequest } from "@/lib/auth"
+import type { AcademicItem, AcademicList } from "@/lib/academic-types"
 import type { StudentListData } from "@/lib/student-types"
 
 export const metadata: Metadata = { title: "Students" }
@@ -31,18 +32,36 @@ export default async function StudentsPage({ searchParams }: { searchParams: Sea
   const raw = await searchParams
   const search = first(raw.search) ?? ""
   const status = first(raw.status) ?? ""
+  const departmentId = first(raw.departmentId) ?? ""
+  const programId = first(raw.programId) ?? ""
+  const batch = first(raw.batch) ?? ""
   const page = Math.max(1, Number(first(raw.page)) || 1)
   const query = new URLSearchParams({ page: String(page), limit: "10" })
   if (search) query.set("search", search)
   if (status) query.set("status", status)
+  if (departmentId) query.set("departmentId", departmentId)
+  if (programId) query.set("programId", programId)
+  if (batch) query.set("batch", batch)
 
   let result: StudentListData | null = null
+  let departments: AcademicItem[] = []
+  let programs: AcademicItem[] = []
   let error = ""
-  try {
-    result = (await authenticatedRequest<StudentListData>(`/students?${query}`)).data
-  } catch (cause) {
-    error = cause instanceof Error ? cause.message : "Students could not be loaded"
+  const [studentResult, departmentResult, programResult] = await Promise.allSettled([
+    authenticatedRequest<StudentListData>(`/students?${query}`),
+    authenticatedRequest<AcademicList>("/departments?status=active&limit=100"),
+    authenticatedRequest<AcademicList>("/programs?status=active&limit=100"),
+  ])
+  if (studentResult.status === "fulfilled") {
+    result = studentResult.value.data
+  } else {
+    error =
+      studentResult.reason instanceof Error
+        ? studentResult.reason.message
+        : "Students could not be loaded"
   }
+  if (departmentResult.status === "fulfilled") departments = departmentResult.value.data.items
+  if (programResult.status === "fulfilled") programs = programResult.value.data.items
 
   return (
     <div className="mx-auto max-w-[1600px] space-y-6">
@@ -71,38 +90,17 @@ export default async function StudentsPage({ searchParams }: { searchParams: Sea
                 : "University records"}
             </p>
           </div>
-          <form
-            className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row"
-            action="/dashboard/students"
-          >
-            <div className="relative sm:w-64">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                name="search"
-                defaultValue={search}
-                className="pl-9"
-                placeholder="Search student ID..."
-              />
-            </div>
-            <div className="relative">
-              <Filter className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <select
-                name="status"
-                defaultValue={status}
-                className="h-8 w-full rounded-lg border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring/40 sm:w-36"
-              >
-                <option value="">All statuses</option>
-                <option value="active">Active</option>
-                <option value="graduated">Graduated</option>
-                <option value="suspended">Suspended</option>
-                <option value="withdrawn">Withdrawn</option>
-                <option value="archived">Archived</option>
-              </select>
-            </div>
-            <Button type="submit" variant="secondary">
-              Apply
-            </Button>
-          </form>
+          <StudentDirectoryFilters
+            key={`${search}:${departmentId}:${programId}:${batch}:${status}`}
+            departments={departments}
+            programs={programs}
+            batches={result?.filters?.batches ?? []}
+            initialSearch={search}
+            initialDepartmentId={departmentId}
+            initialProgramId={programId}
+            initialBatch={batch}
+            initialStatus={status}
+          />
         </CardHeader>
         <CardContent className="p-0">
           {error ? (
@@ -118,6 +116,8 @@ export default async function StudentsPage({ searchParams }: { searchParams: Sea
                     <TableHead>Student</TableHead>
                     <TableHead>ID</TableHead>
                     <TableHead>Program</TableHead>
+                    <TableHead>Department</TableHead>
+                    <TableHead>Batch / Section</TableHead>
                     <TableHead>Semester</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Action</TableHead>
@@ -155,6 +155,20 @@ export default async function StudentsPage({ searchParams }: { searchParams: Sea
                             {student.program.name}
                           </p>
                         </TableCell>
+                        <TableCell>
+                          <p className="font-medium">
+                            {student.program.department?.code ?? "Unassigned"}
+                          </p>
+                          <p className="max-w-44 truncate text-xs text-muted-foreground">
+                            {student.program.department?.name ?? "No department"}
+                          </p>
+                        </TableCell>
+                        <TableCell>
+                          <p className="font-medium">{student.batch}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Section {student.section}
+                          </p>
+                        </TableCell>
                         <TableCell>Semester {student.currentSemesterNumber}</TableCell>
                         <TableCell>
                           <StudentStatusBadge status={student.status} />
@@ -185,7 +199,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Sea
               <Users className="mx-auto size-10 text-muted-foreground/50" />
               <p className="mt-3 font-medium">No students found</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Try changing the search or status filter.
+                Try changing the search, department, program, batch, or status filter.
               </p>
             </div>
           )}

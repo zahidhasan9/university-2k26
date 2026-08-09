@@ -49,6 +49,9 @@ export type Student = {
 
 export type StudentListData = {
   items: Student[]
+  filters?: {
+    batches: string[]
+  }
   pagination: {
     total: number
     page: number

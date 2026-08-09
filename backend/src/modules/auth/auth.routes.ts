@@ -12,7 +12,16 @@ const authLimiter = rateLimit({
   limit: 20,
   standardHeaders: "draft-8",
   legacyHeaders: false,
-  message: { success: false, message: "Too many authentication attempts" },
+  handler: (_req, res, _next, options) => {
+    const retryAfterSeconds = Math.ceil(options.windowMs / 1000);
+    const retryAfterMinutes = Math.ceil(retryAfterSeconds / 60);
+    return res.status(options.statusCode).json({
+      success: false,
+      message: `Too many authentication attempts. Try again in about ${retryAfterMinutes} minutes.`,
+      retryAfterSeconds,
+      retryAfterMinutes,
+    });
+  },
 });
 
 authRouter.post("/register", authLimiter, validate(registerSchema), asyncHandler(register));

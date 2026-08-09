@@ -38,4 +38,5 @@ const studentSchema = new Schema(
 );
 
 studentSchema.index({ program: 1, status: 1 });
+studentSchema.index({ program: 1, batch: 1, status: 1 });
 export const StudentModel = model("Student", studentSchema);

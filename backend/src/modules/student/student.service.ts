@@ -11,10 +11,24 @@ import { StudentModel } from "./student.model";
 export async function listStudents(query: Record<string, unknown>) {
   const { page, limit, skip } = getPagination(query);
   const filter: Record<string, unknown> = {};
-  if (query.programId) filter.program = toObjectId(String(query.programId), "program id");
+  if (query.programId) {
+    filter.program = toObjectId(String(query.programId), "program id");
+  } else if (query.departmentId) {
+    const programIds = await ProgramModel.distinct("_id", {
+      department: toObjectId(String(query.departmentId), "department id"),
+    });
+    filter.program = { $in: programIds };
+  }
+  if (query.batch) filter.batch = String(query.batch);
   if (query.status) filter.status = query.status;
-  if (query.search) filter.studentId = { $regex: escapeRegex(String(query.search)), $options: "i" };
-  const [items, total] = await Promise.all([
+  if (query.search) {
+    const search = { $regex: escapeRegex(String(query.search).trim()), $options: "i" };
+    const matchingUserIds = await UserModel.distinct("_id", {
+      $or: [{ firstName: search }, { lastName: search }, { email: search }],
+    });
+    filter.$or = [{ studentId: search }, { user: { $in: matchingUserIds } }];
+  }
+  const [items, total, batches] = await Promise.all([
     StudentModel.find(filter)
       .populate("user", "firstName lastName email status")
       .populate({
@@ -28,8 +42,13 @@ export async function listStudents(query: Record<string, unknown>) {
       .limit(limit)
       .lean(),
     StudentModel.countDocuments(filter),
+    StudentModel.distinct("batch", { batch: { $ne: "" } }),
   ]);
-  return { items, pagination: paginationMeta(total, page, limit) };
+  return {
+    items,
+    filters: { batches: batches.sort((a, b) => a.localeCompare(b)) },
+    pagination: paginationMeta(total, page, limit),
+  };
 }
 
 export async function getStudent(id: string) {
