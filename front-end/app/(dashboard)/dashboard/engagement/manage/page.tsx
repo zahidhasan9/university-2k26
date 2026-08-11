@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import { AlumniVerify, ComplaintAction } from "@/components/advanced-actions"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -32,8 +33,8 @@ export default async function Page() {
     error = ""
   try {
     const d = await Promise.all([
-      authenticatedRequest<{ items: Complaint[] }>("/engagement/complaints?limit=100"),
-      authenticatedRequest<{ alumni: Alumni[] }>("/engagement/alumni"),
+      authenticatedRequest<{ items: Complaint[] }>(withQuery(API_ENDPOINTS.engagement.complaints, { limit: 100 })),
+      authenticatedRequest<{ alumni: Alumni[] }>(API_ENDPOINTS.engagement.alumni),
     ])
     complaints = d[0].data.items
     alumni = d[1].data.alumni

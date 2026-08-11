@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import type { Metadata } from "next"
 
 import { StudentForm } from "@/components/student-form"
@@ -18,8 +19,8 @@ type SemesterOption = {
 
 export default async function NewStudentPage() {
   const [programs, semesters] = await Promise.all([
-    authenticatedRequest<List<ProgramOption>>("/programs?status=active&limit=100"),
-    authenticatedRequest<List<SemesterOption>>("/semesters?limit=100"),
+    authenticatedRequest<List<ProgramOption>>(withQuery(API_ENDPOINTS.academics.programs, { status: "active", limit: 100 })),
+    authenticatedRequest<List<SemesterOption>>(withQuery(API_ENDPOINTS.academics.semesters, { limit: 100 })),
   ])
 
   return (

@@ -1,5 +1,7 @@
 "use client"
 
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
+
 import { apiResponseRequest } from "@/lib/http-client"
 
 import { FormEvent, useState } from "react"
@@ -89,7 +91,7 @@ export function TeacherForm({
     setSaving(true)
     setError("")
     try {
-      const response = await apiResponseRequest(`/teachers${editing ? `/${teacher?._id}` : ""}`, {
+      const response = await apiResponseRequest(editing && teacher ? API_ENDPOINTS.teachers.detail(teacher._id) : API_ENDPOINTS.teachers.create, {
         method: editing ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

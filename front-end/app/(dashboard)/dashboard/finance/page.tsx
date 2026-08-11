@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { authenticatedRequest } from "@/lib/auth"
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 type Student = { studentId: string; user: { firstName: string; lastName: string; email: string } }
 type Invoice = {
   _id: string
@@ -73,10 +74,10 @@ export default async function FinancePage() {
     error = ""
   try {
     const responses = await Promise.all([
-      authenticatedRequest<{ items: Invoice[] }>("/finance/invoices?limit=10"),
-      authenticatedRequest<{ items: Payment[] }>("/finance/payments?limit=10"),
-      authenticatedRequest<{ items: Expense[] }>("/finance/expenses?limit=10"),
-      authenticatedRequest<Summary>("/finance/reports/summary"),
+      authenticatedRequest<{ items: Invoice[] }>(withQuery(API_ENDPOINTS.finance.invoices, { limit: 10 })),
+      authenticatedRequest<{ items: Payment[] }>(withQuery(API_ENDPOINTS.finance.payments, { limit: 10 })),
+      authenticatedRequest<{ items: Expense[] }>(withQuery(API_ENDPOINTS.finance.expenses, { limit: 10 })),
+      authenticatedRequest<Summary>(API_ENDPOINTS.finance.summary),
     ])
     invoices = responses[0].data.items
     payments = responses[1].data.items
@@ -99,6 +100,12 @@ export default async function FinancePage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" render={<Link href="/dashboard/finance/fee-structures/new" />}>
+            <Plus /> Fee structure
+          </Button>
+          <Button variant="outline" render={<Link href="/dashboard/finance/waivers/new" />}>
+            <Plus /> Student waiver
+          </Button>
           <Button variant="outline" render={<Link href="/dashboard/finance/expenses/new" />}>
             <Plus /> Expense
           </Button>

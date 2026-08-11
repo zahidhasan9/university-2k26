@@ -1,5 +1,7 @@
 "use client"
 
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
+
 import { apiResponseRequest } from "@/lib/http-client"
 
 import { FormEvent, useState } from "react"
@@ -124,6 +126,7 @@ export function AcademicForm({
         degreeType: String(form.get("degreeType")),
         durationYears: Number(form.get("durationYears")),
         totalCredits: Number(form.get("totalCredits")),
+        totalSemesters: Number(form.get("totalSemesters")),
       }
     else if (entity === "courses")
       payload = {
@@ -132,6 +135,9 @@ export function AcademicForm({
         description: base.description,
         programId: String(form.get("programId")),
         credits: Number(form.get("credits")),
+        semesterNumber: Number(form.get("semesterNumber")),
+        theoryHoursPerWeek: Number(form.get("theoryHoursPerWeek")),
+        labHoursPerWeek: Number(form.get("labHoursPerWeek")),
         courseType: String(form.get("courseType")),
         ...(!editing ? { prerequisiteIds: [] } : {}),
       }
@@ -152,7 +158,7 @@ export function AcademicForm({
     setSaving(true)
     setError("")
     try {
-      const response = await apiResponseRequest(`/${entity}${editing ? `/${item?._id}` : ""}`, {
+      const response = await apiResponseRequest(editing && item ? API_ENDPOINTS.academics.detail(entity, item._id) : API_ENDPOINTS.academics[entity], {
         method: editing ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -311,6 +317,9 @@ export function AcademicForm({
                 defaultValue={item?.totalCredits}
               />
             </Field>
+            <Field label="Total semesters" name="totalSemesters">
+              <Input id="totalSemesters" name="totalSemesters" type="number" min={1} max={30} required defaultValue={item?.totalSemesters ?? 8} />
+            </Field>
           </>
         )}
         {entity === "courses" && (
@@ -341,6 +350,15 @@ export function AcademicForm({
                   </option>
                 ))}
               </select>
+            </Field>
+            <Field label="Curriculum semester" name="semesterNumber">
+              <Input id="semesterNumber" name="semesterNumber" type="number" min={1} max={30} required defaultValue={item?.semesterNumber ?? 1} />
+            </Field>
+            <Field label="Theory hours / week" name="theoryHoursPerWeek">
+              <Input id="theoryHoursPerWeek" name="theoryHoursPerWeek" type="number" min={0} max={40} step={0.5} required defaultValue={item?.theoryHoursPerWeek ?? 0} />
+            </Field>
+            <Field label="Lab hours / week" name="labHoursPerWeek">
+              <Input id="labHoursPerWeek" name="labHoursPerWeek" type="number" min={0} max={40} step={0.5} required defaultValue={item?.labHoursPerWeek ?? 0} />
             </Field>
           </>
         )}

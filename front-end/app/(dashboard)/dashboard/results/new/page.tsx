@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { ExamForm } from "@/components/exam-form"
@@ -12,7 +13,7 @@ type Offering = {
 }
 export default async function NewExamPage() {
   const offerings = (
-    await authenticatedRequest<{ items: Offering[] }>("/course-offerings?limit=100")
+    await authenticatedRequest<{ items: Offering[] }>(withQuery(API_ENDPOINTS.academics.offerings, { limit: 100 }))
   ).data.items
   return (
     <div className="mx-auto max-w-3xl space-y-6">

@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { Filter, Plus, Search, UsersRound } from "lucide-react"
@@ -39,7 +40,7 @@ export default async function FacultyPage({
   let result: TeacherList | null = null,
     error = ""
   try {
-    result = (await authenticatedRequest<TeacherList>(`/teachers?${query}`)).data
+    result = (await authenticatedRequest<TeacherList>(`${API_ENDPOINTS.teachers.list}?${query}`)).data
   } catch (cause) {
     error = cause instanceof Error ? cause.message : "Teachers could not be loaded"
   }

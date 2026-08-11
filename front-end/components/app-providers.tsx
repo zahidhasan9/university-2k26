@@ -5,6 +5,7 @@ import { useState } from "react"
 import { Provider as ReduxProvider } from "react-redux"
 
 import { makeStore } from "@/store"
+import { CACHE_POLICY } from "@/lib/query-policy"
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -12,7 +13,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60_000,
+            ...CACHE_POLICY.operational,
             refetchOnWindowFocus: false,
             retry: 1,
           },

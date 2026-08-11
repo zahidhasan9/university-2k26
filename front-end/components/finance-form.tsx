@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { apiResponseRequest } from "@/lib/http-client"
 import { FormEvent, useState } from "react"
@@ -7,6 +7,8 @@ import { LoaderCircle, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { RemoteSelect } from "@/components/remote-select"
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 type Student = { _id: string; studentId: string; user: { firstName: string; lastName: string } }
 type Semester = { _id: string; name: string; academicYear: string }
 type Invoice = {
@@ -77,15 +79,13 @@ function BaseForm({
   )
 }
 export function InvoiceForm({
-  students,
   semesters,
 }: {
-  students: Student[]
   semesters: Semester[]
 }) {
   return (
     <BaseForm
-      endpoint="/finance/invoices"
+      endpoint={API_ENDPOINTS.finance.invoices}
       label="Issue invoice"
       payload={(form) => ({
         studentId: form.get("studentId"),
@@ -99,16 +99,15 @@ export function InvoiceForm({
       })}
     >
       <Field label="Student" name="studentId">
-        <select id="studentId" name="studentId" className={selectClass} required defaultValue="">
-          <option value="" disabled>
-            Select student
-          </option>
-          {students.map((item) => (
-            <option key={item._id} value={item._id}>
-              {item.studentId} · {item.user.firstName} {item.user.lastName}
-            </option>
-          ))}
-        </select>
+        <RemoteSelect
+          name="studentId"
+          endpoint={API_ENDPOINTS.students.list}
+          placeholder="Search by ID, name, or email"
+          mapOption={(item) => {
+            const user = item.user as Student["user"]
+            return { _id: String(item._id), label: `${String(item.studentId)} · ${user.firstName} ${user.lastName}` }
+          }}
+        />
       </Field>
       <Field label="Semester" name="semesterId">
         <select id="semesterId" name="semesterId" className={selectClass} required defaultValue="">
@@ -117,7 +116,7 @@ export function InvoiceForm({
           </option>
           {semesters.map((item) => (
             <option key={item._id} value={item._id}>
-              {item.name} · {item.academicYear}
+              {item.name} Â· {item.academicYear}
             </option>
           ))}
         </select>
@@ -137,7 +136,7 @@ export function InvoiceForm({
 export function PaymentForm({ invoices }: { invoices: Invoice[] }) {
   return (
     <BaseForm
-      endpoint="/finance/payments"
+      endpoint={API_ENDPOINTS.finance.payments}
       label="Collect payment"
       payload={(form) => ({
         invoiceId: form.get("invoiceId"),
@@ -154,7 +153,7 @@ export function PaymentForm({ invoices }: { invoices: Invoice[] }) {
           </option>
           {invoices.map((item) => (
             <option key={item._id} value={item._id}>
-              {item.invoiceNumber} · {item.student.studentId} · Due{" "}
+              {item.invoiceNumber} Â· {item.student.studentId} Â· Due{" "}
               {(item.dueMinor / 100).toFixed(2)} {item.currency}
             </option>
           ))}
@@ -185,7 +184,7 @@ export function PaymentForm({ invoices }: { invoices: Invoice[] }) {
 export function ExpenseForm() {
   return (
     <BaseForm
-      endpoint="/finance/expenses"
+      endpoint={API_ENDPOINTS.finance.expenses}
       label="Create expense"
       payload={(form) => ({
         category: form.get("category"),

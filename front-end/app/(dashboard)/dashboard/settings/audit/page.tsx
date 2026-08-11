@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import { CheckCircle2, History, ShieldX } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -37,8 +38,8 @@ export default async function Page() {
     error = ""
   try {
     const data = await Promise.all([
-      authenticatedRequest<{ items: Audit[] }>("/audit-logs?limit=50"),
-      authenticatedRequest<{ items: Login[] }>("/audit-logs/login-history?limit=50"),
+      authenticatedRequest<{ items: Audit[] }>(withQuery(API_ENDPOINTS.audit.events, { limit: 50 })),
+      authenticatedRequest<{ items: Login[] }>(withQuery(API_ENDPOINTS.audit.logins, { limit: 50 })),
     ])
     logs = data[0].data.items
     logins = data[1].data.items

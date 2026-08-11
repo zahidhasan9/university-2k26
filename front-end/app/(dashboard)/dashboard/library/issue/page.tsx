@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import { IssueForm } from "@/components/library-forms"
 import { LibraryFormShell } from "@/components/library-form-shell"
 import { authenticatedRequest } from "@/lib/auth"
@@ -5,8 +6,8 @@ type Copy = { _id: string; accessionNumber: string; book: { title: string } }
 type User = { _id: string; firstName: string; lastName: string; email: string }
 export default async function IssueBookPage() {
   const [copies, users] = await Promise.all([
-    authenticatedRequest<{ copies: Copy[] }>("/library/copies?status=available"),
-    authenticatedRequest<{ items: User[] }>("/users?status=active&limit=100"),
+    authenticatedRequest<{ copies: Copy[] }>(withQuery(API_ENDPOINTS.library.copies, { status: "available" })),
+    authenticatedRequest<{ items: User[] }>(withQuery(API_ENDPOINTS.users.list, { status: "active", limit: 100 })),
   ])
   return (
     <LibraryFormShell

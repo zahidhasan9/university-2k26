@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { CalendarCheck2, Plus } from "lucide-react"
 import { AttendanceActions } from "@/components/attendance-actions"
@@ -43,7 +44,7 @@ export default async function AttendancePage({
   let data: Data | null = null,
     error = ""
   try {
-    data = (await authenticatedRequest<Data>(`/attendance?${query}`)).data
+    data = (await authenticatedRequest<Data>(`${API_ENDPOINTS.attendance.sessions}?${query}`)).data
   } catch (cause) {
     error = cause instanceof Error ? cause.message : "Attendance unavailable"
   }

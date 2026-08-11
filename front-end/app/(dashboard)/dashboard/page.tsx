@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { authenticatedRequest } from "@/lib/auth"
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 
 export const metadata: Metadata = { title: "Dashboard" }
 
@@ -68,7 +69,7 @@ function money(amountMinor: number, currency = "BDT") {
 
 async function dashboardStats() {
   try {
-    const { data } = await authenticatedRequest<AdminAnalytics>("/analytics/admin")
+    const { data } = await authenticatedRequest<AdminAnalytics>(API_ENDPOINTS.analytics.admin)
     return { connected: true as const, data: data.dashboard }
   } catch {
     return { connected: false as const, data: null }
@@ -98,7 +99,7 @@ const panelClass =
 export default async function DashboardPage() {
   const [stats, currentUserResponse] = await Promise.all([
     dashboardStats(),
-    authenticatedRequest<{ user: { firstName: string } }>("/auth/me"),
+    authenticatedRequest<{ user: { firstName: string } }>(API_ENDPOINTS.auth.me),
   ])
   const firstName = currentUserResponse.data.user.firstName
   const dashboard = stats.data

@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import { ThesisAction } from "@/components/advanced-actions"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,7 +23,7 @@ export default async function Page() {
   let theses: Thesis[] = [],
     error = ""
   try {
-    theses = (await authenticatedRequest<{ theses: Thesis[] }>("/research/theses")).data.theses
+    theses = (await authenticatedRequest<{ theses: Thesis[] }>(API_ENDPOINTS.research.theses)).data.theses
   } catch (c) {
     error = c instanceof Error ? c.message : "Thesis queue unavailable"
   }

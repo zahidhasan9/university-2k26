@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { UserStatusAction } from "@/components/admin-actions"
@@ -27,7 +28,7 @@ export default async function Page() {
   let users: User[] = [],
     error = ""
   try {
-    users = (await authenticatedRequest<{ items: User[] }>("/users?limit=100")).data.items
+    users = (await authenticatedRequest<{ items: User[] }>(withQuery(API_ENDPOINTS.users.list, { limit: 100 }))).data.items
   } catch (cause) {
     error = cause instanceof Error ? cause.message : "Users unavailable"
   }

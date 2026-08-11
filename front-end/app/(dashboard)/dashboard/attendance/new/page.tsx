@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { AttendanceSessionForm } from "@/components/attendance-session-form"
@@ -7,7 +8,7 @@ import { authenticatedRequest } from "@/lib/auth"
 type Offering = { _id: string; section: string; course: { code: string; title: string } }
 export default async function NewAttendancePage() {
   const data = (
-    await authenticatedRequest<{ items: Offering[] }>("/course-offerings?status=ongoing&limit=100")
+    await authenticatedRequest<{ items: Offering[] }>(withQuery(API_ENDPOINTS.academics.offerings, { status: "ongoing", limit: 100 }))
   ).data
   return (
     <div className="mx-auto max-w-2xl space-y-6">

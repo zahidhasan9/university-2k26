@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -19,8 +20,8 @@ export default async function Page() {
     error = ""
   try {
     const data = await Promise.all([
-      authenticatedRequest<{ items: Role[] }>("/roles?limit=100"),
-      authenticatedRequest<{ items: Permission[] }>("/permissions?limit=250"),
+      authenticatedRequest<{ items: Role[] }>(withQuery(API_ENDPOINTS.roles.list, { limit: 100 })),
+      authenticatedRequest<{ items: Permission[] }>(withQuery(API_ENDPOINTS.permissions.list, { limit: 250 })),
     ])
     roles = data[0].data.items
     permissions = data[1].data.items

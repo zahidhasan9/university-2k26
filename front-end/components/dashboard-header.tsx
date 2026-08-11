@@ -22,8 +22,9 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import { apiRequest } from "@/lib/http-client"
+import { CACHE_POLICY, QUERY_KEYS } from "@/lib/query-policy"
 
-type CurrentUser = {
+export type CurrentUser = {
   firstName: string
   lastName: string
   email: string
@@ -43,29 +44,33 @@ type HeaderNotification = {
 export function DashboardHeader({
   sidebarCollapsed,
   onSidebarToggle,
+  initialUser,
 }: {
   sidebarCollapsed: boolean
   onSidebarToggle: () => void
+  initialUser?: CurrentUser
 }) {
   const queryClient = useQueryClient()
   const { data } = useQuery({
-    queryKey: ["auth", "me"],
-    queryFn: () => apiRequest<{ user: CurrentUser }>("/auth/me"),
+    queryKey: QUERY_KEYS.auth.me,
+    queryFn: () => apiRequest<{ user: CurrentUser }>(API_ENDPOINTS.auth.me),
+    initialData: initialUser ? { success: true, message: "Current user", data: { user: initialUser } } : undefined,
+    ...CACHE_POLICY.identity,
   })
   const { data: notificationData } = useQuery({
-    queryKey: ["notifications", "header"],
+    queryKey: QUERY_KEYS.notifications.header,
     queryFn: () =>
       apiRequest<{ items: HeaderNotification[]; unreadCount: number }>(
         `${API_ENDPOINTS.communication.notifications}?limit=6`,
       ),
-    refetchInterval: 60_000,
+    ...CACHE_POLICY.realtime,
   })
   const notifications = notificationData?.data.items ?? []
   const unreadCount = notificationData?.data.unreadCount ?? 0
   const readNotification = useMutation({
     mutationFn: (id: string) =>
       apiRequest(API_ENDPOINTS.communication.readNotification(id), { method: "PATCH" }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notifications.all }),
   })
   const user = data?.data.user
   const fullName = user ? `${user.firstName} ${user.lastName}` : "My account"

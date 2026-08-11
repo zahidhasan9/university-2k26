@@ -1,5 +1,7 @@
 "use client"
 
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
+
 import { apiResponseRequest } from "@/lib/http-client"
 import { FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -17,7 +19,7 @@ export function AttendanceSessionForm({ offerings }: { offerings: Offering[] }) 
     const form = new FormData(event.currentTarget)
     setLoading(true)
     setError("")
-    const response = await apiResponseRequest("/attendance", {
+    const response = await apiResponseRequest(API_ENDPOINTS.attendance.sessions, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

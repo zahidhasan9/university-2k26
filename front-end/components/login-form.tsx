@@ -1,5 +1,7 @@
 "use client"
 
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
+
 import { apiResponseRequest } from "@/lib/http-client"
 
 import { FormEvent, useState } from "react"
@@ -22,7 +24,7 @@ export function LoginForm() {
     setLoading(true)
     setError("")
     try {
-      const response = await apiResponseRequest("/api/auth/login", {
+      const response = await apiResponseRequest(API_ENDPOINTS.auth.proxyLogin, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

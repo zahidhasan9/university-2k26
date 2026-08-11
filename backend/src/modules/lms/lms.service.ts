@@ -36,6 +36,40 @@ export async function lmsAccess(
   throw new AppError(403, "You do not have access to this LMS course");
 }
 
+export async function workspace(userId: Types.ObjectId, manageAll: boolean, requestedOfferingId?: string) {
+  let accessibleIds: Types.ObjectId[];
+  if (manageAll) {
+    accessibleIds = (await CourseOfferingModel.find({ status: { $in: ["open", "ongoing"] } }).select("_id").lean()).map((item) => item._id);
+  } else {
+    const [teacher, student] = await Promise.all([
+      TeacherModel.findOne({ user: userId, status: "active" }).select("_id").lean(),
+      StudentModel.findOne({ user: userId, status: "active" }).select("_id").lean(),
+    ]);
+    const [teacherOfferings, enrollments] = await Promise.all([
+      teacher ? CourseOfferingModel.find({ teacher: teacher._id }).select("_id").lean() : [],
+      student ? EnrollmentModel.find({ student: student._id, status: { $in: ["enrolled", "completed", "failed"] } }).select("offering").lean() : [],
+    ]);
+    accessibleIds = [...new Map([...teacherOfferings.map((item) => [item._id.toString(), item._id] as const), ...enrollments.map((item) => [item.offering.toString(), item.offering] as const)]).values()];
+  }
+  const offerings = await CourseOfferingModel.find({ _id: { $in: accessibleIds } })
+    .populate("course", "code title credits")
+    .populate("semester", "name code academicYear status")
+    .sort({ createdAt: -1 })
+    .lean();
+  const selected = requestedOfferingId
+    ? offerings.find((item) => item._id.toString() === toObjectId(requestedOfferingId, "offering id").toString())
+    : offerings[0];
+  if (requestedOfferingId && !selected) throw new AppError(403, "You do not have access to this LMS course");
+  if (!selected) return { offerings, selectedOffering: null, materials: [], assignments: [], posts: [] };
+  const manager = manageAll || Boolean(await TeacherModel.exists({ user: userId, _id: selected.teacher }));
+  const [materials, assignments, posts] = await Promise.all([
+    CourseMaterialModel.find({ offering: selected._id, ...(!manager ? { published: true } : {}) }).sort({ order: 1, createdAt: 1 }).lean(),
+    LmsAssignmentModel.find({ offering: selected._id, ...(!manager ? { published: true } : {}) }).sort({ dueAt: 1 }).lean(),
+    DiscussionPostModel.find({ offering: selected._id, status: "visible", parent: { $exists: false } }).populate("author", "firstName lastName email").sort({ createdAt: -1 }).lean(),
+  ]);
+  return { offerings, selectedOffering: selected, materials, assignments, posts };
+}
+
 export async function listMaterials(offeringIdValue: string, userId: Types.ObjectId, manageAll: boolean) {
   const offeringId = toObjectId(offeringIdValue, "offering id");
   const access = await lmsAccess(offeringId, userId, manageAll);

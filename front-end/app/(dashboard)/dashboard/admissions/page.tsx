@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { ClipboardList, Filter, Search } from "lucide-react"
@@ -41,7 +42,7 @@ export default async function AdmissionsPage({
   let result: AdmissionListData | null = null
   let error = ""
   try {
-    result = (await authenticatedRequest<AdmissionListData>(`/admissions?${query}`)).data
+    result = (await authenticatedRequest<AdmissionListData>(`${API_ENDPOINTS.admissions.list}?${query}`)).data
   } catch (cause) {
     error = cause instanceof Error ? cause.message : "Applications could not be loaded"
   }

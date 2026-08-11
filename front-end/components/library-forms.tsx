@@ -1,6 +1,7 @@
 "use client"
 
 import { apiResponseRequest } from "@/lib/http-client"
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import { FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
 import { LoaderCircle, Save } from "lucide-react"
@@ -71,7 +72,7 @@ function FormBase({
 export function BookForm() {
   return (
     <FormBase
-      endpoint="/library/books"
+      endpoint={API_ENDPOINTS.library.books}
       label="Create book"
       payload={(form) => ({
         isbn: String(form.get("isbn") ?? "").trim() || undefined,
@@ -137,7 +138,7 @@ type Book = { _id: string; title: string; authors: string[]; isbn?: string }
 export function CopyForm({ books }: { books: Book[] }) {
   return (
     <FormBase
-      endpoint="/library/copies"
+      endpoint={API_ENDPOINTS.library.copies}
       label="Register copy"
       payload={(form) => ({
         bookId: form.get("bookId"),
@@ -184,7 +185,7 @@ type User = { _id: string; firstName: string; lastName: string; email: string }
 export function IssueForm({ copies, users }: { copies: Copy[]; users: User[] }) {
   return (
     <FormBase
-      endpoint="/library/transactions/issue"
+      endpoint={API_ENDPOINTS.library.issue}
       label="Issue book"
       payload={(form) => ({
         copyId: form.get("copyId"),
@@ -244,7 +245,7 @@ export function PolicyForm({
 }) {
   return (
     <FormBase
-      endpoint="/library/policies"
+      endpoint={API_ENDPOINTS.library.policies}
       method="PUT"
       label={`Save ${borrowerType} policy`}
       payload={(form) => ({

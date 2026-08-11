@@ -1,6 +1,7 @@
 "use client"
 
 import { apiResponseRequest } from "@/lib/http-client"
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import { FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
 import { LoaderCircle, Save } from "lucide-react"
@@ -36,7 +37,7 @@ export function FeeStructureForm({
       })
       .filter(Boolean)
     setLoading(true)
-    const response = await apiResponseRequest("/finance/fee-structures", {
+    const response = await apiResponseRequest(API_ENDPOINTS.finance.structures, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -44,6 +45,7 @@ export function FeeStructureForm({
         semesterId: form.get("semesterId"),
         name: form.get("name"),
         currency: form.get("currency"),
+        perCreditFeeMinor: Math.round(Number(form.get("perCreditFee")) * 100),
         items,
       }),
     })
@@ -91,13 +93,18 @@ export function FeeStructureForm({
         <Input name="currency" defaultValue="BDT" minLength={3} maxLength={3} required />
       </div>
       <div className="space-y-2">
+        <Label>Fee per credit</Label>
+        <Input name="perCreditFee" type="number" min={0} step={0.01} required placeholder="2500" />
+        <p className="text-xs text-muted-foreground">Tuition is calculated from the student&apos;s registered credits.</p>
+      </div>
+      <div className="space-y-2">
         <Label>Fee items</Label>
         <textarea
           name="items"
           required
           className="min-h-40 w-full rounded-lg border p-3 font-mono text-sm"
           placeholder={
-            "TUITION | Tuition fee | 25000 | yes\nLAB | Laboratory fee | 3000 | optional"
+            "REGISTRATION | Registration fee | 3000 | yes\nLAB | Laboratory fee | 3000 | optional"
           }
         />
         <p className="text-xs text-muted-foreground">

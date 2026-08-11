@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 
@@ -15,8 +16,8 @@ export default async function EditTeacherPage({ params }: { params: Promise<{ id
   let departments: AcademicList
   try {
     const responses = await Promise.all([
-      authenticatedRequest<{ teacher: Teacher }>(`/teachers/${id}`),
-      authenticatedRequest<AcademicList>("/departments?status=active&limit=100"),
+      authenticatedRequest<{ teacher: Teacher }>(API_ENDPOINTS.teachers.detail(id)),
+      authenticatedRequest<AcademicList>(withQuery(API_ENDPOINTS.academics.departments, { status: "active", limit: 100 })),
     ])
     teacher = responses[0].data.teacher
     departments = responses[1].data

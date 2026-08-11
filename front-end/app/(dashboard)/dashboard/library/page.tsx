@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import { BookCopy, BookOpen, LibraryBig, Repeat2 } from "lucide-react"
 import { ReturnBook } from "@/components/library-actions"
 import { Badge } from "@/components/ui/badge"
@@ -61,10 +62,10 @@ export default async function LibraryPage() {
     error = ""
   try {
     const responses = await Promise.all([
-      authenticatedRequest<{ items: Book[] }>("/library/books?limit=12"),
-      authenticatedRequest<{ copies: Copy[] }>("/library/copies"),
-      authenticatedRequest<{ items: Transaction[] }>("/library/transactions?limit=12"),
-      authenticatedRequest<{ policies: Policy[] }>("/library/policies"),
+      authenticatedRequest<{ items: Book[] }>(withQuery(API_ENDPOINTS.library.books, { limit: 12 })),
+      authenticatedRequest<{ copies: Copy[] }>(API_ENDPOINTS.library.copies),
+      authenticatedRequest<{ items: Transaction[] }>(withQuery(API_ENDPOINTS.library.transactions, { limit: 12 })),
+      authenticatedRequest<{ policies: Policy[] }>(API_ENDPOINTS.library.policies),
     ])
     books = responses[0].data.items
     copies = responses[1].data.copies

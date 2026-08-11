@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { ArrowLeft, ClipboardList } from "lucide-react"
 import { LeaveDecision } from "@/components/leave-decision"
@@ -41,7 +42,7 @@ export default async function LeavesPage({
   let leaves: Leave[] = [],
     error = ""
   try {
-    leaves = (await authenticatedRequest<{ leaves: Leave[] }>(`/hr/leaves${query}`)).data.leaves
+    leaves = (await authenticatedRequest<{ leaves: Leave[] }>(`${API_ENDPOINTS.hr.leaves}${query}`)).data.leaves
   } catch (cause) {
     error = cause instanceof Error ? cause.message : "Leave requests unavailable"
   }

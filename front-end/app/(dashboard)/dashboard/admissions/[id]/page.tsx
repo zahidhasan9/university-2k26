@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import type { Metadata } from "next"
 import Link from "next/link"
 import {
@@ -31,7 +32,7 @@ export default async function AdmissionDetailsPage({
   const { id } = await params
   let application: Admission
   try {
-    application = (await authenticatedRequest<{ application: Admission }>(`/admissions/${id}`)).data
+    application = (await authenticatedRequest<{ application: Admission }>(API_ENDPOINTS.admissions.detail(id))).data
       .application
   } catch (error) {
     if (error instanceof Error && error.message === "Admission application not found") notFound()

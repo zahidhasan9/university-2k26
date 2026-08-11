@@ -11,6 +11,22 @@ function auth(req: Request) {
 async function audit(req: Request, action: string, resource: string, resourceId: string) {
   await writeAuditLog(req, { actor: auth(req).userId, action, resource, resourceId });
 }
+export async function waivers(req: Request, res: Response): Promise<Response> {
+  return sendSuccess(res, 200, "Student waivers retrieved", {
+    waivers: await service.listWaivers(req.query),
+  });
+}
+export async function createWaiver(req: Request, res: Response): Promise<Response> {
+  const waiver = await service.createWaiver(auth(req).userId, req.body);
+  await audit(req, "finance.waiver_create", "student_waiver", waiver._id.toString());
+  return sendSuccess(res, 201, "Student waiver created", { waiver });
+}
+export async function updateWaiver(req: Request, res: Response): Promise<Response> {
+  const id = req.params.id as string;
+  const waiver = await service.updateWaiver(id, req.body.status);
+  await audit(req, "finance.waiver_update", "student_waiver", id);
+  return sendSuccess(res, 200, "Student waiver updated", { waiver });
+}
 
 export async function feeStructures(req: Request, res: Response): Promise<Response> {
   return sendSuccess(res, 200, "Fee structures retrieved", {

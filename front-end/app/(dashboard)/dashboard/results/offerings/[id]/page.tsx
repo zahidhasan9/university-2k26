@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { ArrowLeft, Award } from "lucide-react"
 import { ResultActions } from "@/components/result-actions"
@@ -24,7 +25,7 @@ type Result = {
 }
 export default async function OfferingResultsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const data = (await authenticatedRequest<{ results: Result[] }>(`/results/offerings/${id}`)).data
+  const data = (await authenticatedRequest<{ results: Result[] }>(API_ENDPOINTS.results.offering(id))).data
   const hasDraft = data.results.some((result) => result.status === "draft")
   return (
     <div className="mx-auto max-w-6xl space-y-6">

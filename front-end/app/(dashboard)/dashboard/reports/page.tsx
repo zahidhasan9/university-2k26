@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import Link from "next/link"
 import {
   Activity,
@@ -59,8 +60,8 @@ export default async function ReportsPage({ searchParams }: { searchParams: Sear
   let studentError = ""
 
   const [departmentResult, studentResult] = await Promise.allSettled([
-    authenticatedRequest<{ departments: Department[] }>("/analytics/departments"),
-    authenticatedRequest<StudentListData>(`/students?${studentQuery}`),
+    authenticatedRequest<{ departments: Department[] }>(API_ENDPOINTS.analytics.departments),
+    authenticatedRequest<StudentListData>(`${API_ENDPOINTS.students.list}?${studentQuery}`),
   ])
   if (departmentResult.status === "fulfilled") {
     departments = departmentResult.value.data.departments

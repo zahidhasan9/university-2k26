@@ -18,6 +18,9 @@ const courseSchema = new Schema(
     title: { type: String, required: true, trim: true, maxlength: 180 },
     description: { type: String, trim: true, maxlength: 2000 },
     credits: { type: Number, required: true, min: 0, max: 20 },
+    semesterNumber: { type: Number, required: true, min: 1, max: 30, default: 1, index: true },
+    theoryHoursPerWeek: { type: Number, required: true, min: 0, max: 40, default: 0 },
+    labHoursPerWeek: { type: Number, required: true, min: 0, max: 40, default: 0 },
     courseType: {
       type: String,
       enum: ["core", "elective", "general", "lab", "thesis"],
@@ -37,4 +40,5 @@ const courseSchema = new Schema(
 
 courseSchema.index({ program: 1, code: 1 }, { unique: true });
 courseSchema.index({ program: 1, title: 1 });
+courseSchema.index({ program: 1, semesterNumber: 1, status: 1 });
 export const CourseModel = model("Course", courseSchema);

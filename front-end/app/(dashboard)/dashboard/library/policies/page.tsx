@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import { PolicyForm } from "@/components/library-forms"
 import { LibraryFormShell } from "@/components/library-form-shell"
 import { authenticatedRequest } from "@/lib/auth"
@@ -9,7 +10,7 @@ type Policy = {
   currency: string
 }
 export default async function LibraryPoliciesPage() {
-  const policies = (await authenticatedRequest<{ policies: Policy[] }>("/library/policies")).data
+  const policies = (await authenticatedRequest<{ policies: Policy[] }>(API_ENDPOINTS.library.policies)).data
     .policies
   return (
     <LibraryFormShell

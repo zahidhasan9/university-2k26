@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { AlertTriangle, ArrowDownToLine, ArrowUpFromLine, Boxes, Plus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -44,8 +45,8 @@ export default async function InventoryPage() {
     error = ""
   try {
     const data = await Promise.all([
-      authenticatedRequest<{ items: Item[] }>("/inventory/items?limit=100"),
-      authenticatedRequest<{ items: Transaction[] }>("/inventory/transactions?limit=20"),
+      authenticatedRequest<{ items: Item[] }>(withQuery(API_ENDPOINTS.inventory.items, { limit: 100 })),
+      authenticatedRequest<{ items: Transaction[] }>(withQuery(API_ENDPOINTS.inventory.transactions, { limit: 20 })),
     ])
     items = data[0].data.items
     transactions = data[1].data.items

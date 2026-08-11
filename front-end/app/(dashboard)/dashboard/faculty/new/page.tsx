@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import type { Metadata } from "next"
 
 import { AcademicFormShell } from "@/components/academic-form-shell"
@@ -10,8 +11,8 @@ type Users = { items: { _id: string; firstName: string; lastName: string; email:
 
 export default async function NewTeacherPage() {
   const [users, departments] = await Promise.all([
-    authenticatedRequest<Users>("/users?status=active&limit=100"),
-    authenticatedRequest<AcademicList>("/departments?status=active&limit=100"),
+    authenticatedRequest<Users>(withQuery(API_ENDPOINTS.users.list, { status: "active", limit: 100 })),
+    authenticatedRequest<AcademicList>(withQuery(API_ENDPOINTS.academics.departments, { status: "active", limit: 100 })),
   ])
   return (
     <AcademicFormShell

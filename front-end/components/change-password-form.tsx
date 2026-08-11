@@ -1,5 +1,7 @@
 "use client"
 
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
+
 import { FormEvent, useState } from "react"
 import { LoaderCircle, LockKeyhole } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -25,14 +27,14 @@ export function ChangePasswordForm() {
     setSaving(true)
     setMessage("")
     try {
-      await apiRequest("/auth/change-password", {
+      await apiRequest(API_ENDPOINTS.auth.changePassword, {
         method: "POST",
         data: {
           currentPassword: String(form.get("currentPassword")),
           newPassword,
         },
       })
-      await apiResponseRequest("/api/auth/logout", { method: "POST" })
+      await apiResponseRequest(API_ENDPOINTS.auth.proxyLogout, { method: "POST" })
       router.push("/login")
       router.refresh()
     } catch (error) {

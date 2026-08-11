@@ -1,5 +1,6 @@
 import type { AcademicEntity, AcademicItem, AcademicList } from "@/lib/academic-types"
 import { authenticatedRequest } from "@/lib/auth"
+import { domainServices } from "@/lib/domain-services"
 
 export const entityResponseKey: Record<AcademicEntity, string> = {
   universities: "university",
@@ -22,11 +23,11 @@ export async function academicOptions(entity: AcademicEntity) {
   }
   const parent = parentEndpoint[entity]
   if (!parent) return {}
-  const response = await authenticatedRequest<AcademicList>(`/${parent}?status=active&limit=100`)
+  const response = await domainServices.academics.list<AcademicList>(authenticatedRequest, parent, { status: "active", limit: 100 })
   return { [parent]: response.data.items }
 }
 
 export async function academicItem(entity: AcademicEntity, id: string) {
-  const response = await authenticatedRequest<Record<string, AcademicItem>>(`/${entity}/${id}`)
+  const response = await domainServices.academics.detail<Record<string, AcademicItem>>(authenticatedRequest, entity, id)
   return response.data[entityResponseKey[entity]]
 }

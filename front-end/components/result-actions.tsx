@@ -1,5 +1,7 @@
 "use client"
 
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
+
 import { apiResponseRequest } from "@/lib/http-client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -12,7 +14,7 @@ export function ResultActions({ offeringId, hasDraft }: { offeringId: string; ha
   async function run(action: "calculate" | "publish") {
     setLoading(action)
     setError("")
-    const response = await apiResponseRequest(`/results/offerings/${offeringId}/${action}`, {
+    const response = await apiResponseRequest(API_ENDPOINTS.results.offeringAction(offeringId, action), {
       method: "POST",
     })
     const body = await response.json()

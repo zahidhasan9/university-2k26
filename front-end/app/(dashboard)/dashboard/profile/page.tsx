@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import { Mail, ShieldCheck, UserRound } from "lucide-react"
 
 import { ProfileEditForm } from "@/components/profile-edit-form"
@@ -29,7 +30,7 @@ type ProfileUser = {
 }
 
 export default async function ProfilePage() {
-  const { data } = await authenticatedRequest<{ user: ProfileUser }>("/auth/me")
+  const { data } = await authenticatedRequest<{ user: ProfileUser }>(API_ENDPOINTS.auth.me)
   const { user } = data
   const initials = `${user.firstName[0] ?? ""}${user.lastName[0] ?? ""}`.toUpperCase()
 

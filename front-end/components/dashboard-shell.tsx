@@ -4,9 +4,10 @@ import { useState } from "react"
 
 import { AppSidebar } from "@/components/app-sidebar"
 import { DashboardHeader } from "@/components/dashboard-header"
+import type { CurrentUser } from "@/components/dashboard-header"
 import { cn } from "@/lib/utils"
 
-export function DashboardShell({ children }: { children: React.ReactNode }) {
+export function DashboardShell({ children, currentUser }: { children: React.ReactNode; currentUser: CurrentUser }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   return (
@@ -14,6 +15,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <DashboardHeader
         sidebarCollapsed={sidebarCollapsed}
         onSidebarToggle={() => setSidebarCollapsed((collapsed) => !collapsed)}
+        initialUser={currentUser}
       />
       <div
         className={cn(

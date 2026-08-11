@@ -16,6 +16,7 @@ import {
 
 export const lmsRouter = Router();
 lmsRouter.use(authenticate, authorize("lms.read"));
+lmsRouter.get("/workspace", asyncHandler(controller.workspace));
 lmsRouter.get("/materials", asyncHandler(controller.materials));
 lmsRouter.post("/materials", authorize("lms.manage"), validate(materialCreateSchema), asyncHandler(controller.createMaterial));
 lmsRouter.get("/assignments", asyncHandler(controller.assignments));

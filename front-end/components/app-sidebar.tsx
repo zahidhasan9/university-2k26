@@ -6,6 +6,7 @@ import { useState } from "react"
 import {
   BarChart3,
   BookOpen,
+  BookOpenCheck,
   Building2,
   CalendarDays,
   ChevronDown,
@@ -53,6 +54,7 @@ const navigation: NavigationGroup[] = [
       { label: "Attendance", href: "/dashboard/attendance", icon: ClipboardCheck },
       { label: "Exams & Results", href: "/dashboard/results", icon: BookOpen },
       { label: "LMS", href: "/dashboard/lms", icon: GraduationCap },
+      { label: "Registration", href: "/dashboard/registration", icon: BookOpenCheck },
       { label: "Research", href: "/dashboard/research", icon: FlaskConical },
       { label: "Engagement", href: "/dashboard/engagement", icon: Sparkles },
     ],

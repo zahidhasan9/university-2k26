@@ -5,11 +5,14 @@ import { escapeRegex, toObjectId } from "../../utils/mongo";
 import { getPagination, paginationMeta } from "../../utils/pagination";
 import { SemesterModel } from "../semester/semester.model";
 import { StudentModel } from "../student/student.model";
+import { EnrollmentModel } from "../enrollment/enrollment.model";
+import { CourseModel } from "../university-structure/course.model";
 import { ProgramModel } from "../university-structure/program.model";
 import { ExpenseModel } from "./expense.model";
 import { FeeStructureModel } from "./feeStructure.model";
 import { InvoiceModel } from "./invoice.model";
 import { PaymentModel } from "./payment.model";
+import { StudentWaiverModel } from "./studentWaiver.model";
 
 const idNumber = (prefix: string) =>
   `${prefix}-${new Date().getUTCFullYear()}-${randomUUID().slice(0, 10)}`.toUpperCase();
@@ -31,6 +34,7 @@ export async function createFeeStructure(input: {
   semesterId: string;
   name: string;
   currency: string;
+  perCreditFeeMinor: number;
   items: unknown[];
 }) {
   const programId = toObjectId(input.programId, "program id");
@@ -48,6 +52,7 @@ export async function createFeeStructure(input: {
     semester: semesterId,
     name: input.name,
     currency: input.currency,
+    perCreditFeeMinor: input.perCreditFeeMinor,
     items: input.items,
   });
 }
@@ -84,6 +89,7 @@ export async function createInvoice(
     selectedOptionalItemCodes: string[];
     discountMinor: number;
     dueDate: Date;
+    allowRegistrationUpdate?: boolean;
   },
 ) {
   const studentId = toObjectId(input.studentId, "student id");
@@ -96,7 +102,8 @@ export async function createInvoice(
     status: "active",
   }).lean();
   if (!structure) throw new AppError(409, "Active fee structure not found for this student");
-  if (await InvoiceModel.exists({ student: studentId, semester: semesterId })) {
+  const existingInvoice = await InvoiceModel.findOne({ student: studentId, semester: semesterId });
+  if (existingInvoice && !input.allowRegistrationUpdate) {
     throw new AppError(409, "Student already has an invoice for this semester");
   }
   const optionalCodes = new Set(input.selectedOptionalItemCodes);
@@ -109,25 +116,112 @@ export async function createInvoice(
   const items = structure.items
     .filter((item) => item.mandatory || optionalCodes.has(item.code))
     .map((item) => ({ code: item.code, name: item.name, amountMinor: item.amountMinor }));
+  const enrollments = await EnrollmentModel.find({
+    student: studentId,
+    semester: semesterId,
+    status: "enrolled",
+  }).select("course").lean();
+  const courses = await CourseModel.find({ _id: { $in: enrollments.map((item) => item.course) } })
+    .select("credits")
+    .lean();
+  const registeredCredits = courses.reduce((sum, course) => sum + course.credits, 0);
+  const tuitionMinor = Math.round(registeredCredits * structure.perCreditFeeMinor);
+  if (tuitionMinor > 0) items.unshift({
+    code: "TUITION_CREDIT",
+    name: `Tuition (${registeredCredits} credits × ${(structure.perCreditFeeMinor / 100).toFixed(2)} ${structure.currency})`,
+    amountMinor: tuitionMinor,
+  });
   const subtotalMinor = items.reduce((sum, item) => sum + item.amountMinor, 0);
   if (!Number.isSafeInteger(subtotalMinor)) throw new AppError(400, "Invoice total is too large");
-  if (input.discountMinor > subtotalMinor) throw new AppError(400, "Discount exceeds invoice subtotal");
-  const totalMinor = subtotalMinor - input.discountMinor;
+  const semester = await SemesterModel.findById(semesterId).select("startsAt endsAt").lean();
+  const waiver = semester
+    ? await StudentWaiverModel.findOne({
+        student: studentId,
+        status: "active",
+        validFrom: { $lte: semester.endsAt },
+        validUntil: { $gte: semester.startsAt },
+      }).sort({ createdAt: -1 }).lean()
+    : null;
+  const waiverBase = waiver?.appliesTo === "all" ? subtotalMinor : tuitionMinor;
+  const waiverMinor = waiver
+    ? Math.min(
+        waiverBase,
+        waiver.type === "percentage" ? Math.round(waiverBase * waiver.value / 100) : waiver.value,
+      )
+    : 0;
+  const discountMinor = input.discountMinor + waiverMinor;
+  if (discountMinor > subtotalMinor) throw new AppError(400, "Discount exceeds invoice subtotal");
+  const totalMinor = subtotalMinor - discountMinor;
+  if (existingInvoice) {
+    existingInvoice.set({
+      feeStructure: structure._id,
+      currency: structure.currency,
+      registeredCredits,
+      perCreditFeeMinor: structure.perCreditFeeMinor,
+      waiver: waiver?._id,
+      waiverDescription: waiver ? `${waiver.name} (${waiver.type === "percentage" ? `${waiver.value}%` : `${(waiver.value / 100).toFixed(2)} ${structure.currency}`})` : undefined,
+      items,
+      subtotalMinor,
+      discountMinor,
+      totalMinor,
+      dueMinor: Math.max(0, totalMinor - existingInvoice.paidMinor),
+      status: totalMinor <= existingInvoice.paidMinor ? "paid" : existingInvoice.paidMinor > 0 ? "partially_paid" : "issued",
+      dueDate: input.dueDate,
+    });
+    await existingInvoice.save();
+    return existingInvoice;
+  }
   return InvoiceModel.create({
     invoiceNumber: idNumber("INV"),
     student: studentId,
     semester: semesterId,
     feeStructure: structure._id,
     currency: structure.currency,
+    registeredCredits,
+    perCreditFeeMinor: structure.perCreditFeeMinor,
+    waiver: waiver?._id,
+    waiverDescription: waiver ? `${waiver.name} (${waiver.type === "percentage" ? `${waiver.value}%` : `${(waiver.value / 100).toFixed(2)} ${structure.currency}`})` : undefined,
     items,
     subtotalMinor,
-    discountMinor: input.discountMinor,
+    discountMinor,
     totalMinor,
     dueMinor: totalMinor,
     status: totalMinor === 0 ? "paid" : "issued",
     dueDate: input.dueDate,
     issuedBy: actorId,
   });
+}
+
+export async function listWaivers(query: Record<string, unknown>) {
+  const filter: Record<string, unknown> = {};
+  if (query.studentId) filter.student = toObjectId(String(query.studentId), "student id");
+  if (query.status) filter.status = query.status;
+  return StudentWaiverModel.find(filter)
+    .populate({ path: "student", select: "studentId user", populate: { path: "user", select: "firstName lastName email" } })
+    .populate("approvedBy", "firstName lastName email")
+    .sort({ createdAt: -1 })
+    .lean();
+}
+
+export async function createWaiver(actorId: Types.ObjectId, input: Record<string, unknown>) {
+  const student = await StudentModel.findOne({
+    _id: toObjectId(String(input.studentId), "student id"),
+    status: "active",
+  });
+  if (!student) throw new AppError(400, "Active student not found");
+  if (input.type === "percentage" && Number(input.value) > 100) {
+    throw new AppError(400, "Percentage waiver cannot exceed 100");
+  }
+  const { studentId: _, ...data } = input;
+  return StudentWaiverModel.create({ ...data, student: student._id, approvedBy: actorId });
+}
+
+export async function updateWaiver(id: string, status: "active" | "inactive" | "revoked") {
+  const waiver = await StudentWaiverModel.findById(toObjectId(id));
+  if (!waiver) throw new AppError(404, "Student waiver not found");
+  waiver.status = status;
+  await waiver.save();
+  return waiver;
 }
 
 export async function listInvoices(query: Record<string, unknown>) {

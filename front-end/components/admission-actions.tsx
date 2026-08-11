@@ -1,5 +1,7 @@
 "use client"
 
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
+
 import { apiResponseRequest } from "@/lib/http-client"
 
 import { FormEvent, useState } from "react"
@@ -20,7 +22,7 @@ export function AdmissionActions({ id, status }: { id: string; status: Admission
     setLoading(action)
     setError("")
     try {
-      const response = await apiResponseRequest(`/admissions/${id}/${path}`, {
+      const response = await apiResponseRequest(API_ENDPOINTS.admissions.action(id, path), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

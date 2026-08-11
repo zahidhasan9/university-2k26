@@ -24,6 +24,7 @@ const programSchema = new Schema(
     },
     durationYears: { type: Number, required: true, min: 0.5, max: 10 },
     totalCredits: { type: Number, required: true, min: 1, max: 400 },
+    totalSemesters: { type: Number, required: true, min: 1, max: 30, default: 8 },
     description: { type: String, trim: true, maxlength: 1500 },
     status: {
       type: String,

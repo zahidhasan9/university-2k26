@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { MarksEntry } from "@/components/marks-entry"
@@ -16,8 +17,8 @@ type Exam = {
 export default async function ExamMarksPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const [examResponse, marksResponse] = await Promise.all([
-    authenticatedRequest<{ exam: Exam }>(`/exams/${id}`),
-    authenticatedRequest<{ marks: Mark[] }>(`/exams/${id}/marks`),
+    authenticatedRequest<{ exam: Exam }>(API_ENDPOINTS.exams.detail(id)),
+    authenticatedRequest<{ marks: Mark[] }>(API_ENDPOINTS.exams.marks(id)),
   ])
   const exam = examResponse.data.exam
   const enrollments = (

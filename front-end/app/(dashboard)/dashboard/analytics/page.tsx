@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { authenticatedRequest } from "@/lib/auth"
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 
 type Count = { _id: string; count: number }
 type Analytics = {
@@ -66,7 +67,7 @@ export default async function AnalyticsPage() {
   let error = ""
 
   try {
-    data = (await authenticatedRequest<Analytics>("/analytics/admin")).data
+    data = (await authenticatedRequest<Analytics>(API_ENDPOINTS.analytics.admin)).data
   } catch (caught) {
     error = caught instanceof Error ? caught.message : "Analytics unavailable"
   }

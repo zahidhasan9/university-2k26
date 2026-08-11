@@ -7,17 +7,3 @@ export type ApiResponse<T> = {
   data: T
   details?: unknown
 }
-
-export async function apiRequest<T>(path: string, init?: RequestInit): Promise<ApiResponse<T>> {
-  const response = await fetch(`${API_URL}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-  })
-  const body = (await response.json()) as ApiResponse<T>
-  if (!response.ok) throw new Error(body.message || "Request failed")
-  return body
-}

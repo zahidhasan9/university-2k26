@@ -1,5 +1,7 @@
 "use client"
 
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
+
 import { apiResponseRequest } from "@/lib/http-client"
 import { FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -36,7 +38,7 @@ export function MarksEntry({
     })
     setLoading(true)
     setError("")
-    const response = await apiResponseRequest(`/exams/${examId}/marks`, {
+    const response = await apiResponseRequest(API_ENDPOINTS.exams.marks(examId), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ marks }),

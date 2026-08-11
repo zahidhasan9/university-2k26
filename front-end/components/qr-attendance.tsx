@@ -1,5 +1,7 @@
 "use client"
 
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
+
 import { apiResponseRequest } from "@/lib/http-client"
 import { useState } from "react"
 import { Copy, LoaderCircle, QrCode } from "lucide-react"
@@ -13,7 +15,7 @@ export function QrAttendance({ sessionId, open }: { sessionId: string; open: boo
   async function generate() {
     setLoading(true)
     setError("")
-    const response = await apiResponseRequest(`/attendance/${sessionId}/qr`, {
+    const response = await apiResponseRequest(API_ENDPOINTS.attendance.qr(sessionId), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ expiresInMinutes: 5 }),

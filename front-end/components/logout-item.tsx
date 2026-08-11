@@ -1,5 +1,7 @@
 "use client"
 
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
+
 import { apiResponseRequest } from "@/lib/http-client"
 
 import { useState } from "react"
@@ -14,7 +16,7 @@ export function LogoutItem() {
 
   async function logout() {
     setLoading(true)
-    await apiResponseRequest("/api/auth/logout", { method: "POST" })
+    await apiResponseRequest(API_ENDPOINTS.auth.proxyLogout, { method: "POST" })
     router.replace("/login")
     router.refresh()
   }

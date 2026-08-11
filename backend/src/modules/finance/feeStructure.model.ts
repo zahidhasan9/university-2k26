@@ -16,6 +16,7 @@ const feeStructureSchema = new Schema(
     semester: { type: Schema.Types.ObjectId, ref: "Semester", required: true, index: true },
     name: { type: String, required: true, trim: true, maxlength: 150 },
     currency: { type: String, required: true, uppercase: true, trim: true, default: "BDT" },
+    perCreditFeeMinor: { type: Number, required: true, min: 0, default: 0 },
     items: { type: [feeItemSchema], required: true },
     status: { type: String, enum: ["draft", "active", "archived"], default: "draft", index: true },
   },

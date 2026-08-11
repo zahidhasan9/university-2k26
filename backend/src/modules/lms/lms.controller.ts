@@ -9,6 +9,14 @@ function auth(req: Request) {
   return req.auth;
 }
 const all = (req: Request) => auth(req).permissions.includes("lms.manage_all");
+export async function workspace(req: Request, res: Response): Promise<Response> {
+  return sendSuccess(
+    res,
+    200,
+    "LMS workspace retrieved",
+    await service.workspace(auth(req).userId, all(req), req.query.offeringId as string | undefined),
+  );
+}
 async function audit(req: Request, action: string, resource: string, id: string) {
   await writeAuditLog(req, { actor: auth(req).userId, action, resource, resourceId: id });
 }

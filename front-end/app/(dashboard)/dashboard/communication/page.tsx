@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { Bell, Mail, Megaphone, MessageCircle, Plus } from "lucide-react"
 import { ReadNotification } from "@/components/communication-actions"
@@ -42,9 +43,9 @@ export default async function CommunicationPage() {
     error = ""
   try {
     const data = await Promise.all([
-      authenticatedRequest<{ notices: Notice[] }>("/communication/notices"),
-      authenticatedRequest<{ conversations: Conversation[] }>("/communication/conversations"),
-      authenticatedRequest<{ items: Notification[] }>("/communication/notifications?limit=20"),
+      authenticatedRequest<{ notices: Notice[] }>(API_ENDPOINTS.communication.notices),
+      authenticatedRequest<{ conversations: Conversation[] }>(API_ENDPOINTS.communication.conversations),
+      authenticatedRequest<{ items: Notification[] }>(withQuery(API_ENDPOINTS.communication.notifications, { limit: 20 })),
     ])
     notices = data[0].data.notices
     conversations = data[1].data.conversations

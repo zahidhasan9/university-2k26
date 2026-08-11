@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { MessageComposer } from "@/components/communication-actions"
@@ -23,7 +24,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     error = ""
   try {
     const [conversations, history] = await Promise.all([
-      authenticatedRequest<{ conversations: Conversation[] }>("/communication/conversations"),
+      authenticatedRequest<{ conversations: Conversation[] }>(API_ENDPOINTS.communication.conversations),
       authenticatedRequest<{ items: Message[] }>(
         `/communication/conversations/${id}/messages?limit=100`,
       ),

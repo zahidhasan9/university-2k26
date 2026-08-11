@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { ArrowLeft, Banknote } from "lucide-react"
 import { PayrollAction, PayrollCreate } from "@/components/payroll-actions"
@@ -32,7 +33,7 @@ export default async function PayrollPage() {
   let runs: Run[] = [],
     error = ""
   try {
-    runs = (await authenticatedRequest<{ payrollRuns: Run[] }>("/hr/payroll-runs")).data.payrollRuns
+    runs = (await authenticatedRequest<{ payrollRuns: Run[] }>(API_ENDPOINTS.hr.payroll)).data.payrollRuns
   } catch (cause) {
     error = cause instanceof Error ? cause.message : "Payroll unavailable"
   }

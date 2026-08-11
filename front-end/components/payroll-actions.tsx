@@ -1,5 +1,7 @@
 "use client"
 
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
+
 import { apiResponseRequest } from "@/lib/http-client"
 import { FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -14,7 +16,7 @@ export function PayrollCreate() {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
     setLoading(true)
-    const response = await apiResponseRequest("/hr/payroll-runs", {
+    const response = await apiResponseRequest(API_ENDPOINTS.hr.payroll, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -69,7 +71,7 @@ export function PayrollAction({ id, status }: { id: string; status: string }) {
   const action = status === "draft" ? "process" : "pay"
   async function run() {
     setLoading(true)
-    const response = await apiResponseRequest(`/hr/payroll-runs/${id}/${action}`, {
+    const response = await apiResponseRequest(API_ENDPOINTS.hr.payrollAction(id, action), {
       method: "POST",
     })
     setLoading(false)

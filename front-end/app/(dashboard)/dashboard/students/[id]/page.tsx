@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import type { Metadata } from "next"
 import Link from "next/link"
 import {
@@ -40,7 +41,7 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
   const { id } = await params
   let student: Student
   try {
-    student = (await authenticatedRequest<{ student: Student }>(`/students/${id}`)).data.student
+    student = (await authenticatedRequest<{ student: Student }>(API_ENDPOINTS.students.detail(id))).data.student
   } catch (error) {
     if (error instanceof Error && error.message === "Student not found") notFound()
     throw error

@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { Award, ClipboardPenLine, Plus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -32,8 +33,8 @@ export default async function ResultsPage() {
     error = ""
   try {
     const responses = await Promise.all([
-      authenticatedRequest<{ items: Exam[] }>("/exams?limit=100"),
-      authenticatedRequest<{ policies: Policy[] }>("/results/grade-policies"),
+      authenticatedRequest<{ items: Exam[] }>(withQuery(API_ENDPOINTS.exams.list, { limit: 100 })),
+      authenticatedRequest<{ policies: Policy[] }>(API_ENDPOINTS.results.gradePolicies),
     ])
     exams = responses[0].data.items
     policies = responses[1].data.policies

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { API_ENDPOINTS } from "@/lib/api-endpoints"
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 
 describe("API_ENDPOINTS", () => {
   it("builds entity detail paths without duplicating the API prefix", () => {
@@ -16,6 +16,15 @@ describe("API_ENDPOINTS", () => {
     )
     expect(API_ENDPOINTS.research.thesisAction("thesis-1")).toBe(
       "/research/theses/thesis-1/supervisor-action",
+    )
+  })
+
+  it("builds encoded query strings and omits undefined filters", () => {
+    expect(withQuery(API_ENDPOINTS.students.list, { search: "A & B", page: 2, status: undefined })).toBe(
+      "/students?search=A+%26+B&page=2",
+    )
+    expect(withQuery(API_ENDPOINTS.lms.workspace, { offeringId: undefined })).toBe(
+      "/lms/workspace",
     )
   })
 })

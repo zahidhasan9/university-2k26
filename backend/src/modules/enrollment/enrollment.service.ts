@@ -6,6 +6,8 @@ import { CourseOfferingModel } from "../course-offering/courseOffering.model";
 import { StudentModel } from "../student/student.model";
 import { CourseModel } from "../university-structure/course.model";
 import { EnrollmentModel } from "./enrollment.model";
+import type { Types } from "mongoose";
+import { createInvoice } from "../finance/finance.service";
 
 const enrollmentPopulate = [
   { path: "student", select: "studentId user program status", populate: { path: "user", select: "firstName lastName email" } },
@@ -95,4 +97,79 @@ export async function dropEnrollment(id: string, reason: string) {
   enrollment.dropReason = reason;
   await enrollment.save();
   return getEnrollment(id);
+}
+
+export async function registrationOptions(userId: Types.ObjectId) {
+  const student = await StudentModel.findOne({ user: userId, status: "active" }).lean();
+  if (!student) throw new AppError(404, "Active student profile not found");
+  const semesters = await SemesterModel.find({ status: "registration" }).select("_id name code academicYear registrationEndsAt").lean();
+  const semesterIds = semesters.map((semester) => semester._id);
+  const offerings = await CourseOfferingModel.find({
+    semester: { $in: semesterIds },
+    status: "open",
+  })
+    .populate({
+      path: "course",
+      match: { program: student.program, semesterNumber: student.currentSemesterNumber, status: "active" },
+      select: "code title credits courseType semesterNumber theoryHoursPerWeek labHoursPerWeek prerequisites",
+    })
+    .populate("semester", "name code academicYear registrationEndsAt")
+    .populate({ path: "teacher", select: "user", populate: { path: "user", select: "firstName lastName" } })
+    .lean();
+  const existing = await EnrollmentModel.find({ student: student._id, semester: { $in: semesterIds } }).select("offering").lean();
+  const existingIds = new Set(existing.map((item) => item.offering.toString()));
+  return {
+    student: { studentId: student.studentId, batch: student.batch, currentSemesterNumber: student.currentSemesterNumber },
+    offerings: offerings.filter((item) => item.course && !existingIds.has(item._id.toString())),
+  };
+}
+
+export async function selfRegister(userId: Types.ObjectId, offeringIdValues: string[]) {
+  const student = await StudentModel.findOne({ user: userId, status: "active" });
+  if (!student) throw new AppError(404, "Active student profile not found");
+  const offeringIds = [...new Set(offeringIdValues)].map((id) => toObjectId(id, "offering id"));
+  const offerings = await CourseOfferingModel.find({ _id: { $in: offeringIds }, status: "open" });
+  if (offerings.length !== offeringIds.length) throw new AppError(400, "One or more course offerings are not open");
+  const semesterIds = new Set(offerings.map((item) => item.semester.toString()));
+  if (semesterIds.size !== 1) throw new AppError(400, "All selected courses must belong to the same semester");
+  const semester = await SemesterModel.findOne({ _id: offerings[0]!.semester, status: "registration" });
+  if (!semester || new Date() < semester.registrationStartsAt || new Date() > semester.registrationEndsAt) {
+    throw new AppError(409, "Semester registration is not currently open");
+  }
+  const courses = await CourseModel.find({ _id: { $in: offerings.map((item) => item.course) }, status: "active" });
+  if (courses.length !== offerings.length || courses.some((course) =>
+    !course.program.equals(student.program) || course.semesterNumber !== student.currentSemesterNumber
+  )) throw new AppError(400, "Selected courses are outside the student's curriculum semester");
+  if (await EnrollmentModel.exists({ student: student._id, offering: { $in: offeringIds } })) {
+    throw new AppError(409, "One or more selected courses are already registered");
+  }
+  for (const offering of offerings) {
+    const enrolledCount = await EnrollmentModel.countDocuments({ offering: offering._id, status: "enrolled" });
+    if (enrolledCount >= offering.capacity) throw new AppError(409, "A selected course has reached capacity");
+  }
+  const prerequisiteIds = [...new Set(courses.flatMap((course) => course.prerequisites.map(String)))];
+  if (prerequisiteIds.length) {
+    const completed = await EnrollmentModel.countDocuments({ student: student._id, course: { $in: prerequisiteIds }, status: "completed" });
+    if (completed !== prerequisiteIds.length) throw new AppError(409, "Course prerequisites have not been completed");
+  }
+  const enrollments = await EnrollmentModel.insertMany(offerings.map((offering) => ({
+    student: student._id,
+    offering: offering._id,
+    course: offering.course,
+    semester: offering.semester,
+  })));
+  try {
+    const invoice = await createInvoice(userId, {
+      studentId: student._id.toString(),
+      semesterId: semester._id.toString(),
+      selectedOptionalItemCodes: [],
+      discountMinor: 0,
+      dueDate: semester.registrationEndsAt,
+      allowRegistrationUpdate: true,
+    });
+    return { enrollments, invoice };
+  } catch (error) {
+    await EnrollmentModel.deleteMany({ _id: { $in: enrollments.map((item) => item._id) } });
+    throw error;
+  }
 }

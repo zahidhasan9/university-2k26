@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { BriefcaseBusiness, MessageSquareWarning, Plus, UsersRound } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -33,8 +34,8 @@ export default async function Page() {
     error = ""
   try {
     const d = await Promise.all([
-      authenticatedRequest<{ complaints: Complaint[] }>("/engagement/complaints/mine"),
-      authenticatedRequest<{ alumni: Alumni[] }>("/engagement/alumni"),
+      authenticatedRequest<{ complaints: Complaint[] }>(API_ENDPOINTS.engagement.myComplaints),
+      authenticatedRequest<{ alumni: Alumni[] }>(API_ENDPOINTS.engagement.alumni),
     ])
     complaints = d[0].data.complaints
     alumni = d[1].data.alumni

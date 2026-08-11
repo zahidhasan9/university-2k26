@@ -3,8 +3,8 @@ import { BookOpen, FileUp, MessagesSquare, Plus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { authenticatedRequest } from "@/lib/auth"
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 type Material = {
   _id: string
   title: string
@@ -29,31 +29,44 @@ type Post = {
   author: { firstName: string; lastName: string }
   createdAt: string
 }
+type Offering = {
+  _id: string
+  section: string
+  course?: { code?: string; title?: string }
+}
+type Workspace = {
+  offerings: Offering[]
+  selectedOffering: Offering | null
+  materials: Material[]
+  assignments: Assignment[]
+  posts: Post[]
+}
 export default async function Page({
   searchParams,
 }: {
   searchParams: Promise<{ offeringId?: string }>
 }) {
-  const { offeringId = "" } = await searchParams
+  const { offeringId: requestedOfferingId = "" } = await searchParams
+  let offeringId = requestedOfferingId
+  let offerings: Offering[] = [],
+    selectedOffering: Offering | undefined
   let materials: Material[] = [],
     assignments: Assignment[] = [],
     posts: Post[] = [],
     error = ""
-  if (offeringId)
-    try {
-      const d = await Promise.all([
-        authenticatedRequest<{ materials: Material[] }>(`/lms/materials?offeringId=${offeringId}`),
-        authenticatedRequest<{ assignments: Assignment[] }>(
-          `/lms/assignments?offeringId=${offeringId}`,
-        ),
-        authenticatedRequest<{ posts: Post[] }>(`/lms/discussions?offeringId=${offeringId}`),
-      ])
-      materials = d[0].data.materials
-      assignments = d[1].data.assignments
-      posts = d[2].data.posts
-    } catch (c) {
-      error = c instanceof Error ? c.message : "LMS data unavailable"
-    }
+  try {
+    const workspace = (await authenticatedRequest<Workspace>(
+      withQuery(API_ENDPOINTS.lms.workspace, { offeringId: requestedOfferingId || undefined }),
+    )).data
+    offerings = workspace.offerings
+    selectedOffering = workspace.selectedOffering ?? undefined
+    offeringId = selectedOffering?._id ?? ""
+    materials = workspace.materials
+    assignments = workspace.assignments
+    posts = workspace.posts
+  } catch (c) {
+    error = c instanceof Error ? c.message : "LMS data unavailable"
+  }
   return (
     <div className="mx-auto max-w-[1500px] space-y-6">
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
@@ -80,10 +93,26 @@ export default async function Page({
         </div>
       </div>
       <form className="flex max-w-xl gap-2">
-        <Input name="offeringId" defaultValue={offeringId} placeholder="Enter course offering ID" />
+        <select
+          name="offeringId"
+          defaultValue={offeringId}
+          className="h-9 min-w-0 flex-1 rounded-md border border-input bg-transparent px-3 text-sm"
+        >
+          <option value="">Select a course offering</option>
+          {offerings.map((item) => (
+            <option key={item._id} value={item._id}>
+              {item.course?.code || "Course"} — {item.course?.title || item._id} (Section {item.section})
+            </option>
+          ))}
+        </select>
         <Button>Load course</Button>
       </form>
-      {!offeringId && (
+      {selectedOffering && (
+        <p className="text-sm text-muted-foreground">
+          Showing {selectedOffering.course?.code} — {selectedOffering.course?.title}, section {selectedOffering.section}
+        </p>
+      )}
+      {!offeringId && !error && (
         <p className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
           Select a course offering to load its learning workspace.
         </p>

@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { ArrowLeft, CalendarCheck } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -25,7 +26,7 @@ export default async function AttendancePage() {
   let records: Attendance[] = [],
     error = ""
   try {
-    records = (await authenticatedRequest<{ attendance: Attendance[] }>("/hr/attendance")).data
+    records = (await authenticatedRequest<{ attendance: Attendance[] }>(API_ENDPOINTS.hr.attendance)).data
       .attendance
   } catch (cause) {
     error = cause instanceof Error ? cause.message : "Attendance unavailable"

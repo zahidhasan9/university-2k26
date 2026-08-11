@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { Plus, Users } from "lucide-react"
@@ -48,9 +49,9 @@ export default async function StudentsPage({ searchParams }: { searchParams: Sea
   let programs: AcademicItem[] = []
   let error = ""
   const [studentResult, departmentResult, programResult] = await Promise.allSettled([
-    authenticatedRequest<StudentListData>(`/students?${query}`),
-    authenticatedRequest<AcademicList>("/departments?status=active&limit=100"),
-    authenticatedRequest<AcademicList>("/programs?status=active&limit=100"),
+    authenticatedRequest<StudentListData>(`${API_ENDPOINTS.students.list}?${query}`),
+    authenticatedRequest<AcademicList>(withQuery(API_ENDPOINTS.academics.departments, { status: "active", limit: 100 })),
+    authenticatedRequest<AcademicList>(withQuery(API_ENDPOINTS.academics.programs, { status: "active", limit: 100 })),
   ])
   if (studentResult.status === "fulfilled") {
     result = studentResult.value.data

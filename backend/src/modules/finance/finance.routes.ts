@@ -12,6 +12,8 @@ import {
   invoiceVoidSchema,
   paymentCreateSchema,
   paymentRefundSchema,
+  waiverCreateSchema,
+  waiverUpdateSchema,
 } from "./finance.validation";
 
 export const financeRouter = Router();
@@ -19,6 +21,19 @@ financeRouter.use(authenticate);
 
 financeRouter.get("/invoices/mine", asyncHandler(controller.myInvoices));
 financeRouter.get("/payments/mine", asyncHandler(controller.myPayments));
+financeRouter.get("/waivers", authorize("finance.read"), asyncHandler(controller.waivers));
+financeRouter.post(
+  "/waivers",
+  authorize("finance.manage"),
+  validate(waiverCreateSchema),
+  asyncHandler(controller.createWaiver),
+);
+financeRouter.patch(
+  "/waivers/:id",
+  authorize("finance.manage"),
+  validate(waiverUpdateSchema),
+  asyncHandler(controller.updateWaiver),
+);
 
 financeRouter.get("/fee-structures", authorize("finance.read"), asyncHandler(controller.feeStructures));
 financeRouter.post(

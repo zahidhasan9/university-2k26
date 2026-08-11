@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { BookMarked, FlaskConical, GraduationCap, Plus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -40,9 +41,9 @@ export default async function Page() {
     error = ""
   try {
     const d = await Promise.all([
-      authenticatedRequest<{ items: Project[] }>("/research/projects?limit=50"),
-      authenticatedRequest<{ publications: Publication[] }>("/research/publications"),
-      authenticatedRequest<{ theses: Thesis[] }>("/research/theses"),
+      authenticatedRequest<{ items: Project[] }>(withQuery(API_ENDPOINTS.research.projects, { limit: 50 })),
+      authenticatedRequest<{ publications: Publication[] }>(API_ENDPOINTS.research.publications),
+      authenticatedRequest<{ theses: Thesis[] }>(API_ENDPOINTS.research.theses),
     ])
     projects = d[0].data.items
     publications = d[1].data.publications

@@ -23,7 +23,11 @@ export type AcademicItem = {
   degreeType?: string
   durationYears?: number
   totalCredits?: number
+  totalSemesters?: number
   credits?: number
+  semesterNumber?: number
+  theoryHoursPerWeek?: number
+  labHoursPerWeek?: number
   courseType?: string
   academicYear?: string
   term?: string

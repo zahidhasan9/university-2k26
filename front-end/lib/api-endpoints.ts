@@ -3,7 +3,7 @@
  * Paths are relative to the Express `/api` prefix.
  */
 export const API_ENDPOINTS = {
-  auth: { login: "/auth/login", logout: "/auth/logout", me: "/auth/me" },
+  auth: { login: "/auth/login", logout: "/auth/logout", me: "/auth/me", refresh: "/auth/refresh", changePassword: "/auth/change-password", proxyLogin: "/api/auth/login", proxyLogout: "/api/auth/logout" },
   analytics: {
     admin: "/analytics/admin",
     departments: "/analytics/departments",
@@ -38,6 +38,13 @@ export const API_ENDPOINTS = {
     create: "/students",
     detail: (id: string) => `/students/${id}`,
   },
+  enrollments: {
+    list: "/enrollments",
+    mine: "/enrollments/mine",
+    registrationOptions: "/enrollments/registration-options/mine",
+    registerMine: "/enrollments/register/mine",
+    detail: (id: string) => `/enrollments/${id}`,
+  },
   teachers: {
     list: "/teachers",
     create: "/teachers",
@@ -54,10 +61,13 @@ export const API_ENDPOINTS = {
     close: (id: string) => `/attendance/${id}/close`,
     qr: (id: string) => `/attendance/${id}/qr`,
   },
+  exams: { list: "/exams", detail: (id: string) => `/exams/${id}`, marks: (id: string) => `/exams/${id}/marks` },
   results: {
     exams: "/exams",
     marks: (id: string) => `/exams/${id}/marks`,
     offeringAction: (id: string, action: string) => `/results/offerings/${id}/${action}`,
+    offering: (id: string) => `/results/offerings/${id}`,
+    gradePolicies: "/results/grade-policies",
   },
   finance: {
     dashboard: "/finance/dashboard",
@@ -66,12 +76,17 @@ export const API_ENDPOINTS = {
     payments: "/finance/payments",
     refundPayment: (id: string) => `/finance/payments/${id}/refund`,
     expenses: "/finance/expenses",
+    waivers: "/finance/waivers",
+    mineInvoices: "/finance/invoices/mine",
+    minePayments: "/finance/payments/mine",
+    summary: "/finance/reports/summary",
     expenseAction: (id: string) => `/finance/expenses/${id}/action`,
   },
   library: {
     books: "/library/books",
     copies: "/library/copies",
     transactions: "/library/transactions",
+    issue: "/library/transactions/issue",
     returnTransaction: (id: string) => `/library/transactions/${id}/return`,
     policies: "/library/policies",
   },
@@ -95,25 +110,32 @@ export const API_ENDPOINTS = {
     notifications: "/communication/notifications",
     readNotification: (id: string) => `/communication/notifications/${id}/read`,
     dispatchNotification: "/communication/notifications/dispatch",
+    conversation: (id: string) => `/communication/conversations/${id}`,
+    messages: (id: string) => `/communication/conversations/${id}/messages`,
   },
   lms: {
+    workspace: "/lms/workspace",
     materials: "/lms/materials",
     assignments: "/lms/assignments",
     submitAssignment: (id: string) => `/lms/assignments/${id}/submit`,
     gradeSubmission: (id: string) => `/lms/submissions/${id}/grade`,
     discussions: "/lms/discussions",
     quizzes: "/lms/quizzes",
+    submissions: (assignmentId: string) => `/lms/assignments/${assignmentId}/submissions`,
   },
   research: {
     projects: "/research/projects",
     publications: "/research/publications",
     theses: "/research/theses",
+    proposeThesis: "/research/theses/propose",
     thesisAction: (id: string) => `/research/theses/${id}/supervisor-action`,
   },
   engagement: {
     complaints: "/engagement/complaints",
+    myComplaints: "/engagement/complaints/mine",
     complaintAction: (id: string) => `/engagement/complaints/${id}/action`,
     alumni: "/engagement/alumni",
+    registerAlumni: "/engagement/alumni/register",
     alumniStatus: (id: string) => `/engagement/alumni/${id}/status`,
   },
   hr: {
@@ -122,6 +144,7 @@ export const API_ENDPOINTS = {
     leaves: "/hr/leaves",
     leaveDecision: (id: string) => `/hr/leaves/${id}/decision`,
     payroll: "/hr/payroll-runs",
+    payrollAction: (id: string, action: string) => `/hr/payroll-runs/${id}/${action}`,
   },
   audit: { events: "/audit-logs", logins: "/audit-logs/login-history" },
   routine: { list: "/routine" },

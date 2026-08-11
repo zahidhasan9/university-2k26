@@ -12,6 +12,7 @@ export const feeStructureCreateSchema = z.object({
       semesterId: objectId,
       name: z.string().trim().min(2).max(150),
       currency: currency.default("BDT"),
+      perCreditFeeMinor: amount.default(0),
       items: z
         .array(
           z.object({
@@ -34,6 +35,7 @@ export const feeStructureUpdateSchema = z.object({
   body: z
     .object({
       name: z.string().trim().min(2).max(150).optional(),
+      perCreditFeeMinor: amount.optional(),
       items: z
         .array(
           z.object({
@@ -58,6 +60,35 @@ export const invoiceCreateSchema = z.object({
     discountMinor: amount.default(0),
     dueDate: z.coerce.date(),
   }),
+});
+export const waiverCreateSchema = z.object({
+  body: z
+    .object({
+      studentId: objectId,
+      name: z.string().trim().min(2).max(150),
+      type: z.enum(["percentage", "fixed"]),
+      value: z.number().min(0),
+      appliesTo: z.enum(["tuition", "all"]).default("tuition"),
+      reason: z.string().trim().min(3).max(500),
+      validFrom: z.coerce.date(),
+      validUntil: z.coerce.date(),
+    })
+    .refine((value) => value.validUntil >= value.validFrom, {
+      message: "Waiver end date must be after its start date",
+      path: ["validUntil"],
+    })
+    .refine((value) => value.type !== "percentage" || value.value <= 100, {
+      message: "Percentage waiver cannot exceed 100",
+      path: ["value"],
+    })
+    .refine((value) => value.type !== "fixed" || Number.isInteger(value.value), {
+      message: "Fixed waiver must be stored in minor currency units",
+      path: ["value"],
+    }),
+});
+export const waiverUpdateSchema = z.object({
+  params: z.object({ id: objectId }),
+  body: z.object({ status: z.enum(["active", "inactive", "revoked"]) }),
 });
 export const invoiceVoidSchema = z.object({
   params: z.object({ id: objectId }),

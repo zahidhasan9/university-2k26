@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { ArrowLeft, UserCog } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -26,7 +27,7 @@ export default async function EmployeesPage() {
   let employees: Employee[] = [],
     error = ""
   try {
-    employees = (await authenticatedRequest<{ items: Employee[] }>("/hr/employees?limit=100")).data
+    employees = (await authenticatedRequest<{ items: Employee[] }>(withQuery(API_ENDPOINTS.hr.employees, { limit: 100 }))).data
       .items
   } catch (cause) {
     error = cause instanceof Error ? cause.message : "Employees unavailable"

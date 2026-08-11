@@ -41,6 +41,8 @@ import { BookCopyModel } from "../modules/library/bookCopy.model";
 import { LibraryTransactionModel } from "../modules/library/libraryTransaction.model";
 import { LmsAssignmentModel } from "../modules/lms/assignment.model";
 import { CourseMaterialModel } from "../modules/lms/courseMaterial.model";
+import { DiscussionPostModel } from "../modules/lms/discussionPost.model";
+import { StudentWaiverModel } from "../modules/finance/studentWaiver.model";
 import { PublicationModel } from "../modules/research/publication.model";
 import { ResearchProjectModel } from "../modules/research/researchProject.model";
 import { ThesisDefenseModel, ThesisModel } from "../modules/research/thesis.model";
@@ -131,6 +133,7 @@ async function seedDemo() {
         degreeType: "bachelor",
         durationYears: 4,
         totalCredits: 148,
+        totalSemesters: 8,
         status: "active",
       },
     },
@@ -144,6 +147,7 @@ async function seedDemo() {
         degreeType: "bachelor",
         durationYears: 4,
         totalCredits: 150,
+        totalSemesters: 8,
         status: "active",
       },
     },
@@ -157,6 +161,7 @@ async function seedDemo() {
         degreeType: "bachelor",
         durationYears: 4,
         totalCredits: 126,
+        totalSemesters: 8,
         status: "active",
       },
     },
@@ -170,29 +175,30 @@ async function seedDemo() {
         name: "Fall 2026",
         academicYear: "2026-2027",
         term: "fall",
-        startsAt: date(-1, 1),
-        endsAt: date(4, 20),
-        registrationStartsAt: date(-2, 1),
-        registrationEndsAt: date(-1, 5),
-        status: "ongoing",
+        startsAt: date(1, 10),
+        endsAt: date(6, 20),
+        registrationStartsAt: date(0, 1),
+        registrationEndsAt: date(1, 5),
+        status: "registration",
       },
     },
     { upsert: true, new: true },
   );
 
   const courseSpecs = [
-    [cseProgram._id, "CSE-2201", "Data Structures", 3, "core"],
-    [cseProgram._id, "CSE-3201", "Database Systems", 3, "core"],
-    [cseProgram._id, "CSE-3202", "Database Systems Lab", 1.5, "lab"],
-    [eeeProgram._id, "EEE-2101", "Electronic Circuits", 3, "core"],
-    [bbaProgram._id, "BBA-1101", "Principles of Management", 3, "core"],
+    [cseProgram._id, "CSE-2201", "Data Structures", 3, "core", 3, 3, 0],
+    [cseProgram._id, "CSE-3201", "Database Systems", 3, "core", 3, 3, 0],
+    [cseProgram._id, "CSE-3202", "Database Systems Lab", 1.5, "lab", 3, 0, 3],
+    [eeeProgram._id, "EEE-2101", "Electronic Circuits", 3, "core", 3, 3, 0],
+    [bbaProgram._id, "BBA-1101", "Principles of Management", 3, "core", 3, 3, 0],
+    [cseProgram._id, "CSE-3301", "Web Engineering", 3, "elective", 3, 3, 0],
   ] as const;
   const courses = [];
-  for (const [program, code, title, credits, courseType] of courseSpecs) {
+  for (const [program, code, title, credits, courseType, semesterNumber, theoryHoursPerWeek, labHoursPerWeek] of courseSpecs) {
     courses.push(
       await CourseModel.findOneAndUpdate(
         { program, code },
-        { $set: { title, credits, courseType, status: "active" } },
+        { $set: { title, credits, courseType, semesterNumber, theoryHoursPerWeek, labHoursPerWeek, status: "active" } },
         { upsert: true, new: true },
       ),
     );
@@ -278,6 +284,12 @@ async function seedDemo() {
             studentId: `2026-${String(index + 1).padStart(4, "0")}`,
             program: program._id,
             admissionSemester: semester._id,
+            batch: program._id.equals(cseProgram._id)
+              ? "CSE-47"
+              : program._id.equals(eeeProgram._id)
+                ? "EEE-47"
+                : "BBA-47",
+            section: "A",
             phone: user.phone,
             currentSemesterNumber: 3,
             status: "active",
@@ -299,7 +311,7 @@ async function seedDemo() {
             teacher: index === 3 ? teacher2._id : teacher1._id,
             capacity: 45,
             deliveryMode: index === 2 ? "hybrid" : "in_person",
-            status: "ongoing",
+            status: index === 5 ? "open" : "ongoing",
           },
         },
         { upsert: true, new: true },
@@ -468,8 +480,9 @@ async function seedDemo() {
       $set: {
         name: "Fall 2026 CSE Tuition",
         currency: "BDT",
+        perCreditFeeMinor: 250000,
         items: [
-          { code: "TUITION", name: "Tuition Fee", amountMinor: 6500000, mandatory: true },
+          { code: "REGISTRATION", name: "Registration Fee", amountMinor: 300000, mandatory: true },
           { code: "LAB", name: "Laboratory Fee", amountMinor: 850000, mandatory: true },
         ],
         status: "active",
@@ -477,10 +490,30 @@ async function seedDemo() {
     },
     { upsert: true, new: true },
   );
+  await StudentWaiverModel.findOneAndUpdate(
+    { student: students[0]!._id, name: "Merit Scholarship 25%" },
+    {
+      $set: {
+        type: "percentage",
+        value: 25,
+        appliesTo: "tuition",
+        reason: "Academic merit scholarship",
+        validFrom: semester.startsAt,
+        validUntil: semester.endsAt,
+        status: "active",
+        approvedBy: accountant._id,
+      },
+    },
+    { upsert: true, new: true },
+  );
   for (let index = 0; index < students.slice(0, 4).length; index += 1) {
     const student = students[index]!;
-    const totalMinor = 7350000;
-    const paidMinor = index < 3 ? totalMinor : 3500000;
+    const registeredCredits = 7.5;
+    const tuitionMinor = registeredCredits * feeStructure.perCreditFeeMinor;
+    const subtotalMinor = tuitionMinor + 300000 + 850000;
+    const discountMinor = index === 0 ? Math.round(tuitionMinor * 0.25) : 0;
+    const totalMinor = subtotalMinor - discountMinor;
+    const paidMinor = index < 3 ? totalMinor : 1500000;
     const invoice = await InvoiceModel.findOneAndUpdate(
       { student: student._id, semester: semester._id },
       {
@@ -488,9 +521,16 @@ async function seedDemo() {
           invoiceNumber: `INV-2026-${String(index + 1).padStart(4, "0")}`,
           feeStructure: feeStructure._id,
           currency: "BDT",
-          items: feeStructure.items,
-          subtotalMinor: totalMinor,
-          discountMinor: 0,
+          registeredCredits,
+          perCreditFeeMinor: feeStructure.perCreditFeeMinor,
+          waiver: index === 0 ? (await StudentWaiverModel.findOne({ student: student._id, status: "active" }))?._id : undefined,
+          waiverDescription: index === 0 ? "Merit Scholarship 25% (25%)" : undefined,
+          items: [
+            { code: "TUITION_CREDIT", name: "Tuition (7.5 registered credits)", amountMinor: tuitionMinor },
+            ...feeStructure.items,
+          ],
+          subtotalMinor,
+          discountMinor,
           totalMinor,
           paidMinor,
           dueMinor: totalMinor - paidMinor,
@@ -783,33 +823,75 @@ async function seedDemo() {
     { upsert: true, new: true },
   );
 
-  await CourseMaterialModel.findOneAndUpdate(
-    { offering: offerings[0]!._id, title: "Week 1: Data Structure Review" },
+  const lmsMaterials = [
     {
-      $set: {
-        description: "Lecture notes and practice problems",
-        type: "document",
-        url: "https://example.com/materials/data-structures-week-1.pdf",
-        order: 1,
-        published: true,
-        createdBy: teacherUser1!._id,
-      },
+      title: "Week 1: Data Structure Review",
+      description: "Lecture notes and practice problems for arrays, linked lists, and complexity.",
+      type: "document",
+      url: "https://example.com/materials/data-structures-week-1.pdf",
     },
-    { upsert: true, new: true },
-  );
-  await LmsAssignmentModel.findOneAndUpdate(
-    { offering: offerings[0]!._id, title: "Balanced Search Tree Implementation" },
     {
-      $set: {
-        instructions: "Implement an AVL tree and submit source code with a short report.",
-        dueAt: date(1, 5),
-        maxScore: 100,
-        published: true,
-        createdBy: teacherUser1!._id,
-      },
+      title: "AVL Tree Lecture",
+      description: "A recorded walkthrough of rotations, insertion, and deletion in AVL trees.",
+      type: "video",
+      url: "https://example.com/videos/avl-tree-lecture",
     },
-    { upsert: true, new: true },
-  );
+    {
+      title: "Graph Traversal Slides",
+      description: "Class slides covering breadth-first and depth-first search with examples.",
+      type: "slide",
+      url: "https://example.com/materials/graph-traversal-slides.pdf",
+    },
+  ] as const;
+  for (const [index, material] of lmsMaterials.entries()) {
+    await CourseMaterialModel.findOneAndUpdate(
+      { offering: offerings[0]!._id, title: material.title },
+      { $set: { ...material, order: index + 1, published: true, createdBy: teacherUser1!._id } },
+      { upsert: true, new: true },
+    );
+  }
+
+  const lmsAssignments = [
+    {
+      title: "Balanced Search Tree Implementation",
+      instructions: "Implement an AVL tree and submit source code with a short report.",
+      dueAt: date(1, 5),
+      maxScore: 100,
+    },
+    {
+      title: "Graph Traversal Problem Set",
+      instructions: "Solve the BFS and DFS exercises and include the traversal order for each graph.",
+      dueAt: date(1, 12),
+      maxScore: 50,
+    },
+  ];
+  for (const assignment of lmsAssignments) {
+    await LmsAssignmentModel.findOneAndUpdate(
+      { offering: offerings[0]!._id, title: assignment.title },
+      { $set: { ...assignment, published: true, createdBy: teacherUser1!._id } },
+      { upsert: true, new: true },
+    );
+  }
+
+  const discussionPosts = [
+    {
+      title: "Welcome to the course discussion",
+      body: "Use this space to ask questions about lectures, assignments, and lab exercises.",
+      author: teacherUser1!._id,
+    },
+    {
+      title: "AVL rotation practice",
+      body: "Can someone explain when a left-right rotation is needed? I am comparing it with a right-left rotation.",
+      author: studentUsers[0]!._id,
+    },
+  ];
+  for (const post of discussionPosts) {
+    await DiscussionPostModel.findOneAndUpdate(
+      { offering: offerings[0]!._id, title: post.title },
+      { $set: { ...post, status: "visible" } },
+      { upsert: true, new: true },
+    );
+  }
 
   const project = await ResearchProjectModel.findOneAndUpdate(
     { code: "RES-AI-2026-01" },
@@ -948,6 +1030,7 @@ async function seedDemo() {
   }
 
   console.info("Demo data is ready.");
+  console.info(`LMS offering ID: ${offerings[0]!._id.toString()}`);
   console.info(`Teacher login: ${teacherUser1!.email} / ${demoPassword}`);
   console.info(`Student login: ${studentUsers[0]!.email} / ${demoPassword}`);
 }

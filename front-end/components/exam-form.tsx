@@ -1,5 +1,7 @@
 "use client"
 
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
+
 import { apiResponseRequest } from "@/lib/http-client"
 import { FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -32,7 +34,7 @@ export function ExamForm({ offerings }: { offerings: Offering[] }) {
       weightPercentage: Number(form.get("weightPercentage")),
     }
     setLoading(true)
-    const response = await apiResponseRequest("/exams", {
+    const response = await apiResponseRequest(API_ENDPOINTS.exams.list, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

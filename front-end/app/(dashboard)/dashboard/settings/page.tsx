@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { Activity, FileClock, KeyRound, Server, ShieldCheck, Users } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -15,10 +16,10 @@ export default async function SettingsPage() {
     error = ""
   try {
     const data = await Promise.all([
-      authenticatedRequest<Counted<unknown>>("/users?limit=1"),
-      authenticatedRequest<Counted<unknown>>("/roles?limit=1"),
-      authenticatedRequest<Counted<unknown>>("/permissions?limit=1"),
-      authenticatedRequest<Health>("/health"),
+      authenticatedRequest<Counted<unknown>>(withQuery(API_ENDPOINTS.users.list, { limit: 1 })),
+      authenticatedRequest<Counted<unknown>>(withQuery(API_ENDPOINTS.roles.list, { limit: 1 })),
+      authenticatedRequest<Counted<unknown>>(withQuery(API_ENDPOINTS.permissions.list, { limit: 1 })),
+      authenticatedRequest<Health>(API_ENDPOINTS.health.status),
     ])
     userCount = data[0].data.pagination.total
     roleCount = data[1].data.pagination.total

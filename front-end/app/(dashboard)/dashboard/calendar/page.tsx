@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import { CalendarDays, Clock3, MapPin, Users } from "lucide-react"
 
 import { PaginationLinks } from "@/components/pagination-links"
@@ -70,10 +71,10 @@ export default async function RoutinePage({ searchParams }: { searchParams: Sear
   let programs: AcademicItem[] = []
   let error = ""
   const [routineResult, semesterResult, departmentResult, programResult] = await Promise.allSettled([
-    authenticatedRequest<Data>(`/routine?${query}`),
-    authenticatedRequest<AcademicList>("/semesters?limit=100"),
-    authenticatedRequest<AcademicList>("/departments?status=active&limit=100"),
-    authenticatedRequest<AcademicList>("/programs?status=active&limit=100"),
+    authenticatedRequest<Data>(`${API_ENDPOINTS.routine.list}?${query}`),
+    authenticatedRequest<AcademicList>(withQuery(API_ENDPOINTS.academics.semesters, { limit: 100 })),
+    authenticatedRequest<AcademicList>(withQuery(API_ENDPOINTS.academics.departments, { status: "active", limit: 100 })),
+    authenticatedRequest<AcademicList>(withQuery(API_ENDPOINTS.academics.programs, { status: "active", limit: 100 })),
   ])
   if (routineResult.status === "fulfilled") data = routineResult.value.data
   else error = routineResult.reason instanceof Error ? routineResult.reason.message : "Routine unavailable"

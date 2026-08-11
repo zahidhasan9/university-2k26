@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { academicEntities, type AcademicList } from "@/lib/academic-types"
 import { authenticatedRequest } from "@/lib/auth"
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 
 export const metadata: Metadata = { title: "Academic structure" }
 
@@ -31,7 +32,7 @@ export default async function AcademicsPage() {
   const counts = await Promise.all(
     academicEntities.map(async (entity) => {
       try {
-        const response = await authenticatedRequest<AcademicList>(`/${entity.key}?limit=1`)
+        const response = await authenticatedRequest<AcademicList>(withQuery(API_ENDPOINTS.academics[entity.key], { limit: 1 }))
         return [entity.key, response.data.pagination.total] as const
       } catch {
         return [entity.key, null] as const

@@ -1,5 +1,7 @@
 "use client"
 
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
+
 import { apiResponseRequest } from "@/lib/http-client"
 import { FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -37,7 +39,7 @@ export function ManualAttendance({
     }))
     setLoading(true)
     setError("")
-    const response = await apiResponseRequest(`/attendance/${sessionId}/records`, {
+    const response = await apiResponseRequest(API_ENDPOINTS.attendance.records(sessionId), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ records }),

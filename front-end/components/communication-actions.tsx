@@ -1,5 +1,7 @@
 "use client"
 
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
+
 import { apiResponseRequest } from "@/lib/http-client"
 
 import { FormEvent, useState } from "react"
@@ -13,7 +15,7 @@ export function ReadNotification({ id }: { id: string }) {
   const [loading, setLoading] = useState(false)
   async function markRead() {
     setLoading(true)
-    const response = await apiResponseRequest(`/communication/notifications/${id}/read`, {
+    const response = await apiResponseRequest(API_ENDPOINTS.communication.readNotification(id), {
       method: "PATCH",
     })
     setLoading(false)

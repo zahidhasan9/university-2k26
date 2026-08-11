@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import Link from "next/link"
 import { BedDouble, Bus, Hotel, MapPinned, Plus } from "lucide-react"
 import { EndAllocation } from "@/components/allocation-actions"
@@ -80,13 +81,13 @@ export default async function FacilitiesPage() {
     error = ""
   try {
     const data = await Promise.all([
-      authenticatedRequest<{ hostels: Hostel[] }>("/facilities/hostels"),
-      authenticatedRequest<{ rooms: Room[] }>("/facilities/rooms"),
+      authenticatedRequest<{ hostels: Hostel[] }>(API_ENDPOINTS.facilities.hostels),
+      authenticatedRequest<{ rooms: Room[] }>(API_ENDPOINTS.facilities.rooms),
       authenticatedRequest<{ allocations: HostelAllocation[] }>(
         "/facilities/hostel-allocations?status=active",
       ),
-      authenticatedRequest<{ vehicles: Vehicle[] }>("/facilities/vehicles"),
-      authenticatedRequest<{ routes: Route[] }>("/facilities/transport-routes"),
+      authenticatedRequest<{ vehicles: Vehicle[] }>(API_ENDPOINTS.facilities.vehicles),
+      authenticatedRequest<{ routes: Route[] }>(API_ENDPOINTS.facilities.routes),
       authenticatedRequest<{ allocations: TransportAllocation[] }>(
         "/facilities/transport-allocations?status=active",
       ),

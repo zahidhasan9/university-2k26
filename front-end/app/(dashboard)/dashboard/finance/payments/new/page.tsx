@@ -1,3 +1,4 @@
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import { PaymentForm } from "@/components/finance-form"
 import { FinanceFormShell } from "@/components/finance-form-shell"
 import { authenticatedRequest } from "@/lib/auth"
@@ -12,7 +13,7 @@ type Invoice = {
 }
 export default async function NewPaymentPage() {
   const data = (
-    await authenticatedRequest<{ items: Invoice[] }>("/finance/invoices?limit=100")
+    await authenticatedRequest<{ items: Invoice[] }>(withQuery(API_ENDPOINTS.finance.invoices, { limit: 100 }))
   ).data.items.filter((item) => item.dueMinor > 0 && !["void", "paid"].includes(item.status))
   return (
     <FinanceFormShell

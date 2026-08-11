@@ -1,6 +1,7 @@
 "use client"
 
 import { apiResponseRequest } from "@/lib/http-client"
+import { API_ENDPOINTS } from "@/lib/api-endpoints"
 import { FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
 import { LoaderCircle } from "lucide-react"
@@ -28,10 +29,10 @@ export function PortalForm({ kind }: { kind: Kind }) {
         ?.split(",")
         .map((i) => i.trim())
         .filter(Boolean) ?? []
-    let endpoint = "",
+    let endpoint: string = "",
       p: Record<string, unknown> = {}
     if (kind === "material") {
-      endpoint = "lms/materials"
+      endpoint = API_ENDPOINTS.lms.materials
       p = {
         offeringId: v.offeringId,
         title: v.title,
@@ -43,7 +44,7 @@ export function PortalForm({ kind }: { kind: Kind }) {
       }
     }
     if (kind === "assignment") {
-      endpoint = "lms/assignments"
+      endpoint = API_ENDPOINTS.lms.assignments
       p = {
         offeringId: v.offeringId,
         title: v.title,
@@ -55,11 +56,11 @@ export function PortalForm({ kind }: { kind: Kind }) {
       }
     }
     if (kind === "discussion") {
-      endpoint = "lms/discussions"
+      endpoint = API_ENDPOINTS.lms.discussions
       p = { offeringId: v.offeringId, title: v.title || undefined, body: v.body }
     }
     if (kind === "project") {
-      endpoint = "research/projects"
+      endpoint = API_ENDPOINTS.research.projects
       p = {
         code: v.code,
         title: v.title,
@@ -80,7 +81,7 @@ export function PortalForm({ kind }: { kind: Kind }) {
       }
     }
     if (kind === "publication") {
-      endpoint = "research/publications"
+      endpoint = API_ENDPOINTS.research.publications
       p = {
         title: v.title,
         type: v.type,
@@ -94,7 +95,7 @@ export function PortalForm({ kind }: { kind: Kind }) {
       }
     }
     if (kind === "thesis") {
-      endpoint = "research/theses/propose"
+      endpoint = API_ENDPOINTS.research.proposeThesis
       p = {
         title: v.title,
         abstract: v.abstract,
@@ -103,7 +104,7 @@ export function PortalForm({ kind }: { kind: Kind }) {
       }
     }
     if (kind === "complaint") {
-      endpoint = "engagement/complaints"
+      endpoint = API_ENDPOINTS.engagement.complaints
       p = {
         category: v.category,
         subject: v.subject,
@@ -113,7 +114,7 @@ export function PortalForm({ kind }: { kind: Kind }) {
       }
     }
     if (kind === "alumni") {
-      endpoint = "engagement/alumni/register"
+      endpoint = API_ENDPOINTS.engagement.registerAlumni
       p = {
         graduationYear: Number(v.graduationYear),
         currentOrganization: v.currentOrganization || undefined,
@@ -126,7 +127,7 @@ export function PortalForm({ kind }: { kind: Kind }) {
     }
     setLoading(true)
     setError("")
-    const r = await apiResponseRequest(`/${endpoint}`, {
+    const r = await apiResponseRequest(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(p),
