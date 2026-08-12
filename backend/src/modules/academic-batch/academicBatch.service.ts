@@ -25,6 +25,11 @@ export async function listBatches(query: Record<string, unknown>) {
   ]);
   return { items, pagination: paginationMeta(total, page, limit) };
 }
+export async function getBatch(id: string) {
+  const batch = await AcademicBatchModel.findById(toObjectId(id)).populate("department", "name code").populate("program", "name code").populate("curriculum", "name code totalSemesters").lean();
+  if (!batch) throw new AppError(404, "Academic batch not found");
+  return batch;
+}
 
 export async function createBatch(input: BatchCreateInput) {
   const departmentId = toObjectId(input.departmentId);

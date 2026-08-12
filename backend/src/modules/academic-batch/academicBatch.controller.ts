@@ -4,6 +4,7 @@ import { writeAuditLog } from "../audit/audit.service";
 import * as service from "./academicBatch.service";
 
 export async function list(req: Request, res: Response) { return sendSuccess(res, 200, "Academic batches retrieved", await service.listBatches(req.query)); }
+export async function getOne(req: Request, res: Response) { return sendSuccess(res, 200, "Academic batch retrieved", { batch: await service.getBatch(String(req.params.id)) }); }
 export async function create(req: Request, res: Response) {
   const batch = await service.createBatch(req.body);
   await writeAuditLog(req, { actor: req.auth?.userId, action: "academic_batch.create", resource: "academic_batch", resourceId: batch._id.toString() });

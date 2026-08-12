@@ -124,7 +124,6 @@ export function AdmissionActions({ id, status, batches, sections }: { id: string
                 id="academicBatchId"
                 name="academicBatchId"
                 required
-                defaultValue=""
                 value={batchId}
                 onChange={(event) => setBatchId(event.target.value)}
                 className="mt-2 h-9 w-full rounded-lg border bg-white px-3 text-sm"
@@ -140,7 +139,7 @@ export function AdmissionActions({ id, status, batches, sections }: { id: string
             </div>
             <div>
               <Label htmlFor="academicSectionId">Section</Label>
-              <select id="academicSectionId" name="academicSectionId" required defaultValue="" className="mt-2 h-9 w-full rounded-lg border bg-white px-3 text-sm">
+              <select key={batchId} id="academicSectionId" name="academicSectionId" required defaultValue="" className="mt-2 h-9 w-full rounded-lg border bg-white px-3 text-sm">
                 <option value="" disabled>{batchId ? "Select an available section" : "Select a batch first"}</option>
                 {availableSections.map((section) => <option key={section._id} value={section._id} disabled={section.enrolledCount >= section.capacity}>{section.code} · {section.name} ({section.capacity - section.enrolledCount} seats left)</option>)}
               </select>
