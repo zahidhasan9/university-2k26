@@ -208,6 +208,11 @@ async function CourseHierarchy({ raw }: { raw: Record<string, string | string[] 
                 </p>
               </div>
               <div className="flex items-center gap-3">
+                {selectedBatch && (
+                  <Button variant="outline" render={<Link href={`/dashboard/academics/batches/${selectedBatch._id}/sections`} />}>
+                    <Users /> Manage sections
+                  </Button>
+                )}
                 {selectedBatch?.curriculum && (
                   <Button variant="outline" render={<Link href={`/dashboard/academics/curricula/${selectedBatch.curriculum._id}`} />}>
                     <Pencil /> Edit curriculum

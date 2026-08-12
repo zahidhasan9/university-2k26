@@ -1,4 +1,4 @@
-import { API_ENDPOINTS } from "@/lib/api-endpoints"
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import type { Metadata } from "next"
 import Link from "next/link"
 import {
@@ -15,6 +15,7 @@ import {
 import { notFound } from "next/navigation"
 
 import { StudentStatusBadge } from "@/components/student-status"
+import { StudentSectionTransfer } from "@/components/student-section-transfer"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -40,8 +41,11 @@ function Info({ label, children }: { label: string; children: React.ReactNode })
 export default async function StudentDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   let student: Student
+  type Section = { _id: string; code: string; name: string; capacity: number; enrolledCount: number }
+  let sections: Section[] = []
   try {
     student = (await authenticatedRequest<{ student: Student }>(API_ENDPOINTS.students.detail(id))).data.student
+    if (student.academicBatch?._id) sections = (await authenticatedRequest<{ items: Section[] }>(withQuery(API_ENDPOINTS.academics.sections, { academicBatchId: student.academicBatch._id, status: "active", limit: 200 }))).data.items
   } catch (error) {
     if (error instanceof Error && error.message === "Student not found") notFound()
     throw error
@@ -65,9 +69,10 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
         <Button variant="ghost" render={<Link href="/dashboard/students" />}>
           <ArrowLeft /> Back to students
         </Button>
-        <Button variant="outline" render={<Link href={`/dashboard/students/${id}/edit`} />}>
-          <Pencil /> Edit profile
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <StudentSectionTransfer studentId={id} currentSectionId={student.academicSection?._id} currentSectionCode={student.section} sections={sections} />
+          <Button variant="outline" render={<Link href={`/dashboard/students/${id}/edit`} />}><Pencil /> Edit profile</Button>
+        </div>
       </div>
 
       <Card className="overflow-hidden">
