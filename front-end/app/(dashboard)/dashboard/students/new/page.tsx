@@ -10,6 +10,7 @@ export const metadata: Metadata = { title: "Add student" }
 type List<T> = { items: T[] }
 type ProgramOption = { _id: string; name: string; code: string }
 type BatchOption = { _id: string; code: string; name: string; curriculumVersion: string; program: { _id: string } | string }
+type SectionOption = { _id: string; code: string; name: string; capacity: number; enrolledCount: number; academicBatch: { _id: string } | string }
 type SemesterOption = {
   _id: string
   name: string
@@ -19,10 +20,11 @@ type SemesterOption = {
 }
 
 export default async function NewStudentPage() {
-  const [programs, semesters, batches] = await Promise.all([
+  const [programs, semesters, batches, sections] = await Promise.all([
     authenticatedRequest<List<ProgramOption>>(withQuery(API_ENDPOINTS.academics.programs, { status: "active", limit: 100 })),
     authenticatedRequest<List<SemesterOption>>(withQuery(API_ENDPOINTS.academics.semesters, { limit: 100 })),
     authenticatedRequest<List<BatchOption>>(withQuery(API_ENDPOINTS.academics.batches, { status: "active", limit: 100 })),
+    authenticatedRequest<List<SectionOption>>(withQuery(API_ENDPOINTS.academics.sections, { status: "active", limit: 500 })),
   ])
 
   return (
@@ -34,6 +36,7 @@ export default async function NewStudentPage() {
       <StudentForm
         programs={programs.data.items}
         batches={batches.data.items}
+        sections={sections.data.items}
         semesters={semesters.data.items.filter((semester) => semester.status !== "archived")}
       />
     </StudentFormPage>

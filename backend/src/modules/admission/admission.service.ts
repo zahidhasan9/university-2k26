@@ -114,7 +114,7 @@ export async function startReview(id: string, reviewerId: Types.ObjectId, note?:
 export async function decideApplication(
   id: string,
   reviewerId: Types.ObjectId,
-  input: { decision: "approve"; studentId: string; academicBatchId: string; note?: string } | { decision: "reject"; note: string },
+  input: { decision: "approve"; studentId: string; academicBatchId: string; academicSectionId: string; note?: string } | { decision: "reject"; note: string },
 ) {
   const application = await AdmissionModel.findOne({
     _id: toObjectId(id),
@@ -128,6 +128,7 @@ export async function decideApplication(
       userId: application.applicant.toString(),
       studentId: input.studentId,
       academicBatchId: input.academicBatchId,
+      academicSectionId: input.academicSectionId,
       programId: application.program.toString(),
       admissionSemesterId: application.intakeSemester.toString(),
       admissionApplicationId: application._id.toString(),

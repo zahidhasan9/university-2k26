@@ -44,6 +44,7 @@ export const admissionDecisionSchema = z.object({
       decision: z.literal("approve"),
       studentId: z.string().trim().min(3).max(40).regex(/^[A-Za-z0-9_-]+$/).transform((v) => v.toUpperCase()),
       academicBatchId: objectId,
+      academicSectionId: objectId,
       note: z.string().trim().max(2000).optional(),
     }),
     z.object({

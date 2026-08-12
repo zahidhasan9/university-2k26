@@ -14,11 +14,14 @@ import { Label } from "@/components/ui/label"
 import type { AdmissionStatus } from "@/lib/admission-types"
 
 type BatchOption = { _id: string; code: string; name: string; curriculumVersion: string }
+type SectionOption = { _id: string; code: string; name: string; capacity: number; enrolledCount: number; academicBatch: { _id: string } | string }
 
-export function AdmissionActions({ id, status, batches }: { id: string; status: AdmissionStatus; batches: BatchOption[] }) {
+export function AdmissionActions({ id, status, batches, sections }: { id: string; status: AdmissionStatus; batches: BatchOption[]; sections: SectionOption[] }) {
   const router = useRouter()
   const [loading, setLoading] = useState("")
   const [error, setError] = useState("")
+  const [batchId, setBatchId] = useState("")
+  const availableSections = sections.filter((section) => (typeof section.academicBatch === "string" ? section.academicBatch : section.academicBatch._id) === batchId)
 
   async function send(path: string, payload: object, action: string) {
     setLoading(action)
@@ -52,10 +55,11 @@ export function AdmissionActions({ id, status, batches }: { id: string; status: 
     const note = String(form.get(`${decision}Note`) ?? "").trim()
     const studentId = String(form.get("studentId") ?? "").trim()
     const academicBatchId = String(form.get("academicBatchId") ?? "").trim()
+    const academicSectionId = String(form.get("academicSectionId") ?? "").trim()
     void send(
       "decision",
       decision === "approve"
-        ? { decision, studentId, academicBatchId, ...(note ? { note } : {}) }
+        ? { decision, studentId, academicBatchId, academicSectionId, ...(note ? { note } : {}) }
         : { decision, note },
       decision,
     )
@@ -121,6 +125,8 @@ export function AdmissionActions({ id, status, batches }: { id: string; status: 
                 name="academicBatchId"
                 required
                 defaultValue=""
+                value={batchId}
+                onChange={(event) => setBatchId(event.target.value)}
                 className="mt-2 h-9 w-full rounded-lg border bg-white px-3 text-sm"
               >
                 <option value="" disabled>Select an active batch</option>
@@ -131,6 +137,13 @@ export function AdmissionActions({ id, status, batches }: { id: string; status: 
                 ))}
               </select>
               {!batches.length && <p className="mt-2 text-xs text-rose-700">Create an active batch for this programme before approval.</p>}
+            </div>
+            <div>
+              <Label htmlFor="academicSectionId">Section</Label>
+              <select id="academicSectionId" name="academicSectionId" required defaultValue="" className="mt-2 h-9 w-full rounded-lg border bg-white px-3 text-sm">
+                <option value="" disabled>{batchId ? "Select an available section" : "Select a batch first"}</option>
+                {availableSections.map((section) => <option key={section._id} value={section._id} disabled={section.enrolledCount >= section.capacity}>{section.code} · {section.name} ({section.capacity - section.enrolledCount} seats left)</option>)}
+              </select>
             </div>
             <div>
               <Label htmlFor="approveNote">Approval note</Label>

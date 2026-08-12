@@ -3,6 +3,7 @@ import { AppError } from "../../utils/AppError";
 import { escapeRegex, toObjectId } from "../../utils/mongo";
 import { getPagination, paginationMeta } from "../../utils/pagination";
 import { AcademicBatchModel } from "../academic-batch/academicBatch.model";
+import { releaseSectionSeat, reserveSectionSeat } from "../academic-section/academicSection.service";
 import { RoleModel } from "../role/role.model";
 import { SemesterModel } from "../semester/semester.model";
 import { ProgramModel } from "../university-structure/program.model";
@@ -21,6 +22,9 @@ export async function listStudents(query: Record<string, unknown>) {
     filter.program = { $in: programIds };
   }
   if (query.batch) filter.batch = String(query.batch);
+  if (query.academicBatchId) filter.academicBatch = toObjectId(String(query.academicBatchId), "academic batch id");
+  if (query.academicSectionId) filter.academicSection = toObjectId(String(query.academicSectionId), "academic section id");
+  if (query.section) filter.section = String(query.section).trim();
   if (query.status) filter.status = query.status;
   if (query.search) {
     const search = { $regex: escapeRegex(String(query.search).trim()), $options: "i" };
@@ -29,7 +33,10 @@ export async function listStudents(query: Record<string, unknown>) {
     });
     filter.$or = [{ studentId: search }, { user: { $in: matchingUserIds } }];
   }
-  const [items, total, batches] = await Promise.all([
+  const filterScope = { ...filter };
+  delete filterScope.section;
+  delete filterScope.$or;
+  const [items, total, batches, sections] = await Promise.all([
     StudentModel.find(filter)
       .populate("user", "firstName lastName email status")
       .populate({
@@ -39,16 +46,18 @@ export async function listStudents(query: Record<string, unknown>) {
       })
       .populate("admissionSemester", "name code academicYear")
       .populate("academicBatch", "code name admissionYear curriculumVersion status")
+      .populate("academicSection", "code name capacity enrolledCount shift homeRoom status")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean(),
     StudentModel.countDocuments(filter),
     StudentModel.distinct("batch", { batch: { $ne: "" } }),
+    StudentModel.distinct("section", { ...filterScope, section: { $ne: "" } }),
   ]);
   return {
     items,
-    filters: { batches: batches.sort((a, b) => a.localeCompare(b)) },
+    filters: { batches: batches.sort((a, b) => a.localeCompare(b)), sections: sections.sort((a, b) => a.localeCompare(b)) },
     pagination: paginationMeta(total, page, limit),
   };
 }
@@ -59,6 +68,7 @@ export async function getStudent(id: string) {
     .populate({ path: "program", select: "name code department", populate: { path: "department", select: "name code" } })
     .populate("admissionSemester", "name code academicYear")
     .populate("academicBatch", "code name admissionYear curriculumVersion status")
+    .populate("academicSection", "code name capacity enrolledCount shift homeRoom status")
     .lean();
   if (!student) throw new AppError(404, "Student not found");
   return student;
@@ -70,6 +80,7 @@ export async function getStudentByUser(userId: string) {
     .populate({ path: "program", select: "name code department", populate: { path: "department", select: "name code" } })
     .populate("admissionSemester", "name code academicYear")
     .populate("academicBatch", "code name admissionYear curriculumVersion status")
+    .populate("academicSection", "code name capacity enrolledCount shift homeRoom status")
     .lean();
   if (!student) throw new AppError(404, "Student profile not found");
   return student;
@@ -80,6 +91,7 @@ export async function createStudent(input: Record<string, unknown>) {
   const programId = toObjectId(String(input.programId), "program id");
   const semesterId = toObjectId(String(input.admissionSemesterId), "semester id");
   const academicBatchId = toObjectId(String(input.academicBatchId), "academic batch id");
+  const academicSectionId = String(input.academicSectionId);
   if (await StudentModel.exists({ studentId })) {
     throw new AppError(409, "Student ID already exists");
   }
@@ -122,7 +134,9 @@ export async function createStudent(input: Record<string, unknown>) {
     throw new AppError(409, "This user already has a student profile");
   }
 
+  let academicSection;
   try {
+    academicSection = await reserveSectionSeat(academicSectionId, academicBatchId.toString());
     const {
       userId: _,
       firstName: __,
@@ -131,6 +145,7 @@ export async function createStudent(input: Record<string, unknown>) {
       programId: _____,
       admissionSemesterId: ______,
       academicBatchId: _______,
+      academicSectionId: ________,
       admissionApplicationId,
       ...data
     } = input;
@@ -140,7 +155,9 @@ export async function createStudent(input: Record<string, unknown>) {
       program: programId,
       admissionSemester: semesterId,
       academicBatch: academicBatch._id,
+      academicSection: academicSection._id,
       batch: academicBatch.code,
+      section: academicSection.code,
       ...(admissionApplicationId
         ? {
             admissionApplication: toObjectId(
@@ -157,6 +174,7 @@ export async function createStudent(input: Record<string, unknown>) {
     }
     return getStudent(student._id.toString());
   } catch (error) {
+    await releaseSectionSeat(academicSection?._id);
     if (provisionedUserId) await UserModel.findByIdAndDelete(provisionedUserId);
     throw error;
   }
@@ -172,6 +190,9 @@ export async function updateStudent(id: string, input: Record<string, unknown>) 
     : student.program;
   if (input.programId && !input.academicBatchId) {
     throw new AppError(400, "Academic batch is required when changing program");
+  }
+  if (input.academicBatchId && !input.academicSectionId) {
+    throw new AppError(400, "Academic section is required when changing batch");
   }
   if (input.programId) {
     const program = await ProgramModel.findOne({
@@ -195,6 +216,18 @@ export async function updateStudent(id: string, input: Record<string, unknown>) 
     student.batch = academicBatch.code;
     delete input.academicBatchId;
   }
+  if (input.academicSectionId) {
+    if (student.academicSection?.toString() === String(input.academicSectionId)) {
+      delete input.academicSectionId;
+    } else {
+    const previousSection = student.academicSection;
+    const target = await reserveSectionSeat(String(input.academicSectionId), student.academicBatch.toString());
+    student.academicSection = target._id;
+    student.section = target.code;
+    delete input.academicSectionId;
+    await releaseSectionSeat(previousSection);
+    }
+  }
   if (input.firstName !== undefined) user.firstName = String(input.firstName);
   if (input.lastName !== undefined) user.lastName = String(input.lastName);
   if (input.email !== undefined) {
@@ -211,4 +244,30 @@ export async function updateStudent(id: string, input: Record<string, unknown>) 
   student.set(input);
   await Promise.all([student.save(), user.save()]);
   return getStudent(id);
+}
+
+export async function transferStudentSection(id: string, academicSectionId: string, reason: string | undefined, actorId: unknown) {
+  const student = await StudentModel.findById(toObjectId(id));
+  if (!student) throw new AppError(404, "Student not found");
+  if (student.status !== "active") throw new AppError(409, "Only active students can be transferred");
+  if (student.academicSection?.toString() === academicSectionId) throw new AppError(400, "Student is already assigned to this section");
+  const previousSection = student.academicSection;
+  const target = await reserveSectionSeat(academicSectionId, student.academicBatch.toString());
+  try {
+    student.academicSection = target._id;
+    student.section = target.code;
+    student.sectionTransfers.push({
+      ...(previousSection ? { fromSection: previousSection } : {}),
+      toSection: target._id,
+      ...(reason ? { reason } : {}),
+      transferredBy: toObjectId(String(actorId), "actor id"),
+      transferredAt: new Date(),
+    });
+    await student.save();
+    await releaseSectionSeat(previousSection);
+    return getStudent(id);
+  } catch (error) {
+    await releaseSectionSeat(target._id);
+    throw error;
+  }
 }

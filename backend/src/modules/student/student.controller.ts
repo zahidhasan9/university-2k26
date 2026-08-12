@@ -40,3 +40,16 @@ export async function update(req: Request, res: Response): Promise<Response> {
   });
   return sendSuccess(res, 200, "Student updated", { student });
 }
+export async function transferSection(req: Request, res: Response): Promise<Response> {
+  if (!req.auth) throw new AppError(401, "Authentication required");
+  const id = req.params.id as string;
+  const student = await service.transferStudentSection(id, req.body.academicSectionId, req.body.reason, req.auth.userId);
+  await writeAuditLog(req, {
+    actor: req.auth.userId,
+    action: "student.section-transfer",
+    resource: "student",
+    resourceId: id,
+    metadata: { academicSectionId: req.body.academicSectionId, reason: req.body.reason },
+  });
+  return sendSuccess(res, 200, "Student transferred to the selected section", { student });
+}

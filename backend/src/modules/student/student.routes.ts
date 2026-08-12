@@ -3,7 +3,7 @@ import { authenticate, authorize } from "../../middleware/authenticate";
 import { validate } from "../../middleware/validate";
 import { asyncHandler } from "../../utils/asyncHandler";
 import * as controller from "./student.controller";
-import { studentCreateSchema, studentIdParamSchema, studentUpdateSchema } from "./student.validation";
+import { studentCreateSchema, studentIdParamSchema, studentSectionTransferSchema, studentUpdateSchema } from "./student.validation";
 
 export const studentRouter = Router();
 studentRouter.use(authenticate);
@@ -26,4 +26,10 @@ studentRouter.patch(
   authorize("students.manage"),
   validate(studentUpdateSchema),
   asyncHandler(controller.update),
+);
+studentRouter.post(
+  "/:id/section-transfer",
+  authorize("students.manage"),
+  validate(studentSectionTransferSchema),
+  asyncHandler(controller.transferSection),
 );

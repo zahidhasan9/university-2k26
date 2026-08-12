@@ -12,6 +12,15 @@ export type Student = {
     status: string
   }
   section: string
+  academicSection?: {
+    _id: string
+    code: string
+    name: string
+    capacity: number
+    enrolledCount: number
+    shift: string
+    status: string
+  }
   user: {
     _id: string
     firstName: string
@@ -58,6 +67,7 @@ export type StudentListData = {
   items: Student[]
   filters?: {
     batches: string[]
+    sections?: string[]
   }
   pagination: {
     total: number

@@ -41,6 +41,8 @@ export const API_ENDPOINTS = {
     offerings: "/course-offerings",
     batches: "/academic-batches",
     batchDetail: (id: string) => `/academic-batches/${id}`,
+    sections: "/academic-sections",
+    sectionDetail: (id: string) => `/academic-sections/${id}`,
     curricula: "/curricula",
     curriculumDetail: (id: string) => `/curricula/${id}`,
     detail: (entity: string, id: string) => `/${entity}/${id}`,
@@ -49,6 +51,7 @@ export const API_ENDPOINTS = {
     list: "/students",
     create: "/students",
     detail: (id: string) => `/students/${id}`,
+    transferSection: (id: string) => `/students/${id}/section-transfer`,
   },
   enrollments: {
     list: "/enrollments",

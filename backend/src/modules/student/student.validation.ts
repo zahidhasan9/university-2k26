@@ -29,7 +29,7 @@ export const studentCreateSchema = z.object({
     temporaryPassword: z.string().min(12).max(128).optional(),
     studentId: z.string().trim().min(3).max(40).regex(/^[A-Za-z0-9_-]+$/).transform((v) => v.toUpperCase()),
     academicBatchId: objectId,
-    section: z.string().trim().min(1).max(20).default("Unassigned"),
+    academicSectionId: objectId,
     programId: objectId,
     admissionSemesterId: objectId,
     admissionApplicationId: objectId.optional(),
@@ -57,7 +57,7 @@ export const studentUpdateSchema = z.object({
       lastName: z.string().trim().min(1).max(80).optional(),
       email: z.string().trim().email().transform((value) => value.toLowerCase()).optional(),
       academicBatchId: objectId.optional(),
-      section: z.string().trim().min(1).max(20).optional(),
+      academicSectionId: objectId.optional(),
       currentSemesterNumber: z.number().int().min(1).optional(),
       dateOfBirth: z.coerce.date().optional(),
       gender: z.enum(["male", "female", "other", "prefer_not_to_say"]).optional(),
@@ -67,4 +67,8 @@ export const studentUpdateSchema = z.object({
       status: z.enum(["active", "graduated", "suspended", "withdrawn", "archived"]).optional(),
     })
     .refine((value) => Object.keys(value).length > 0, "At least one field is required"),
+});
+export const studentSectionTransferSchema = z.object({
+  params: z.object({ id: objectId }),
+  body: z.object({ academicSectionId: objectId, reason: z.string().trim().max(300).optional() }),
 });

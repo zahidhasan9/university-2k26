@@ -1,7 +1,7 @@
 import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Plus, Users } from "lucide-react"
+import { FolderTree, List, Plus, Users } from "lucide-react"
 
 import { PaginationLinks } from "@/components/pagination-links"
 import { StudentDirectoryFilters } from "@/components/student-directory-filters"
@@ -74,9 +74,9 @@ export default async function StudentsPage({ searchParams }: { searchParams: Sea
             Search profiles and monitor academic status across programs.
           </p>
         </div>
-        <Button render={<Link href="/dashboard/students/new" />}>
+        <div className="flex flex-wrap gap-2"><Button variant="outline"><List /> Table & ID search</Button><Button variant="outline" render={<Link href="/dashboard/students/structure" />}><FolderTree /> Structure view</Button><Button render={<Link href="/dashboard/students/new" />}>
           <Plus /> Add student
-        </Button>
+        </Button></div>
       </div>
 
       <Card>

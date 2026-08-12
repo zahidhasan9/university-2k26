@@ -40,12 +40,16 @@ export default async function AdmissionDetailsPage({
   }
   const applicantName = `${application.applicant.firstName} ${application.applicant.lastName}`
   type BatchOption = { _id: string; code: string; name: string; curriculumVersion: string }
+  type SectionOption = { _id: string; code: string; name: string; capacity: number; enrolledCount: number; academicBatch: { _id: string } | string }
   const batches = application.status === "under_review"
     ? (await authenticatedRequest<{ items: BatchOption[] }>(withQuery(API_ENDPOINTS.academics.batches, {
         programId: application.program._id,
         status: "active",
         limit: 100,
       }))).data.items
+    : []
+  const sections = application.status === "under_review"
+    ? (await authenticatedRequest<{ items: SectionOption[] }>(withQuery(API_ENDPOINTS.academics.sections, { status: "active", limit: 500 }))).data.items
     : []
 
   return (
@@ -163,7 +167,7 @@ export default async function AdmissionDetailsPage({
               <CardTitle>Review decision</CardTitle>
             </CardHeader>
             <CardContent>
-              <AdmissionActions id={application._id} status={application.status} batches={batches} />
+              <AdmissionActions id={application._id} status={application.status} batches={batches} sections={sections} />
             </CardContent>
           </Card>
         </div>

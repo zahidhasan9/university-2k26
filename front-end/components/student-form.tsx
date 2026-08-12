@@ -28,6 +28,7 @@ type BatchOption = {
   curriculumVersion: string
   program: { _id: string } | string
 }
+type SectionOption = { _id: string; code: string; name: string; capacity: number; enrolledCount: number; academicBatch: { _id: string } | string }
 
 const selectClass =
   "h-9 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/20"
@@ -67,11 +68,13 @@ export function StudentForm({
   student,
   programs,
   batches,
+  sections,
   semesters = [],
 }: {
   student?: Student
   programs: Option[]
   batches: BatchOption[]
+  sections: SectionOption[]
   semesters?: Option[]
 }) {
   const router = useRouter()
@@ -79,8 +82,13 @@ export function StudentForm({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
   const [programId, setProgramId] = useState(student?.program._id ?? "")
+  const [batchId, setBatchId] = useState(student?.academicBatch?._id ?? "")
+  const [sectionId, setSectionId] = useState(student?.academicSection?._id ?? "")
   const availableBatches = batches.filter(
     (batch) => (typeof batch.program === "string" ? batch.program : batch.program._id) === programId,
+  )
+  const availableSections = sections.filter(
+    (section) => (typeof section.academicBatch === "string" ? section.academicBatch : section.academicBatch._id) === batchId,
   )
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -106,7 +114,7 @@ export function StudentForm({
           lastName: String(form.get("lastName")),
           email: optional(form, "email"),
           academicBatchId: String(form.get("academicBatchId")),
-          section: String(form.get("section")),
+          academicSectionId: String(form.get("academicSectionId")),
           programId: String(form.get("programId")),
           currentSemesterNumber: Number(form.get("currentSemesterNumber")),
           dateOfBirth: optional(form, "dateOfBirth"),
@@ -122,7 +130,7 @@ export function StudentForm({
           temporaryPassword: String(form.get("temporaryPassword")),
           studentId: String(form.get("studentId")),
           academicBatchId: String(form.get("academicBatchId")),
-          section: String(form.get("section")),
+          academicSectionId: String(form.get("academicSectionId")),
           programId: String(form.get("programId")),
           admissionSemesterId: String(form.get("admissionSemesterId")),
           dateOfBirth: optional(form, "dateOfBirth"),
@@ -218,15 +226,6 @@ export function StudentForm({
               />
             </Field>
           )}
-          <Field label="Section" name="section">
-            <Input
-              id="section"
-              name="section"
-              defaultValue={student?.section}
-              placeholder="e.g. A"
-              required
-            />
-          </Field>
         </div>
       </section>
 
@@ -243,7 +242,7 @@ export function StudentForm({
               className={selectClass}
               required
               value={programId}
-              onChange={(event) => setProgramId(event.target.value)}
+              onChange={(event) => { setProgramId(event.target.value); setBatchId(""); setSectionId("") }}
             >
               <option value="" disabled>
                 Select a program
@@ -262,7 +261,8 @@ export function StudentForm({
               name="academicBatchId"
               className={selectClass}
               required
-              defaultValue={student?.academicBatch?._id ?? ""}
+              value={batchId}
+              onChange={(event) => { setBatchId(event.target.value); setSectionId("") }}
             >
               <option value="" disabled>
                 {programId ? "Select an active batch" : "Select a program first"}
@@ -270,6 +270,16 @@ export function StudentForm({
               {availableBatches.map((batch) => (
                 <option key={batch._id} value={batch._id}>
                   {batch.code} · {batch.name} ({batch.curriculumVersion})
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Section" name="academicSectionId">
+            <select id="academicSectionId" name="academicSectionId" className={selectClass} required value={sectionId} onChange={(event) => setSectionId(event.target.value)}>
+              <option value="" disabled>{batchId ? "Select an available section" : "Select a batch first"}</option>
+              {availableSections.map((section) => (
+                <option key={section._id} value={section._id} disabled={section.enrolledCount >= section.capacity && section._id !== student?.academicSection?._id}>
+                  {section.code} · {section.name} ({section.capacity - section.enrolledCount} seats left)
                 </option>
               ))}
             </select>
