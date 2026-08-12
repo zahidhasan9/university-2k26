@@ -1,11 +1,12 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowLeft, BookOpen, Building2, Filter, Layers3, Pencil, Search, Users } from "lucide-react"
+import { ArrowLeft, BookOpen, Building2, Filter, Layers3, Pencil, Search, Settings, Users } from "lucide-react"
 import { notFound } from "next/navigation"
 
 import { PaginationLinks } from "@/components/pagination-links"
 import { AcademicRecordActions } from "@/components/academic-record-actions"
 import { BatchRemoveAction } from "@/components/batch-remove-action"
+import { AcademicSectionManager, type AcademicSectionOption } from "@/components/academic-section-manager"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -54,6 +55,8 @@ async function CourseHierarchy({ raw }: { raw: Record<string, string | string[] 
   const departmentId = first(raw.departmentId) ?? ""
   const batch = first(raw.batch) ?? ""
   const programId = first(raw.programId) ?? ""
+  const requestedTab = first(raw.tab) ?? "curriculum"
+  const activeTab = ["curriculum", "sections", "students", "settings"].includes(requestedTab) ? requestedTab : "curriculum"
   const departments = (
     await authenticatedRequest<AcademicList>(
       withQuery(API_ENDPOINTS.academics.departments, { status: "active", limit: 100 }),
@@ -66,6 +69,7 @@ async function CourseHierarchy({ raw }: { raw: Record<string, string | string[] 
   let curriculum: CurriculumDetail | undefined
   let selectedBatch: AcademicBatch | undefined
   let selectedProgram: Program | undefined
+  let sections: AcademicSectionOption[] = []
   if (departmentId) {
     const [programResponse, batchResponse] = await Promise.all([
       authenticatedRequest<AcademicList>(
@@ -87,10 +91,14 @@ async function CourseHierarchy({ raw }: { raw: Record<string, string | string[] 
       curriculum = (await authenticatedRequest<{ curriculum: CurriculumDetail }>(API_ENDPOINTS.academics.curriculumDetail(selectedBatch.curriculum._id))).data.curriculum
       courses = curriculum.coursePlans.map((plan) => ({ ...plan.course, semesterNumber: plan.semesterNumber }))
     }
+    if (selectedBatch && activeTab === "sections") {
+      sections = (await authenticatedRequest<{ items: AcademicSectionOption[] }>(withQuery(API_ENDPOINTS.academics.sections, { academicBatchId: selectedBatch._id, status: "active", limit: 200 }))).data.items
+    }
   }
 
   const query = (values: Record<string, string>) =>
     `/dashboard/academics/courses?${new URLSearchParams(values)}`
+  const tabHref = (tab: string) => query({ departmentId, batch, programId, tab })
   const semesters = new Map<number, AcademicItem[]>()
   for (const course of courses) {
     const number = course.semesterNumber ?? 1
@@ -208,22 +216,28 @@ async function CourseHierarchy({ raw }: { raw: Record<string, string | string[] 
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                {selectedBatch && (
-                  <Button variant="outline" render={<Link href={`/dashboard/academics/batches/${selectedBatch._id}/sections`} />}>
-                    <Users /> Manage sections
-                  </Button>
-                )}
                 {selectedBatch?.curriculum && (
                   <Button variant="outline" render={<Link href={`/dashboard/academics/curricula/${selectedBatch.curriculum._id}`} />}>
                     <Pencil /> Edit curriculum
                   </Button>
                 )}
-                {selectedBatch && <BatchRemoveAction id={selectedBatch._id} code={selectedBatch.code} redirectHref={query({ departmentId })} />}
                 <Layers3 className="size-6 text-primary" />
               </div>
             </CardContent>
           </Card>
-          {[...semesters.entries()]
+          <nav className="flex gap-1 overflow-x-auto rounded-xl border bg-muted/30 p-1" aria-label="Batch workspace">
+            {[
+              { key: "curriculum", label: "Curriculum", icon: BookOpen },
+              { key: "sections", label: "Sections", icon: Layers3 },
+              { key: "students", label: "Students", icon: Users },
+              { key: "settings", label: "Settings", icon: Settings },
+            ].map(({ key, label, icon: Icon }) => (
+              <Link key={key} href={tabHref(key)} className={`inline-flex min-w-fit items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${activeTab === key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                <Icon className="size-4" /> {label}
+              </Link>
+            ))}
+          </nav>
+          {activeTab === "curriculum" && [...semesters.entries()]
             .sort(([a], [b]) => a - b)
             .map(([number, items]) => (
               <Card key={number}>
@@ -269,10 +283,19 @@ async function CourseHierarchy({ raw }: { raw: Record<string, string | string[] 
                 </CardContent>
               </Card>
             ))}
-          {!courses.length && (
+          {activeTab === "curriculum" && !courses.length && (
             <p className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
               This batch has no published curriculum assigned. Design a curriculum and assign it to the batch.
             </p>
+          )}
+          {activeTab === "sections" && selectedBatch && (
+            <Card><CardHeader><CardTitle>Section planning</CardTitle><p className="text-sm text-muted-foreground">Create sections and manage capacity, shift, room, and available seats.</p></CardHeader><CardContent><AcademicSectionManager batchId={selectedBatch._id} sections={sections} /></CardContent></Card>
+          )}
+          {activeTab === "students" && selectedBatch && (
+            <Card><CardHeader><CardTitle>Batch students</CardTitle></CardHeader><CardContent className="flex flex-col items-start gap-4"><p className="text-sm text-muted-foreground">Browse this batch section-by-section, search students, and open profiles for transfers.</p><Button render={<Link href={`/dashboard/students/structure?departmentId=${departmentId}&batchId=${selectedBatch._id}`} />}><Users /> Open student directory</Button></CardContent></Card>
+          )}
+          {activeTab === "settings" && selectedBatch && (
+            <Card><CardHeader><CardTitle>Batch settings</CardTitle></CardHeader><CardContent className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"><div><p className="text-xs font-medium uppercase text-muted-foreground">Batch</p><p className="mt-1 font-semibold">{selectedBatch.code} · {selectedBatch.name}</p></div><div><p className="text-xs font-medium uppercase text-muted-foreground">Program</p><p className="mt-1 font-semibold">{selectedProgram.code} · {selectedProgram.name}</p></div><div><p className="text-xs font-medium uppercase text-muted-foreground">Curriculum</p><p className="mt-1 font-semibold">{selectedBatch.curriculum?.code ?? "Not assigned"}</p></div><div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-3">{selectedBatch.curriculum && <Button variant="outline" render={<Link href={`/dashboard/academics/curricula/${selectedBatch.curriculum._id}`} />}><Pencil /> Edit curriculum</Button>}<BatchRemoveAction id={selectedBatch._id} code={selectedBatch.code} redirectHref={query({ departmentId })} /></div></CardContent></Card>
           )}
         </div>
       )}

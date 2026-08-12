@@ -28,6 +28,7 @@ import { uploadRouter } from "../modules/upload/upload.routes";
 import { semesterRouter } from "../modules/semester/semester.routes";
 import { studentRouter } from "../modules/student/student.routes";
 import { teacherRouter } from "../modules/teacher/teacher.routes";
+import { facultyAdvisingRouter } from "../modules/faculty-advising/facultyAdvising.routes";
 import {
   courseRouter,
   departmentRouter,
@@ -77,6 +78,7 @@ apiRouter.use("/semesters", semesterRouter);
 apiRouter.use("/admissions", admissionRouter);
 apiRouter.use("/students", studentRouter);
 apiRouter.use("/teachers", teacherRouter);
+apiRouter.use("/faculty-advising", facultyAdvisingRouter);
 apiRouter.use("/enrollments", enrollmentRouter);
 apiRouter.use("/course-offerings", courseOfferingRouter);
 apiRouter.use("/academic-batches", academicBatchRouter);

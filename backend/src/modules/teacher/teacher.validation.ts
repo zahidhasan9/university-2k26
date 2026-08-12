@@ -18,6 +18,13 @@ const qualifications = z
   )
   .max(20)
   .optional();
+const professionalFields = {
+  employmentType: z.enum(["permanent", "contractual", "adjunct", "visiting"]).optional(), campus: z.string().trim().max(100).optional(), officeRoom: z.string().trim().max(40).optional(), officialEmail: z.string().trim().email().optional(), confirmationDate: z.coerce.date().optional(), maxWeeklyHours: z.coerce.number().int().min(1).max(60).optional(),
+  researchInterests: z.array(z.string().trim().min(1).max(120)).max(30).optional(), certifications: z.array(z.string().trim().min(1).max(180)).max(30).optional(),
+  links: z.object({ orcid: z.string().trim().url().optional(), googleScholar: z.string().trim().url().optional(), website: z.string().trim().url().optional() }).optional(),
+  officeHours: z.array(z.object({ day: z.enum(["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), endTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/) })).max(14).optional(),
+  documents: z.array(z.object({ type: z.string().trim().min(1).max(80), url: z.string().trim().url(), status: z.enum(["pending", "verified", "rejected"]).default("pending") })).max(30).optional(),
+};
 
 export const teacherIdParamSchema = z.object({ params: z.object({ id: objectId }) });
 export const teacherCreateSchema = z.object({
@@ -30,6 +37,7 @@ export const teacherCreateSchema = z.object({
     phone: z.string().trim().max(30).optional(),
     specialization: z.array(z.string().trim().min(1).max(100)).max(30).default([]),
     qualifications,
+    ...professionalFields,
   }),
 });
 export const teacherUpdateSchema = z.object({
@@ -42,6 +50,7 @@ export const teacherUpdateSchema = z.object({
       phone: z.string().trim().max(30).optional(),
       specialization: z.array(z.string().trim().min(1).max(100)).max(30).optional(),
       qualifications,
+      ...professionalFields,
       status: z.enum(["active", "on_leave", "retired", "resigned", "archived"]).optional(),
     })
     .refine((value) => Object.keys(value).length > 0, "At least one field is required"),

@@ -68,6 +68,7 @@ export const waiverCreateSchema = z.object({
       name: z.string().trim().min(2).max(150),
       type: z.enum(["percentage", "fixed"]),
       value: z.number().min(0),
+      currency: z.string().trim().length(3).transform((value) => value.toUpperCase()).default("BDT"),
       appliesTo: z.enum(["tuition", "all"]).default("tuition"),
       reason: z.string().trim().min(3).max(500),
       validFrom: z.coerce.date(),

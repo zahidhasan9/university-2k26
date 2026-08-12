@@ -12,6 +12,9 @@ const extensionByMime: Record<string, string> = {
   "image/png": ".png",
   "image/webp": ".webp",
   "image/gif": ".gif",
+  "application/pdf": ".pdf",
+  "application/msword": ".doc",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
 }
 
 export type UploadedImage = {
@@ -28,7 +31,7 @@ async function saveLocally(
   requestOrigin: string,
 ): Promise<UploadedImage> {
   const extension = extensionByMime[file.mimetype];
-  if (!extension) throw new AppError(415, "Unsupported image format");
+  if (!extension) throw new AppError(415, "Unsupported file format");
   const safeFolder = folder.replace(/[^a-z0-9-]/gi, "-");
   const key = `${safeFolder}/${randomUUID()}${extension}`;
   const directory = path.join(localUploadRoot, safeFolder);
@@ -47,6 +50,7 @@ async function saveLocally(
 async function saveToCloudinary(
   file: Express.Multer.File,
   folder: string,
+  resourceType: "image" | "auto" = "image",
 ): Promise<UploadedImage> {
   cloudinary.config({
     cloud_name: env.CLOUDINARY_CLOUD_NAME,
@@ -59,7 +63,7 @@ async function saveToCloudinary(
     const stream = cloudinary.uploader.upload_stream(
       {
         folder: `unisphere/${folder}`,
-        resource_type: "image",
+        resource_type: resourceType,
         unique_filename: true,
         overwrite: false,
       },
@@ -87,6 +91,13 @@ export async function uploadImage(
   if (!file) throw new AppError(400, "Image file is required");
   return env.UPLOAD_DRIVER === "cloudinary"
     ? saveToCloudinary(file, options.folder)
+    : saveLocally(file, options.folder, options.requestOrigin);
+}
+
+export async function uploadDocument(file: Express.Multer.File | undefined, options: { folder: string; requestOrigin: string }) {
+  if (!file) throw new AppError(400, "Document file is required");
+  return env.UPLOAD_DRIVER === "cloudinary"
+    ? saveToCloudinary(file, options.folder, "auto")
     : saveLocally(file, options.folder, options.requestOrigin);
 }
 

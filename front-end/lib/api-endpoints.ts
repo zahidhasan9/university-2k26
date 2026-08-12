@@ -24,7 +24,7 @@ export const API_ENDPOINTS = {
     me: "/users/me",
     detail: (id: string) => `/users/${id}`,
   },
-  uploads: { profileImage: "/uploads/profile-image" },
+  uploads: { profileImage: "/uploads/profile-image", studentProfileImage: "/uploads/student-profile-image", studentDocument: "/uploads/student-document" },
   roles: {
     list: "/roles",
     create: "/roles",
@@ -64,7 +64,9 @@ export const API_ENDPOINTS = {
     list: "/teachers",
     create: "/teachers",
     detail: (id: string) => `/teachers/${id}`,
+    workload: (id: string) => `/teachers/${id}/workload`,
   },
+  facultyAdvising: { list: "/faculty-advising", end: (id: string) => `/faculty-advising/${id}/end` },
   admissions: {
     list: "/admissions",
     detail: (id: string) => `/admissions/${id}`,

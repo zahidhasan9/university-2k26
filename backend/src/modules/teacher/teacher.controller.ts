@@ -30,7 +30,7 @@ export async function create(req: Request, res: Response): Promise<Response> {
 }
 export async function update(req: Request, res: Response): Promise<Response> {
   const id = req.params.id as string;
-  const teacher = await service.updateTeacher(id, req.body);
+  const teacher = await service.updateTeacher(id, req.body, req.auth?.userId.toString());
   await writeAuditLog(req, {
     actor: req.auth?.userId,
     action: "teacher.update",
@@ -40,3 +40,4 @@ export async function update(req: Request, res: Response): Promise<Response> {
   });
   return sendSuccess(res, 200, "Teacher updated", { teacher });
 }
+export async function workload(req: Request, res: Response): Promise<Response> { return sendSuccess(res, 200, "Teacher workload retrieved", await service.getTeacherWorkload(String(req.params.id), req.query)); }

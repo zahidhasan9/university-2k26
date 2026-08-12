@@ -54,26 +54,28 @@ type Policy = {
   finePerDayMinor: number
   currency: string
 }
+const money = (amount: number, currency?: string | null) => {
+  const safeCurrency = typeof currency === "string" && /^[A-Z]{3}$/.test(currency) ? currency : "BDT"
+  return new Intl.NumberFormat("en-BD", { style: "currency", currency: safeCurrency }).format((Number.isFinite(amount) ? amount : 0) / 100)
+}
 export default async function LibraryPage() {
   let books: Book[] = [],
     copies: Copy[] = [],
     transactions: Transaction[] = [],
     policies: Policy[] = [],
     error = ""
-  try {
-    const responses = await Promise.all([
+  const responses = await Promise.allSettled([
       authenticatedRequest<{ items: Book[] }>(withQuery(API_ENDPOINTS.library.books, { limit: 12 })),
       authenticatedRequest<{ copies: Copy[] }>(API_ENDPOINTS.library.copies),
       authenticatedRequest<{ items: Transaction[] }>(withQuery(API_ENDPOINTS.library.transactions, { limit: 12 })),
       authenticatedRequest<{ policies: Policy[] }>(API_ENDPOINTS.library.policies),
     ])
-    books = responses[0].data.items
-    copies = responses[1].data.copies
-    transactions = responses[2].data.items
-    policies = responses[3].data.policies
-  } catch (cause) {
-    error = cause instanceof Error ? cause.message : "Library data unavailable"
-  }
+  if (responses[0].status === "fulfilled") books = responses[0].value.data.items ?? []
+  if (responses[1].status === "fulfilled") copies = responses[1].value.data.copies ?? []
+  if (responses[2].status === "fulfilled") transactions = responses[2].value.data.items ?? []
+  if (responses[3].status === "fulfilled") policies = responses[3].value.data.policies ?? []
+  const failures = responses.filter((response) => response.status === "rejected")
+  if (failures.length) error = `${failures.length} library data source${failures.length > 1 ? "s are" : " is"} temporarily unavailable. Available data is shown below.`
   const available = copies.filter((copy) => copy.status === "available").length,
     issued = copies.filter((copy) => copy.status === "issued").length
   return (
@@ -137,7 +139,7 @@ export default async function LibraryPage() {
                 <TableRow key={book._id}>
                   <TableCell>
                     <p className="font-medium">{book.title}</p>
-                    <p className="text-xs text-muted-foreground">{book.authors.join(", ")}</p>
+                    <p className="text-xs text-muted-foreground">{book.authors?.join(", ") || "Author not recorded"}</p>
                   </TableCell>
                   <TableCell className="font-mono text-xs">{book.isbn ?? "—"}</TableCell>
                   <TableCell>
@@ -146,14 +148,14 @@ export default async function LibraryPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {book.categories.slice(0, 2).map((category) => (
+                      {(book.categories ?? []).slice(0, 2).map((category) => (
                         <Badge key={category} variant="secondary">
                           {category}
                         </Badge>
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell>{book.copies.available ?? 0}</TableCell>
+                  <TableCell>{book.copies?.available ?? 0}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="capitalize">
                       {book.status}
@@ -187,12 +189,12 @@ export default async function LibraryPage() {
                   <TableRow key={item._id}>
                     <TableCell>
                       <p className="font-mono text-xs font-semibold">{item.transactionNumber}</p>
-                      <p className="text-xs text-muted-foreground">{item.copy.accessionNumber}</p>
+                      <p className="text-xs text-muted-foreground">{item.copy?.accessionNumber ?? "Copy unavailable"}</p>
                     </TableCell>
                     <TableCell>
-                      <p className="font-medium">{item.book.title}</p>
+                      <p className="font-medium">{item.book?.title ?? "Book unavailable"}</p>
                       <p className="text-xs text-muted-foreground">
-                        {item.borrower.firstName} {item.borrower.lastName} · {item.borrowerType}
+                        {item.borrower?.firstName ?? "Unknown"} {item.borrower?.lastName ?? "borrower"} · {item.borrowerType}
                       </p>
                     </TableCell>
                     <TableCell
@@ -205,10 +207,7 @@ export default async function LibraryPage() {
                       {new Date(item.dueAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      {new Intl.NumberFormat("en-BD", {
-                        style: "currency",
-                        currency: item.currency,
-                      }).format(item.fineMinor / 100)}
+                      {money(item.fineMinor, item.currency)}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{item.status}</Badge>
@@ -235,10 +234,7 @@ export default async function LibraryPage() {
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">
                   {policy.loanDays} loan days ·{" "}
-                  {new Intl.NumberFormat("en-BD", {
-                    style: "currency",
-                    currency: policy.currency,
-                  }).format(policy.finePerDayMinor / 100)}{" "}
+                  {money(policy.finePerDayMinor, policy.currency)}{" "}
                   fine/day
                 </p>
               </div>

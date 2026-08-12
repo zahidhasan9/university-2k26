@@ -15,6 +15,7 @@ teacherRouter.get(
   validate(teacherIdParamSchema),
   asyncHandler(controller.getOne),
 );
+teacherRouter.get("/:id/workload", authorize("teachers.read"), validate(teacherIdParamSchema), asyncHandler(controller.workload));
 teacherRouter.post(
   "/",
   authorize("teachers.manage"),

@@ -4,6 +4,7 @@ import { escapeRegex, toObjectId } from "../../utils/mongo";
 import { getPagination, paginationMeta } from "../../utils/pagination";
 import { AcademicBatchModel } from "../academic-batch/academicBatch.model";
 import { releaseSectionSeat, reserveSectionSeat } from "../academic-section/academicSection.service";
+import { AdmissionModel } from "../admission/admission.model";
 import { RoleModel } from "../role/role.model";
 import { SemesterModel } from "../semester/semester.model";
 import { ProgramModel } from "../university-structure/program.model";
@@ -38,7 +39,7 @@ export async function listStudents(query: Record<string, unknown>) {
   delete filterScope.$or;
   const [items, total, batches, sections] = await Promise.all([
     StudentModel.find(filter)
-      .populate("user", "firstName lastName email status")
+      .populate("user", "firstName lastName email phone avatarUrl status")
       .populate({
         path: "program",
         select: "name code department",
@@ -64,11 +65,12 @@ export async function listStudents(query: Record<string, unknown>) {
 
 export async function getStudent(id: string) {
   const student = await StudentModel.findById(toObjectId(id))
-    .populate("user", "firstName lastName email status")
+    .populate("user", "firstName lastName email phone avatarUrl status")
     .populate({ path: "program", select: "name code department", populate: { path: "department", select: "name code" } })
     .populate("admissionSemester", "name code academicYear")
     .populate("academicBatch", "code name admissionYear curriculumVersion status")
     .populate("academicSection", "code name capacity enrolledCount shift homeRoom status")
+    .populate("assignedAdvisor", "employeeId designation user")
     .lean();
   if (!student) throw new AppError(404, "Student not found");
   return student;
@@ -76,7 +78,7 @@ export async function getStudent(id: string) {
 
 export async function getStudentByUser(userId: string) {
   const student = await StudentModel.findOne({ user: toObjectId(userId, "user id") })
-    .populate("user", "firstName lastName email status")
+    .populate("user", "firstName lastName email phone avatarUrl status")
     .populate({ path: "program", select: "name code department", populate: { path: "department", select: "name code" } })
     .populate("admissionSemester", "name code academicYear")
     .populate("academicBatch", "code name admissionYear curriculumVersion status")
@@ -133,10 +135,14 @@ export async function createStudent(input: Record<string, unknown>) {
   } else if (await StudentModel.exists({ user: user._id })) {
     throw new AppError(409, "This user already has a student profile");
   }
+  if (input.avatarUrl) user.avatarUrl = String(input.avatarUrl);
 
   let academicSection;
   try {
     academicSection = await reserveSectionSeat(academicSectionId, academicBatchId.toString());
+    const admissionApplication = input.admissionApplicationId
+      ? await AdmissionModel.findById(toObjectId(String(input.admissionApplicationId), "admission application id")).lean()
+      : null;
     const {
       userId: _,
       firstName: __,
@@ -147,6 +153,8 @@ export async function createStudent(input: Record<string, unknown>) {
       academicBatchId: _______,
       academicSectionId: ________,
       admissionApplicationId,
+      assignedAdvisorId,
+      avatarUrl: _________,
       ...data
     } = input;
     const student = await StudentModel.create({
@@ -158,6 +166,9 @@ export async function createStudent(input: Record<string, unknown>) {
       academicSection: academicSection._id,
       batch: academicBatch.code,
       section: academicSection.code,
+      ...(assignedAdvisorId ? { assignedAdvisor: toObjectId(String(assignedAdvisorId), "advisor id") } : {}),
+      ...(!data.previousEducation && admissionApplication?.previousEducation.length ? { previousEducation: admissionApplication.previousEducation } : {}),
+      ...(!data.documents && admissionApplication?.documents.length ? { documents: admissionApplication.documents.map((document) => ({ type: document.type, url: document.url, status: document.verifiedAt ? "verified" : "pending", verifiedAt: document.verifiedAt, verifiedBy: document.verifiedBy })) } : {}),
       ...(admissionApplicationId
         ? {
             admissionApplication: toObjectId(
@@ -170,8 +181,8 @@ export async function createStudent(input: Record<string, unknown>) {
     if (!user.roles.some((roleId) => roleId.equals(studentRole._id))) {
       user.roles.push(studentRole._id);
       user.authVersion += 1;
-      await user.save();
     }
+    await user.save();
     return getStudent(student._id.toString());
   } catch (error) {
     await releaseSectionSeat(academicSection?._id);
@@ -228,6 +239,10 @@ export async function updateStudent(id: string, input: Record<string, unknown>) 
     await releaseSectionSeat(previousSection);
     }
   }
+  if (input.assignedAdvisorId !== undefined) {
+    student.assignedAdvisor = input.assignedAdvisorId ? toObjectId(String(input.assignedAdvisorId), "advisor id") : undefined;
+    delete input.assignedAdvisorId;
+  }
   if (input.firstName !== undefined) user.firstName = String(input.firstName);
   if (input.lastName !== undefined) user.lastName = String(input.lastName);
   if (input.email !== undefined) {
@@ -238,9 +253,11 @@ export async function updateStudent(id: string, input: Record<string, unknown>) 
     user.email = email;
     user.emailClaimedAt = new Date();
   }
+  if (input.avatarUrl !== undefined) user.avatarUrl = String(input.avatarUrl);
   delete input.firstName;
   delete input.lastName;
   delete input.email;
+  delete input.avatarUrl;
   student.set(input);
   await Promise.all([student.save(), user.save()]);
   return getStudent(id);

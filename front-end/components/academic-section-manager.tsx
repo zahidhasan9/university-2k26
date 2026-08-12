@@ -16,11 +16,33 @@ const selectClass = "h-9 w-full rounded-lg border bg-background px-3 text-sm"
 export function AcademicSectionManager({ batchId, sections }: { batchId: string; sections: AcademicSectionOption[] }) {
   const router = useRouter(); const [saving, setSaving] = useState(false); const [error, setError] = useState("")
   async function create(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const form = new FormData(event.currentTarget); setSaving(true); setError("")
-    const response = await apiResponseRequest(API_ENDPOINTS.academics.sections, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ academicBatchId: batchId, code: form.get("code"), name: form.get("name"), capacity: Number(form.get("capacity")), shift: form.get("shift"), homeRoom: form.get("homeRoom") || undefined }) })
-    const body = await response.json<{ message?: string }>(); setSaving(false)
-    if (!response.ok) return setError(body.message || "Section could not be created")
-    event.currentTarget.reset(); router.refresh()
+    event.preventDefault()
+    const formElement = event.currentTarget
+    const form = new FormData(formElement)
+    setSaving(true)
+    setError("")
+    try {
+      const response = await apiResponseRequest(API_ENDPOINTS.academics.sections, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          academicBatchId: batchId,
+          code: form.get("code"),
+          name: form.get("name"),
+          capacity: Number(form.get("capacity")),
+          shift: form.get("shift"),
+          homeRoom: form.get("homeRoom") || undefined,
+        }),
+      })
+      const body = await response.json<{ message?: string }>()
+      if (!response.ok) throw new Error(body.message || "Section could not be created")
+      formElement.reset()
+      router.refresh()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Section could not be created")
+    } finally {
+      setSaving(false)
+    }
   }
   async function archive(id: string) {
     const response = await apiResponseRequest(API_ENDPOINTS.academics.sectionDetail(id), { method: "DELETE" })
@@ -35,7 +57,7 @@ export function AcademicSectionManager({ batchId, sections }: { batchId: string;
       <div className="space-y-2"><Label>Shift</Label><select name="shift" className={selectClass} defaultValue="day"><option value="morning">Morning</option><option value="day">Day</option><option value="evening">Evening</option><option value="weekend">Weekend</option></select></div>
       <div className="space-y-2"><Label>Home room</Label><Input name="homeRoom" placeholder="C-301" /></div>
       {error && <p className="text-sm text-destructive md:col-span-4">{error}</p>}
-      <div className="md:col-span-5"><Button disabled={saving}>{saving ? <LoaderCircle className="animate-spin" /> : <Plus />} Add section</Button></div>
+      <div className="md:col-span-5"><Button type="submit" disabled={saving}>{saving ? <LoaderCircle className="animate-spin" /> : <Plus />} Add section</Button></div>
     </form>
     <div className="overflow-hidden rounded-xl border">
       <table className="w-full text-sm"><thead className="bg-muted/60 text-left"><tr><th className="p-3">Section</th><th className="p-3">Shift / room</th><th className="p-3">Students</th><th className="p-3">Available</th><th className="p-3 text-right">Action</th></tr></thead>

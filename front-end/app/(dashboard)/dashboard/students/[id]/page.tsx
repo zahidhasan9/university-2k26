@@ -16,7 +16,7 @@ import { notFound } from "next/navigation"
 
 import { StudentStatusBadge } from "@/components/student-status"
 import { StudentSectionTransfer } from "@/components/student-section-transfer"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -41,11 +41,27 @@ function Info({ label, children }: { label: string; children: React.ReactNode })
 export default async function StudentDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   let student: Student
-  type Section = { _id: string; code: string; name: string; capacity: number; enrolledCount: number }
+  type Section = {
+    _id: string
+    code: string
+    name: string
+    capacity: number
+    enrolledCount: number
+  }
   let sections: Section[] = []
   try {
-    student = (await authenticatedRequest<{ student: Student }>(API_ENDPOINTS.students.detail(id))).data.student
-    if (student.academicBatch?._id) sections = (await authenticatedRequest<{ items: Section[] }>(withQuery(API_ENDPOINTS.academics.sections, { academicBatchId: student.academicBatch._id, status: "active", limit: 200 }))).data.items
+    student = (await authenticatedRequest<{ student: Student }>(API_ENDPOINTS.students.detail(id)))
+      .data.student
+    if (student.academicBatch?._id)
+      sections = (
+        await authenticatedRequest<{ items: Section[] }>(
+          withQuery(API_ENDPOINTS.academics.sections, {
+            academicBatchId: student.academicBatch._id,
+            status: "active",
+            limit: 200,
+          }),
+        )
+      ).data.items
   } catch (error) {
     if (error instanceof Error && error.message === "Student not found") notFound()
     throw error
@@ -70,8 +86,15 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
           <ArrowLeft /> Back to students
         </Button>
         <div className="flex flex-wrap gap-2">
-          <StudentSectionTransfer studentId={id} currentSectionId={student.academicSection?._id} currentSectionCode={student.section} sections={sections} />
-          <Button variant="outline" render={<Link href={`/dashboard/students/${id}/edit`} />}><Pencil /> Edit profile</Button>
+          <StudentSectionTransfer
+            studentId={id}
+            currentSectionId={student.academicSection?._id}
+            currentSectionCode={student.section}
+            sections={sections}
+          />
+          <Button variant="outline" render={<Link href={`/dashboard/students/${id}/edit`} />}>
+            <Pencil /> Edit profile
+          </Button>
         </div>
       </div>
 
@@ -79,6 +102,7 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
         <div className="h-28 bg-gradient-to-r from-slate-950 via-blue-950 to-blue-700" />
         <CardContent className="relative px-5 pb-6 sm:px-8">
           <Avatar className="-mt-12 size-24 border-4 border-card shadow-sm">
+            {student.user.avatarUrl && <AvatarImage src={student.user.avatarUrl} alt={name} />}
             <AvatarFallback className="bg-blue-100 text-2xl font-bold text-blue-700">
               {student.user.firstName[0]}
               {student.user.lastName[0]}

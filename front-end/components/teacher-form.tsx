@@ -62,6 +62,7 @@ export function TeacherForm({
       .split(",")
       .map((item) => item.trim())
       .filter(Boolean)
+    const list = (name: string) => String(form.get(name) ?? "").split(",").map((item) => item.trim()).filter(Boolean)
     const qualifications = String(form.get("qualifications") ?? "")
       .split("\n")
       .map((line) => {
@@ -80,6 +81,10 @@ export function TeacherForm({
       phone: String(form.get("phone") ?? "").trim() || undefined,
       specialization,
       qualifications,
+      employmentType: String(form.get("employmentType")), campus: String(form.get("campus") ?? "").trim() || undefined, officeRoom: String(form.get("officeRoom") ?? "").trim() || undefined,
+      officialEmail: String(form.get("officialEmail") ?? "").trim() || undefined, confirmationDate: String(form.get("confirmationDate") ?? "").trim() || undefined, maxWeeklyHours: Number(form.get("maxWeeklyHours")),
+      researchInterests: list("researchInterests"), certifications: list("certifications"),
+      links: { orcid: String(form.get("orcid") ?? "").trim() || undefined, googleScholar: String(form.get("googleScholar") ?? "").trim() || undefined, website: String(form.get("website") ?? "").trim() || undefined },
     }
     const payload = editing
       ? { ...common, status: String(form.get("status")) }
@@ -182,6 +187,12 @@ export function TeacherForm({
         <Field label="Phone" name="phone">
           <Input id="phone" name="phone" defaultValue={teacher?.phone} />
         </Field>
+        <Field label="Employment type" name="employmentType"><select id="employmentType" name="employmentType" className={selectClass} defaultValue={teacher?.employmentType ?? "permanent"}><option value="permanent">Permanent</option><option value="contractual">Contractual</option><option value="adjunct">Adjunct</option><option value="visiting">Visiting</option></select></Field>
+        <Field label="Confirmation date" name="confirmationDate"><Input id="confirmationDate" name="confirmationDate" type="date" defaultValue={teacher?.confirmationDate?.slice(0, 10)} /></Field>
+        <Field label="Official email" name="officialEmail"><Input id="officialEmail" name="officialEmail" type="email" defaultValue={teacher?.officialEmail} /></Field>
+        <Field label="Campus" name="campus"><Input id="campus" name="campus" defaultValue={teacher?.campus} /></Field>
+        <Field label="Office room" name="officeRoom"><Input id="officeRoom" name="officeRoom" defaultValue={teacher?.officeRoom} /></Field>
+        <Field label="Maximum weekly contact hours" name="maxWeeklyHours"><Input id="maxWeeklyHours" name="maxWeeklyHours" type="number" min={1} max={60} defaultValue={teacher?.maxWeeklyHours ?? 18} required /></Field>
         {editing && (
           <Field label="Status" name="status">
             <select
@@ -225,6 +236,7 @@ export function TeacherForm({
           One qualification per line: Degree | Institution | Year
         </p>
       </Field>
+      <div className="grid gap-5 md:grid-cols-2"><Field label="Research interests (comma separated)" name="researchInterests"><Input id="researchInterests" name="researchInterests" defaultValue={teacher?.researchInterests?.join(", ")} /></Field><Field label="Certifications (comma separated)" name="certifications"><Input id="certifications" name="certifications" defaultValue={teacher?.certifications?.join(", ")} /></Field><Field label="ORCID URL" name="orcid"><Input id="orcid" name="orcid" type="url" defaultValue={teacher?.links?.orcid} /></Field><Field label="Google Scholar URL" name="googleScholar"><Input id="googleScholar" name="googleScholar" type="url" defaultValue={teacher?.links?.googleScholar} /></Field><Field label="Personal/academic website" name="website"><Input id="website" name="website" type="url" defaultValue={teacher?.links?.website} /></Field></div>
       {error && (
         <p className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</p>
       )}

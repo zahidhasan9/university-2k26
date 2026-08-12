@@ -72,7 +72,9 @@ export function AcademicBatchForm({
     const body = await response.json<{ message?: string; data?: { batch?: { _id: string } } }>()
     setLoading(false)
     if (!response.ok) return setError(body.message || "Batch could not be created")
-    router.push(body.data?.batch?._id ? `/dashboard/academics/batches/${body.data.batch._id}/sections` : `/dashboard/academics/courses?departmentId=${departmentId}`)
+    router.push(body.data?.batch?._id
+      ? `/dashboard/academics/courses?${new URLSearchParams({ departmentId, batch: String(form.get("code")).toUpperCase(), programId, tab: "sections" })}`
+      : `/dashboard/academics/courses?departmentId=${departmentId}`)
     router.refresh()
   }
   return (

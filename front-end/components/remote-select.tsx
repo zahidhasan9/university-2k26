@@ -10,16 +10,17 @@ import { CACHE_POLICY } from "@/lib/query-policy"
 
 type RemoteOption = { _id: string; label: string }
 
-export function RemoteSelect({ name, endpoint, placeholder = "Search…", mapOption }: {
+export function RemoteSelect({ name, endpoint, placeholder = "Search…", mapOption, initialOption }: {
   name: string
   endpoint: string
   placeholder?: string
   mapOption: (item: Record<string, unknown>) => RemoteOption
+  initialOption?: RemoteOption
 }) {
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useState(initialOption?.label ?? "")
   const [debounced, setDebounced] = useState("")
   const [page, setPage] = useState(1)
-  const [selected, setSelected] = useState<RemoteOption | null>(null)
+  const [selected, setSelected] = useState<RemoteOption | null>(initialOption ?? null)
   useEffect(() => {
     const timer = window.setTimeout(() => { setDebounced(search.trim()); setPage(1) }, 250)
     return () => window.clearTimeout(timer)

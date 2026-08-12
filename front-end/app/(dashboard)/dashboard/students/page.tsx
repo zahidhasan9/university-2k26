@@ -6,7 +6,7 @@ import { FolderTree, List, Plus, Users } from "lucide-react"
 import { PaginationLinks } from "@/components/pagination-links"
 import { StudentDirectoryFilters } from "@/components/student-directory-filters"
 import { StudentStatusBadge } from "@/components/student-status"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -132,6 +132,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Sea
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <Avatar className="size-9">
+                              {student.user.avatarUrl && <AvatarImage src={student.user.avatarUrl} alt={`${student.user.firstName} ${student.user.lastName}`} />}
                               <AvatarFallback className="bg-blue-50 text-xs font-semibold text-blue-700">
                                 {student.user.firstName[0]}
                                 {student.user.lastName[0]}

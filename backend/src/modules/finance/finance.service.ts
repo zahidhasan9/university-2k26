@@ -140,6 +140,7 @@ export async function createInvoice(
         status: "active",
         validFrom: { $lte: semester.endsAt },
         validUntil: { $gte: semester.startsAt },
+        $or: [{ type: "percentage" }, { type: "fixed", currency: structure.currency }],
       }).sort({ createdAt: -1 }).lean()
     : null;
   const waiverBase = waiver?.appliesTo === "all" ? subtotalMinor : tuitionMinor;
@@ -212,6 +213,13 @@ export async function createWaiver(actorId: Types.ObjectId, input: Record<string
   if (input.type === "percentage" && Number(input.value) > 100) {
     throw new AppError(400, "Percentage waiver cannot exceed 100");
   }
+  const overlaps = await StudentWaiverModel.findOne()
+    .where("student").equals(student._id)
+    .where("status").equals("active")
+    .where("validFrom").lte(new Date(String(input.validUntil)).getTime())
+    .where("validUntil").gte(new Date(String(input.validFrom)).getTime())
+    .select("_id").lean();
+  if (overlaps) throw new AppError(409, "An active waiver already covers part of this date range");
   const { studentId: _, ...data } = input;
   return StudentWaiverModel.create({ ...data, student: student._id, approvedBy: actorId });
 }

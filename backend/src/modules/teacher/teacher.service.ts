@@ -5,6 +5,7 @@ import { RoleModel } from "../role/role.model";
 import { DepartmentModel } from "../university-structure/department.model";
 import { UserModel } from "../user/user.model";
 import { TeacherModel } from "./teacher.model";
+import { CourseOfferingModel } from "../course-offering/courseOffering.model";
 
 export async function listTeachers(query: Record<string, unknown>) {
   const { page, limit, skip } = getPagination(query);
@@ -13,22 +14,24 @@ export async function listTeachers(query: Record<string, unknown>) {
   if (query.status) filter.status = query.status;
   if (query.designation) filter.designation = query.designation;
   if (query.search) filter.employeeId = { $regex: escapeRegex(String(query.search)), $options: "i" };
-  const [items, total] = await Promise.all([
+  const [items, total, workloads] = await Promise.all([
     TeacherModel.find(filter)
-      .populate("user", "firstName lastName email status")
+      .populate("user", "firstName lastName email avatarUrl status")
       .populate("department", "name code faculty")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean(),
     TeacherModel.countDocuments(filter),
+    CourseOfferingModel.aggregate<{ _id: unknown; courseCount: number }>([{ $match: { status: { $in: ["planned", "open", "ongoing"] } } }, { $group: { _id: "$teacher", courseCount: { $sum: 1 } } }]),
   ]);
-  return { items, pagination: paginationMeta(total, page, limit) };
+  const counts = new Map(workloads.map((item) => [String(item._id), item.courseCount]));
+  return { items: items.map((item) => ({ ...item, activeCourseCount: counts.get(String(item._id)) ?? 0 })), pagination: paginationMeta(total, page, limit) };
 }
 
 export async function getTeacher(id: string) {
   const teacher = await TeacherModel.findById(toObjectId(id))
-    .populate("user", "firstName lastName email status")
+    .populate("user", "firstName lastName email avatarUrl status")
     .populate("department", "name code faculty")
     .lean();
   if (!teacher) throw new AppError(404, "Teacher not found");
@@ -37,7 +40,7 @@ export async function getTeacher(id: string) {
 
 export async function getTeacherByUser(userId: string) {
   const teacher = await TeacherModel.findOne({ user: toObjectId(userId, "user id") })
-    .populate("user", "firstName lastName email status")
+    .populate("user", "firstName lastName email avatarUrl status")
     .populate("department", "name code faculty")
     .lean();
   if (!teacher) throw new AppError(404, "Teacher profile not found");
@@ -73,7 +76,7 @@ export async function createTeacher(input: Record<string, unknown>) {
   return getTeacher(teacher._id.toString());
 }
 
-export async function updateTeacher(id: string, input: Record<string, unknown>) {
+export async function updateTeacher(id: string, input: Record<string, unknown>, actorId?: string) {
   const teacher = await TeacherModel.findById(toObjectId(id));
   if (!teacher) throw new AppError(404, "Teacher not found");
   if (input.departmentId) {
@@ -82,10 +85,23 @@ export async function updateTeacher(id: string, input: Record<string, unknown>) 
       status: "active",
     });
     if (!department) throw new AppError(400, "Active department not found");
+    if (!teacher.department.equals(department._id)) teacher.assignmentHistory.push({ department: teacher.department, designation: teacher.designation, changedAt: new Date(), ...(actorId ? { changedBy: toObjectId(actorId, "actor id") } : {}) });
     teacher.department = department._id;
     delete input.departmentId;
   }
+  if (input.designation && input.designation !== teacher.designation && !input.departmentId) teacher.assignmentHistory.push({ department: teacher.department, designation: teacher.designation, changedAt: new Date(), ...(actorId ? { changedBy: toObjectId(actorId, "actor id") } : {}) });
   teacher.set(input);
   await teacher.save();
   return getTeacher(id);
+}
+
+export async function getTeacherWorkload(id: string, query: Record<string, unknown>) {
+  const teacherId = toObjectId(id, "teacher id");
+  const teacher = await TeacherModel.findById(teacherId).select("maxWeeklyHours").lean();
+  if (!teacher) throw new AppError(404, "Teacher not found");
+  const filter: Record<string, unknown> = { teacher: teacherId, status: { $in: ["planned", "open", "ongoing"] } };
+  if (query.semesterId) filter.semester = toObjectId(String(query.semesterId), "semester id");
+  const offerings = await CourseOfferingModel.find(filter).populate("course", "code title credits theoryHoursPerWeek labHoursPerWeek").populate("semester", "name code academicYear").populate("academicBatch", "code name").sort({ semester: 1 }).lean();
+  const weeklyHours = offerings.reduce((sum, offering) => { const course = offering.course as unknown as { theoryHoursPerWeek?: number; labHoursPerWeek?: number }; return sum + (course?.theoryHoursPerWeek ?? 0) + (course?.labHoursPerWeek ?? 0); }, 0);
+  return { offerings, summary: { courseCount: offerings.length, weeklyHours, maxWeeklyHours: teacher.maxWeeklyHours, remainingHours: teacher.maxWeeklyHours - weeklyHours, overloaded: weeklyHours > teacher.maxWeeklyHours } };
 }

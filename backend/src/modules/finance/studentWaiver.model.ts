@@ -6,6 +6,7 @@ const studentWaiverSchema = new Schema(
     name: { type: String, required: true, trim: true, maxlength: 150 },
     type: { type: String, enum: ["percentage", "fixed"], required: true },
     value: { type: Number, required: true, min: 0 },
+    currency: { type: String, uppercase: true, trim: true, minlength: 3, maxlength: 3, default: "BDT" },
     appliesTo: { type: String, enum: ["tuition", "all"], default: "tuition" },
     reason: { type: String, required: true, trim: true, maxlength: 500 },
     validFrom: { type: Date, required: true, index: true },
