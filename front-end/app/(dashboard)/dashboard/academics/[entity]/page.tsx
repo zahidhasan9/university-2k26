@@ -1,10 +1,11 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowLeft, BookOpen, Building2, Filter, Layers3, Search, Users } from "lucide-react"
+import { ArrowLeft, BookOpen, Building2, Filter, Layers3, Pencil, Search, Users } from "lucide-react"
 import { notFound } from "next/navigation"
 
 import { PaginationLinks } from "@/components/pagination-links"
 import { AcademicRecordActions } from "@/components/academic-record-actions"
+import { BatchRemoveAction } from "@/components/batch-remove-action"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -46,61 +47,232 @@ function details(entity: AcademicEntity, item: AcademicItem) {
 
 type Department = { _id: string; name: string; code: string }
 type Program = { _id: string; name: string; code: string }
-type StudentBatchItem = { batch: string; program: Program & { department?: Department } }
+type AcademicBatch = { _id: string; code: string; name: string; program: Program; curriculum?: { _id: string; code: string; name: string } }
+type CurriculumDetail = { _id: string; code: string; name: string; coursePlans: Array<{ semesterNumber: number; required: boolean; course: AcademicItem }> }
 
 async function CourseHierarchy({ raw }: { raw: Record<string, string | string[] | undefined> }) {
   const departmentId = first(raw.departmentId) ?? ""
   const batch = first(raw.batch) ?? ""
   const programId = first(raw.programId) ?? ""
-  const departments = (await authenticatedRequest<AcademicList>(withQuery(API_ENDPOINTS.academics.departments, { status: "active", limit: 100 }))).data.items as Department[]
+  const departments = (
+    await authenticatedRequest<AcademicList>(
+      withQuery(API_ENDPOINTS.academics.departments, { status: "active", limit: 100 }),
+    )
+  ).data.items as Department[]
   const selectedDepartment = departments.find((item) => item._id === departmentId)
 
-  let batches: Array<{ batch: string; program: Program }> = []
+  let batches: AcademicBatch[] = []
   let courses: AcademicItem[] = []
+  let curriculum: CurriculumDetail | undefined
+  let selectedBatch: AcademicBatch | undefined
   let selectedProgram: Program | undefined
   if (departmentId) {
-    const [programResponse, studentResponse] = await Promise.all([
-      authenticatedRequest<AcademicList>(withQuery(API_ENDPOINTS.academics.programs, { parentId: departmentId, status: "active", limit: 100 })),
-      authenticatedRequest<{ items: StudentBatchItem[] }>(withQuery(API_ENDPOINTS.students.list, { departmentId, status: "active", limit: 100 })),
+    const [programResponse, batchResponse] = await Promise.all([
+      authenticatedRequest<AcademicList>(
+        withQuery(API_ENDPOINTS.academics.programs, {
+          parentId: departmentId,
+          status: "active",
+          limit: 100,
+        }),
+      ),
+      authenticatedRequest<{ items: AcademicBatch[] }>(
+        withQuery(API_ENDPOINTS.academics.batches, { departmentId, status: "active", limit: 100 }),
+      ),
     ])
     const programs = programResponse.data.items as Program[]
-    const unique = new Map<string, { batch: string; program: Program }>()
-    for (const student of studentResponse.data.items) {
-      if (student.batch && student.program) unique.set(`${student.program._id}:${student.batch}`, { batch: student.batch, program: student.program })
-    }
-    batches = [...unique.values()].sort((a, b) => a.batch.localeCompare(b.batch))
+    batches = batchResponse.data.items
     selectedProgram = programs.find((item) => item._id === programId)
-    if (batch && selectedProgram) {
-      courses = (await authenticatedRequest<AcademicList>(withQuery(API_ENDPOINTS.academics.courses, { parentId: selectedProgram._id, status: "active", limit: 100 }))).data.items
+    selectedBatch = batches.find((item) => item.code === batch && item.program._id === programId)
+    if (selectedBatch?.curriculum) {
+      curriculum = (await authenticatedRequest<{ curriculum: CurriculumDetail }>(API_ENDPOINTS.academics.curriculumDetail(selectedBatch.curriculum._id))).data.curriculum
+      courses = curriculum.coursePlans.map((plan) => ({ ...plan.course, semesterNumber: plan.semesterNumber }))
     }
   }
 
-  const query = (values: Record<string, string>) => `/dashboard/academics/courses?${new URLSearchParams(values)}`
+  const query = (values: Record<string, string>) =>
+    `/dashboard/academics/courses?${new URLSearchParams(values)}`
   const semesters = new Map<number, AcademicItem[]>()
   for (const course of courses) {
     const number = course.semesterNumber ?? 1
     semesters.set(number, [...(semesters.get(number) ?? []), course])
   }
 
-  return <div className="mx-auto max-w-[1500px] space-y-6">
-    <Button variant="ghost" render={<Link href="/dashboard/academics" />}><ArrowLeft /> Academic structure</Button>
-    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-      <div><p className="text-sm font-medium text-primary">Curriculum manager</p><h1 className="mt-1 text-3xl font-bold">Department → Batch → Courses</h1><p className="mt-1 text-sm text-muted-foreground">Choose a department and batch to manage its semester-wise curriculum.</p></div>
-      <Button render={<Link href="/dashboard/academics/courses/new" />}>Create course</Button>
+  return (
+    <div className="mx-auto max-w-[1500px] space-y-6">
+      <Button variant="ghost" render={<Link href="/dashboard/academics" />}>
+        <ArrowLeft /> Academic structure
+      </Button>
+      <div>
+        <div>
+          <p className="text-sm font-medium text-primary">Curriculum manager</p>
+          <h1 className="mt-1 text-3xl font-bold">Department → Batch → Courses</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Choose a department and batch to manage its semester-wise curriculum.
+          </p>
+        </div>
+      </div>
+      {departmentId && !batch && (
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button variant="outline" render={<Link href={`/dashboard/academics/curricula/new?departmentId=${departmentId}`} />}>
+            Design curriculum
+          </Button>
+          <Button
+            render={<Link href={`/dashboard/academics/batches/new?departmentId=${departmentId}`} />}
+          >
+            Create batch
+          </Button>
+        </div>
+      )}
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <Link
+          href="/dashboard/academics/courses"
+          className="rounded-lg bg-muted px-3 py-2 font-medium"
+        >
+          Departments
+        </Link>
+        {selectedDepartment && (
+          <>
+            <span>›</span>
+            <Link
+              href={query({ departmentId })}
+              className="rounded-lg bg-muted px-3 py-2 font-medium"
+            >
+              {selectedDepartment.code}
+            </Link>
+          </>
+        )}
+        {batch && (
+          <>
+            <span>›</span>
+            <span className="rounded-lg bg-primary px-3 py-2 font-medium text-primary-foreground">
+              {batch}
+            </span>
+          </>
+        )}
+      </div>
+      {!departmentId && (
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {departments.map((item) => (
+            <Link key={item._id} href={query({ departmentId: item._id })}>
+              <Card className="h-full transition hover:-translate-y-0.5 hover:shadow-lg">
+                <CardContent className="p-6">
+                  <Building2 className="size-6 text-primary" />
+                  <p className="mt-4 text-lg font-bold">{item.code}</p>
+                  <p className="text-sm text-muted-foreground">{item.name}</p>
+                  <p className="mt-4 text-xs font-semibold text-primary">View batches →</p>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </section>
+      )}
+      {departmentId && !batch && (
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {batches.map((item) => (
+            <Link
+              key={item._id}
+              href={query({ departmentId, batch: item.code, programId: item.program._id })}
+            >
+              <Card className="h-full transition hover:-translate-y-0.5 hover:shadow-lg">
+                <CardContent className="p-6">
+                  <Users className="size-6 text-primary" />
+                  <p className="mt-4 text-lg font-bold">{item.code}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {item.program.code} · {item.program.name}
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {item.curriculum ? `Curriculum: ${item.curriculum.code}` : "Curriculum not assigned"}
+                  </p>
+                  <p className="mt-4 text-xs font-semibold text-primary">View curriculum →</p>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+          {!batches.length && (
+            <p className="col-span-full rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+              No academic batches configured for this department.
+            </p>
+          )}
+        </section>
+      )}
+      {batch && selectedProgram && (
+        <div className="space-y-6">
+          <Card>
+            <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
+              <div>
+                <p className="font-bold">
+                  {selectedProgram.code} · {batch}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {curriculum ? `${curriculum.code} · ${courses.length} courses · ${semesters.size} curriculum semesters` : "No canonical curriculum assigned"}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                {selectedBatch?.curriculum && (
+                  <Button variant="outline" render={<Link href={`/dashboard/academics/curricula/${selectedBatch.curriculum._id}`} />}>
+                    <Pencil /> Edit curriculum
+                  </Button>
+                )}
+                {selectedBatch && <BatchRemoveAction id={selectedBatch._id} code={selectedBatch.code} redirectHref={query({ departmentId })} />}
+                <Layers3 className="size-6 text-primary" />
+              </div>
+            </CardContent>
+          </Card>
+          {[...semesters.entries()]
+            .sort(([a], [b]) => a - b)
+            .map(([number, items]) => (
+              <Card key={number}>
+                <CardHeader className="flex-row items-center justify-between gap-4">
+                  <div><CardTitle>Semester Plan {number}</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {items.length} courses ·{" "}
+                    {items.reduce((sum, item) => sum + (item.credits ?? 0), 0)} credits
+                  </p></div>
+                  {curriculum && <Button size="sm" variant="outline" render={<Link href={`/dashboard/academics/curricula/${curriculum._id}/semesters/${number}`} />}><Pencil /> Edit semester</Button>}
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Code</TableHead>
+                        <TableHead>Course</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Credit</TableHead>
+                        <TableHead>Theory</TableHead>
+                        <TableHead>Lab</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {items.map((item) => (
+                        <TableRow key={item._id}>
+                          <TableCell className="font-mono text-xs font-semibold">
+                            {item.code}
+                          </TableCell>
+                          <TableCell className="font-medium">{item.title}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="capitalize">
+                              {item.courseType}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{item.credits}</TableCell>
+                          <TableCell>{item.theoryHoursPerWeek ?? 0}h/week</TableCell>
+                          <TableCell>{item.labHoursPerWeek ?? 0}h/week</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            ))}
+          {!courses.length && (
+            <p className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+              This batch has no published curriculum assigned. Design a curriculum and assign it to the batch.
+            </p>
+          )}
+        </div>
+      )}
     </div>
-    <div className="flex flex-wrap items-center gap-2 text-sm">
-      <Link href="/dashboard/academics/courses" className="rounded-lg bg-muted px-3 py-2 font-medium">Departments</Link>
-      {selectedDepartment && <><span>›</span><Link href={query({ departmentId })} className="rounded-lg bg-muted px-3 py-2 font-medium">{selectedDepartment.code}</Link></>}
-      {batch && <><span>›</span><span className="rounded-lg bg-primary px-3 py-2 font-medium text-primary-foreground">{batch}</span></>}
-    </div>
-    {!departmentId && <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{departments.map((item) => <Link key={item._id} href={query({ departmentId: item._id })}><Card className="h-full transition hover:-translate-y-0.5 hover:shadow-lg"><CardContent className="p-6"><Building2 className="size-6 text-primary" /><p className="mt-4 text-lg font-bold">{item.code}</p><p className="text-sm text-muted-foreground">{item.name}</p><p className="mt-4 text-xs font-semibold text-primary">View batches →</p></CardContent></Card></Link>)}</section>}
-    {departmentId && !batch && <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{batches.map((item) => <Link key={`${item.program._id}-${item.batch}`} href={query({ departmentId, batch: item.batch, programId: item.program._id })}><Card className="h-full transition hover:-translate-y-0.5 hover:shadow-lg"><CardContent className="p-6"><Users className="size-6 text-primary" /><p className="mt-4 text-lg font-bold">{item.batch}</p><p className="text-sm text-muted-foreground">{item.program.code} · {item.program.name}</p><p className="mt-4 text-xs font-semibold text-primary">View curriculum →</p></CardContent></Card></Link>)}{!batches.length && <p className="col-span-full rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">No student batches found in this department.</p>}</section>}
-    {batch && selectedProgram && <div className="space-y-6">
-      <Card><CardContent className="flex flex-wrap items-center justify-between gap-4 p-5"><div><p className="font-bold">{selectedProgram.code} · {batch}</p><p className="text-sm text-muted-foreground">{courses.length} courses · {semesters.size} curriculum semesters</p></div><Layers3 className="size-6 text-primary" /></CardContent></Card>
-      {[...semesters.entries()].sort(([a], [b]) => a - b).map(([number, items]) => <Card key={number}><CardHeader><CardTitle>Semester {number}</CardTitle><p className="text-sm text-muted-foreground">{items.length} courses · {items.reduce((sum, item) => sum + (item.credits ?? 0), 0)} credits</p></CardHeader><CardContent className="p-0"><Table><TableHeader><TableRow><TableHead>Code</TableHead><TableHead>Course</TableHead><TableHead>Type</TableHead><TableHead>Credit</TableHead><TableHead>Theory</TableHead><TableHead>Lab</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{items.map((item) => <TableRow key={item._id}><TableCell className="font-mono text-xs font-semibold">{item.code}</TableCell><TableCell className="font-medium">{item.title}</TableCell><TableCell><Badge variant="outline" className="capitalize">{item.courseType}</Badge></TableCell><TableCell>{item.credits}</TableCell><TableCell>{item.theoryHoursPerWeek ?? 0}h/week</TableCell><TableCell>{item.labHoursPerWeek ?? 0}h/week</TableCell><TableCell><AcademicRecordActions entity="courses" id={item._id} archived={false} /></TableCell></TableRow>)}</TableBody></Table></CardContent></Card>)}
-      {!courses.length && <p className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">No curriculum courses found for this batch program.</p>}
-    </div>}
-  </div>
+  )
 }
 
 export default async function AcademicEntityPage({
@@ -119,7 +291,11 @@ export default async function AcademicEntityPage({
     try {
       return await CourseHierarchy({ raw })
     } catch (cause) {
-      return <div className="mx-auto max-w-[1200px] rounded-xl bg-destructive/10 p-5 text-destructive">{cause instanceof Error ? cause.message : "Course hierarchy could not be loaded"}</div>
+      return (
+        <div className="mx-auto max-w-[1200px] rounded-xl bg-destructive/10 p-5 text-destructive">
+          {cause instanceof Error ? cause.message : "Course hierarchy could not be loaded"}
+        </div>
+      )
     }
   }
   const search = first(raw.search) ?? ""
@@ -132,7 +308,9 @@ export default async function AcademicEntityPage({
   let result: AcademicList | null = null
   let error = ""
   try {
-    result = (await authenticatedRequest<AcademicList>(`${API_ENDPOINTS.academics[entity]}?${query}`)).data
+    result = (
+      await authenticatedRequest<AcademicList>(`${API_ENDPOINTS.academics[entity]}?${query}`)
+    ).data
   } catch (cause) {
     error = cause instanceof Error ? cause.message : `${config.label} could not be loaded`
   }

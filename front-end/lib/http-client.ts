@@ -3,6 +3,7 @@
 import axios, { AxiosError, type AxiosRequestConfig, type InternalAxiosRequestConfig } from "axios"
 
 import type { ApiResponse } from "@/lib/api"
+import { emitApiFeedback } from "@/lib/feedback-events"
 
 const sharedConfig: AxiosRequestConfig = {
   headers: { Accept: "application/json" },
@@ -37,6 +38,13 @@ type RetryableConfig = InternalAxiosRequestConfig & {
   _sessionRetry?: boolean
 }
 
+function isMutation(method?: string) { return Boolean(method && method.toLowerCase() !== "get") }
+function mutationFeedback(response: { status: number; config: { method?: string }; data?: { message?: string } }) {
+  if (!isMutation(response.config.method)) return
+  const successful = response.status >= 200 && response.status < 300
+  emitApiFeedback({ type: successful ? "success" : "error", message: response.data?.message ?? (successful ? "Action completed successfully" : "Action could not be completed") })
+}
+
 async function normalizeAxiosError(error: AxiosError<ApiResponse<unknown>>) {
   const config = error.config as RetryableConfig | undefined
 
@@ -59,12 +67,15 @@ async function normalizeAxiosError(error: AxiosError<ApiResponse<unknown>>) {
     error.response?.data?.message ??
     (error.code === "ECONNABORTED" ? "The request timed out" : "API request failed")
 
+  if (isMutation(error.config?.method)) emitApiFeedback({ type: "error", message })
+
   return Promise.reject(new Error(message))
 }
 
-httpClient.interceptors.response.use((response) => response, normalizeAxiosError)
+httpClient.interceptors.response.use((response) => { mutationFeedback(response); return response }, normalizeAxiosError)
 appClient.interceptors.response.use((response) => {
   redirectOnUnauthorized(response.status)
+  mutationFeedback(response)
   return response
 }, normalizeAxiosError)
 

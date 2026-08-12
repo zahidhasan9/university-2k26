@@ -2,186 +2,187 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import {
   ArrowRight,
-  BadgeCheck,
   BookOpenCheck,
   Building2,
   CalendarRange,
+  ChevronRight,
+  CircleCheck,
   GraduationCap,
   Landmark,
   Network,
+  Plus,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { academicEntities, type AcademicList } from "@/lib/academic-types"
 import { authenticatedRequest } from "@/lib/auth"
 import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 
-export const metadata: Metadata = { title: "Academic structure" }
+export const metadata: Metadata = { title: "Academic administration" }
 
-const icons = {
-  universities: Landmark,
-  faculties: Building2,
-  departments: Network,
-  programs: GraduationCap,
-  courses: BookOpenCheck,
-  semesters: CalendarRange,
+const entityPresentation = {
+  universities: { icon: Landmark, tone: "bg-blue-50 text-blue-700 ring-blue-100" },
+  faculties: { icon: Building2, tone: "bg-cyan-50 text-cyan-700 ring-cyan-100" },
+  departments: { icon: Network, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
+  programs: { icon: GraduationCap, tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
+  courses: { icon: BookOpenCheck, tone: "bg-amber-50 text-amber-700 ring-amber-100" },
+  semesters: { icon: CalendarRange, tone: "bg-rose-50 text-rose-700 ring-rose-100" },
+}
+
+function displayCount(value: number | null | undefined) {
+  return value === null || value === undefined ? "—" : value.toLocaleString()
 }
 
 export default async function AcademicsPage() {
   const counts = await Promise.all(
     academicEntities.map(async (entity) => {
       try {
-        const response = await authenticatedRequest<AcademicList>(withQuery(API_ENDPOINTS.academics[entity.key], { limit: 1 }))
+        const response = await authenticatedRequest<AcademicList>(
+          withQuery(API_ENDPOINTS.academics[entity.key], { limit: 1 }),
+        )
         return [entity.key, response.data.pagination.total] as const
       } catch {
         return [entity.key, null] as const
       }
     }),
   )
-
   const totalByEntity = Object.fromEntries(counts) as Record<string, number | null>
-  const totalRecords = academicEntities.reduce(
-    (sum, entity) => sum + (totalByEntity[entity.key] ?? 0),
-    0,
-  )
-  const structureNodes =
-    (totalByEntity.universities ?? 0) +
-    (totalByEntity.faculties ?? 0) +
-    (totalByEntity.departments ?? 0) +
-    (totalByEntity.programs ?? 0) +
-    (totalByEntity.courses ?? 0)
 
   return (
-    <div className="mx-auto max-w-[1400px] space-y-7">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm font-medium text-primary">Academic administration</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight">Academic structure</h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Manage the complete institutional hierarchy, curriculum, and academic calendar.
-          </p>
+    <main className="mx-auto max-w-[1440px] space-y-6">
+      <section className="overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-blue-50/70 to-cyan-50 shadow-sm">
+        <div className="flex flex-col gap-6 px-6 py-7 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:px-10 lg:py-9">
+          <div className="max-w-2xl">
+            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-blue-700">
+              <span className="grid size-8 place-items-center rounded-lg bg-blue-100">
+                <GraduationCap className="size-4" />
+              </span>
+              Academic administration
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+              Manage your academic structure
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
+              Organise departments, programmes, courses and semesters from one clear workspace.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button variant="outline" className="bg-white" render={<Link href="/dashboard/results" />}>
+              Results workspace
+            </Button>
+            <Button render={<Link href="/dashboard/academics/courses" />}>
+              Curriculum manager <ArrowRight />
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" render={<Link href="/dashboard/results" />}>
-            <BadgeCheck />
-            Results workspace
-          </Button>
-          <Button render={<Link href="/dashboard/academics/universities/new" />}>
-            Create university
-          </Button>
-        </div>
-      </div>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card className="border-slate-200/80 shadow-sm">
-          <CardContent className="p-5">
-            <Landmark className="size-5 text-blue-700" />
-            <p className="mt-4 text-2xl font-bold">{totalByEntity.universities ?? "—"}</p>
-            <p className="text-sm text-muted-foreground">Universities</p>
-          </CardContent>
-        </Card>
-        <Card className="border-slate-200/80 shadow-sm">
-          <CardContent className="p-5">
-            <Building2 className="size-5 text-emerald-700" />
-            <p className="mt-4 text-2xl font-bold">{structureNodes || "—"}</p>
-            <p className="text-sm text-muted-foreground">Structure nodes</p>
-          </CardContent>
-        </Card>
-        <Card className="border-slate-200/80 shadow-sm">
-          <CardContent className="p-5">
-            <BookOpenCheck className="size-5 text-violet-700" />
-            <p className="mt-4 text-2xl font-bold">{totalByEntity.courses ?? "—"}</p>
-            <p className="text-sm text-muted-foreground">Courses in catalog</p>
-          </CardContent>
-        </Card>
-        <Card className="border-slate-200/80 shadow-sm">
-          <CardContent className="p-5">
-            <CalendarRange className="size-5 text-amber-700" />
-            <p className="mt-4 text-2xl font-bold">{totalByEntity.semesters ?? "—"}</p>
-            <p className="text-sm text-muted-foreground">Semesters configured</p>
-          </CardContent>
-        </Card>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-3 border-t border-blue-100 bg-white/70 px-6 py-4 text-sm sm:px-8 lg:px-10">
+          {["University", "Faculty", "Department", "Programme", "Curriculum"].map(
+            (item, index, items) => (
+              <div key={item} className="flex items-center gap-2">
+                <span className="rounded-md bg-white px-3 py-1.5 font-medium text-slate-700 shadow-sm ring-1 ring-slate-200">
+                  {item}
+                </span>
+                {index < items.length - 1 && <ChevronRight className="size-4 text-slate-400" />}
+              </div>
+            ),
+          )}
+        </div>
       </section>
 
-      <div className="grid gap-4 xl:grid-cols-[1.35fr_.65fr]">
-        <div className="rounded-2xl bg-gradient-to-r from-slate-950 via-blue-950 to-blue-800 p-6 text-white sm:p-8">
-          <p className="text-sm font-medium text-blue-200">Structure map</p>
-          <div className="mt-5 flex flex-wrap items-center gap-2 text-sm font-semibold">
-            {["University", "Faculty", "Department", "Program", "Course"].map((item, index) => (
-              <div key={item} className="flex items-center gap-2">
-                <span className="rounded-lg bg-white/10 px-3 py-2">{item}</span>
-                {index < 4 && <ArrowRight className="size-4 text-blue-300" />}
-              </div>
-            ))}
-          </div>
-          <p className="mt-6 max-w-2xl text-sm leading-6 text-slate-300">
-            Each level inherits its institutional context, keeping programs and courses correctly
-            scoped for enrollment, routines, results, and reporting.
-          </p>
-        </div>
-        <Card className="border-slate-200/80 shadow-sm">
-          <CardHeader>
-            <CardTitle>Operational coverage</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {academicEntities.map((entity) => (
-              <div key={entity.key} className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium">{entity.label}</p>
-                  <p className="text-xs text-muted-foreground">{entity.description}</p>
-                </div>
-                <span className="rounded-full bg-muted px-3 py-1 text-sm font-semibold">
-                  {totalByEntity[entity.key] ?? "—"}
-                </span>
-              </div>
-            ))}
-            <p className="border-t pt-4 text-xs leading-5 text-muted-foreground">
-              Tip: keep university, faculty, department, program, and course records aligned so
-              downstream features like offerings, exams, and results stay accurate.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {academicEntities.map((entity) => {
-          const Icon = icons[entity.key]
-          const count = totalByEntity[entity.key]
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: "Faculties", value: totalByEntity.faculties, icon: Building2, tone: "text-blue-700 bg-blue-50" },
+          { label: "Departments", value: totalByEntity.departments, icon: Network, tone: "text-violet-700 bg-violet-50" },
+          { label: "Programmes", value: totalByEntity.programs, icon: GraduationCap, tone: "text-emerald-700 bg-emerald-50" },
+          { label: "Courses", value: totalByEntity.courses, icon: BookOpenCheck, tone: "text-amber-700 bg-amber-50" },
+        ].map((item) => {
+          const Icon = item.icon
           return (
-            <Card key={entity.key} className="transition-all hover:-translate-y-0.5 hover:shadow-lg">
-              <CardHeader className="flex-row items-start justify-between">
-                <span className="grid size-11 place-items-center rounded-xl bg-blue-50 text-blue-700">
-                  <Icon className="size-5" />
-                </span>
-                <span className="rounded-full bg-muted px-3 py-1 text-sm font-semibold">
-                  #{entity.shortcut}
-                </span>
-              </CardHeader>
-              <CardContent>
-                <CardTitle>{entity.label}</CardTitle>
-                <p className="mt-2 text-sm text-muted-foreground">{entity.description}</p>
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <span className="text-2xl font-bold">{count ?? "—"}</span>
-                  <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    records
-                  </span>
-                </div>
-                <Button
-                  variant="link"
-                  className="mt-4 px-0"
-                  render={<Link href={`/dashboard/academics/${entity.key}`} />}
-                >
-                  Manage {entity.label.toLowerCase()} <ArrowRight />
-                </Button>
-              </CardContent>
-            </Card>
+            <div key={item.label} className="flex items-center gap-4 rounded-xl border bg-white p-5 shadow-sm">
+              <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${item.tone}`}>
+                <Icon className="size-5" />
+              </span>
+              <div>
+                <p className="text-2xl font-bold text-slate-950">{displayCount(item.value)}</p>
+                <p className="text-sm text-slate-500">{item.label}</p>
+              </div>
+            </div>
           )
         })}
       </section>
-      <p className="text-xs text-muted-foreground">
-        Total records across structure: {totalRecords}
-      </p>
-    </div>
+
+      <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-7">
+        <div className="flex flex-col gap-3 border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-slate-950">Academic management</h2>
+            <p className="mt-1 text-sm text-slate-500">Select an area to view and manage its records.</p>
+          </div>
+          <Button variant="outline" size="sm" render={<Link href="/dashboard/academics/universities/new" />}>
+            <Plus /> Add university
+          </Button>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {academicEntities.map((entity) => {
+            const presentation = entityPresentation[entity.key]
+            const Icon = presentation.icon
+            return (
+              <Link
+                key={entity.key}
+                href={`/dashboard/academics/${entity.key}`}
+                className="group rounded-xl border border-slate-200 p-5 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50/30 hover:shadow-md"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <span className={`grid size-11 place-items-center rounded-xl ring-1 ${presentation.tone}`}>
+                    <Icon className="size-5" />
+                  </span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-700">
+                    {displayCount(totalByEntity[entity.key])}
+                  </span>
+                </div>
+                <h3 className="mt-5 text-lg font-bold text-slate-900">{entity.label}</h3>
+                <p className="mt-1 min-h-10 text-sm leading-5 text-slate-500">{entity.description}</p>
+                <span className="mt-5 flex items-center gap-2 text-sm font-semibold text-blue-700">
+                  Manage records
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                </span>
+              </Link>
+            )
+          })}
+        </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-2">
+        <Link
+          href="/dashboard/academics/courses"
+          className="group flex items-center gap-4 rounded-xl border border-blue-100 bg-blue-50/70 p-5 transition hover:border-blue-200 hover:bg-blue-50"
+        >
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-blue-600 text-white">
+            <BookOpenCheck className="size-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-bold text-slate-900">Curriculum workspace</span>
+            <span className="mt-1 block text-sm text-slate-600">Department → batch → semester courses</span>
+          </span>
+          <ArrowRight className="size-5 text-blue-700 transition-transform group-hover:translate-x-1" />
+        </Link>
+        <Link
+          href="/dashboard/academics/semesters"
+          className="group flex items-center gap-4 rounded-xl border border-emerald-100 bg-emerald-50/70 p-5 transition hover:border-emerald-200 hover:bg-emerald-50"
+        >
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-emerald-600 text-white">
+            <CalendarRange className="size-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-bold text-slate-900">Academic terms</span>
+            <span className="mt-1 block text-sm text-slate-600">
+              {displayCount(totalByEntity.semesters)} teaching terms configured
+            </span>
+          </span>
+          <CircleCheck className="size-5 text-emerald-700" />
+        </Link>
+      </section>
+    </main>
   )
 }

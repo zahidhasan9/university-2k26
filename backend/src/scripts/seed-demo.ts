@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { connectDatabase, disconnectDatabase } from "../config/database";
 import { AdmissionModel } from "../modules/admission/admission.model";
+import { AcademicBatchModel } from "../modules/academic-batch/academicBatch.model";
 import { AttendanceRecordModel } from "../modules/attendance/attendanceRecord.model";
 import { AttendanceSessionModel } from "../modules/attendance/attendanceSession.model";
 import { AuditLogModel } from "../modules/audit/auditLog.model";
@@ -168,6 +169,17 @@ async function seedDemo() {
     { upsert: true, new: true },
   );
 
+  const batchSeeds: Array<[typeof cse._id, typeof cseProgram._id, string, string]> = [
+    [cse._id, cseProgram._id, "CSE-47", "CSE 47th Batch"],
+    [eee._id, eeeProgram._id, "EEE-47", "EEE 47th Batch"],
+    [bbaDepartment._id, bbaProgram._id, "BBA-47", "BBA 47th Batch"],
+  ];
+  const academicBatches = await Promise.all(batchSeeds.map(([department, program, code, name]) => AcademicBatchModel.findOneAndUpdate(
+    { program, code },
+    { $set: { department, name, admissionYear: 2026, curriculumVersion: "2026-v1", totalSemesters: 8, currentSemesterNumber: 3, status: "active" } },
+    { upsert: true, new: true },
+  )));
+
   const semester = await SemesterModel.findOneAndUpdate(
     { university: university._id, code: "FALL-2026" },
     {
@@ -276,6 +288,7 @@ async function seedDemo() {
   for (let index = 0; index < studentUsers.length; index += 1) {
     const user = studentUsers[index]!;
     const program = index < 4 ? cseProgram : index === 4 ? eeeProgram : bbaProgram;
+    const academicBatch = program._id.equals(cseProgram._id) ? academicBatches[0]! : program._id.equals(eeeProgram._id) ? academicBatches[1]! : academicBatches[2]!;
     students.push(
       await StudentModel.findOneAndUpdate(
         { user: user._id },
@@ -289,6 +302,7 @@ async function seedDemo() {
               : program._id.equals(eeeProgram._id)
                 ? "EEE-47"
                 : "BBA-47",
+            academicBatch: academicBatch._id,
             section: "A",
             phone: user.phone,
             currentSemesterNumber: 3,
@@ -303,12 +317,15 @@ async function seedDemo() {
   const offerings = [];
   for (let index = 0; index < courses.length; index += 1) {
     const course = courses[index]!;
+    const academicBatch = course.program.equals(cseProgram._id) ? academicBatches[0]! : course.program.equals(eeeProgram._id) ? academicBatches[1]! : academicBatches[2]!;
     offerings.push(
       await CourseOfferingModel.findOneAndUpdate(
         { course: course._id, semester: semester._id, section: "A" },
         {
           $set: {
             teacher: index === 3 ? teacher2._id : teacher1._id,
+            academicBatch: academicBatch._id,
+            batch: academicBatch.code,
             capacity: 45,
             deliveryMode: index === 2 ? "hybrid" : "in_person",
             status: index === 5 ? "open" : "ongoing",

@@ -21,6 +21,14 @@ type Option = {
   academicYear?: string
 }
 
+type BatchOption = {
+  _id: string
+  code: string
+  name: string
+  curriculumVersion: string
+  program: { _id: string } | string
+}
+
 const selectClass =
   "h-9 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/20"
 
@@ -58,16 +66,22 @@ function Field({
 export function StudentForm({
   student,
   programs,
+  batches,
   semesters = [],
 }: {
   student?: Student
   programs: Option[]
+  batches: BatchOption[]
   semesters?: Option[]
 }) {
   const router = useRouter()
   const editing = Boolean(student)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [programId, setProgramId] = useState(student?.program._id ?? "")
+  const availableBatches = batches.filter(
+    (batch) => (typeof batch.program === "string" ? batch.program : batch.program._id) === programId,
+  )
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -91,7 +105,7 @@ export function StudentForm({
           firstName: String(form.get("firstName")),
           lastName: String(form.get("lastName")),
           email: optional(form, "email"),
-          batch: String(form.get("batch")),
+          academicBatchId: String(form.get("academicBatchId")),
           section: String(form.get("section")),
           programId: String(form.get("programId")),
           currentSemesterNumber: Number(form.get("currentSemesterNumber")),
@@ -107,7 +121,7 @@ export function StudentForm({
           lastName: String(form.get("lastName")),
           temporaryPassword: String(form.get("temporaryPassword")),
           studentId: String(form.get("studentId")),
-          batch: String(form.get("batch")),
+          academicBatchId: String(form.get("academicBatchId")),
           section: String(form.get("section")),
           programId: String(form.get("programId")),
           admissionSemesterId: String(form.get("admissionSemesterId")),
@@ -204,15 +218,6 @@ export function StudentForm({
               />
             </Field>
           )}
-          <Field label="Batch" name="batch">
-            <Input
-              id="batch"
-              name="batch"
-              defaultValue={student?.batch}
-              placeholder="e.g. 2026"
-              required
-            />
-          </Field>
           <Field label="Section" name="section">
             <Input
               id="section"
@@ -237,7 +242,8 @@ export function StudentForm({
               name="programId"
               className={selectClass}
               required
-              defaultValue={student?.program._id ?? ""}
+              value={programId}
+              onChange={(event) => setProgramId(event.target.value)}
             >
               <option value="" disabled>
                 Select a program
@@ -249,20 +255,38 @@ export function StudentForm({
               ))}
             </select>
           </Field>
+          <Field label="Academic batch" name="academicBatchId">
+            <select
+              key={programId}
+              id="academicBatchId"
+              name="academicBatchId"
+              className={selectClass}
+              required
+              defaultValue={student?.academicBatch?._id ?? ""}
+            >
+              <option value="" disabled>
+                {programId ? "Select an active batch" : "Select a program first"}
+              </option>
+              {availableBatches.map((batch) => (
+                <option key={batch._id} value={batch._id}>
+                  {batch.code} · {batch.name} ({batch.curriculumVersion})
+                </option>
+              ))}
+            </select>
+          </Field>
           {editing ? (
-            <Field label="Current semester" name="currentSemesterNumber">
+            <Field label="Current curriculum semester" name="currentSemesterNumber">
               <Input
                 id="currentSemesterNumber"
                 name="currentSemesterNumber"
                 type="number"
                 min={1}
-                max={30}
                 required
                 defaultValue={student?.currentSemesterNumber ?? 1}
               />
             </Field>
           ) : (
-            <Field label="Admission semester" name="admissionSemesterId">
+            <Field label="Admission academic term" name="admissionSemesterId">
               <select
                 id="admissionSemesterId"
                 name="admissionSemesterId"

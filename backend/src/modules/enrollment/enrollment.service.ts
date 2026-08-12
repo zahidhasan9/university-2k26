@@ -8,6 +8,16 @@ import { CourseModel } from "../university-structure/course.model";
 import { EnrollmentModel } from "./enrollment.model";
 import type { Types } from "mongoose";
 import { createInvoice } from "../finance/finance.service";
+import { AcademicBatchModel } from "../academic-batch/academicBatch.model";
+import { CurriculumModel } from "../curriculum/curriculum.model";
+
+async function curriculumCourseIds(academicBatchId: Types.ObjectId, semesterNumber: number) {
+  const batch = await AcademicBatchModel.findById(academicBatchId).select("curriculum").lean();
+  if (!batch?.curriculum) throw new AppError(409, "Academic batch has no curriculum assigned");
+  const curriculum = await CurriculumModel.findOne({ _id: batch.curriculum, status: "active" }).select("coursePlans").lean();
+  if (!curriculum) throw new AppError(409, "Assigned curriculum is not active");
+  return curriculum.coursePlans.filter((plan) => plan.semesterNumber === semesterNumber).map((plan) => plan.course);
+}
 
 const enrollmentPopulate = [
   { path: "student", select: "studentId user program status", populate: { path: "user", select: "firstName lastName email" } },
@@ -67,6 +77,17 @@ export async function createEnrollment(input: {
   if (!student.program.equals(course.program)) {
     throw new AppError(400, "Course does not belong to the student's program");
   }
+  if (
+    !student.academicBatch ||
+    !offering.academicBatch ||
+    !student.academicBatch.equals(offering.academicBatch)
+  ) {
+    throw new AppError(400, "Course offering does not belong to the student's academic batch");
+  }
+  const eligibleCourseIds = await curriculumCourseIds(student.academicBatch, student.currentSemesterNumber);
+  if (!eligibleCourseIds.some((id) => id.equals(course._id))) {
+    throw new AppError(400, "Course is outside the student's curriculum semester");
+  }
   if (await EnrollmentModel.exists({ student: studentId, offering: offeringId })) {
     throw new AppError(409, "Student is already enrolled in this course offering");
   }
@@ -102,15 +123,20 @@ export async function dropEnrollment(id: string, reason: string) {
 export async function registrationOptions(userId: Types.ObjectId) {
   const student = await StudentModel.findOne({ user: userId, status: "active" }).lean();
   if (!student) throw new AppError(404, "Active student profile not found");
+  if (!student.academicBatch) {
+    throw new AppError(409, "Academic batch has not been assigned to this student");
+  }
+  const eligibleCourseIds = await curriculumCourseIds(student.academicBatch, student.currentSemesterNumber);
   const semesters = await SemesterModel.find({ status: "registration" }).select("_id name code academicYear registrationEndsAt").lean();
   const semesterIds = semesters.map((semester) => semester._id);
   const offerings = await CourseOfferingModel.find({
     semester: { $in: semesterIds },
     status: "open",
+    academicBatch: student.academicBatch,
   })
     .populate({
       path: "course",
-      match: { program: student.program, semesterNumber: student.currentSemesterNumber, status: "active" },
+      match: { _id: { $in: eligibleCourseIds }, program: student.program, status: "active" },
       select: "code title credits courseType semesterNumber theoryHoursPerWeek labHoursPerWeek prerequisites",
     })
     .populate("semester", "name code academicYear registrationEndsAt")
@@ -127,9 +153,18 @@ export async function registrationOptions(userId: Types.ObjectId) {
 export async function selfRegister(userId: Types.ObjectId, offeringIdValues: string[]) {
   const student = await StudentModel.findOne({ user: userId, status: "active" });
   if (!student) throw new AppError(404, "Active student profile not found");
+  if (!student.academicBatch) throw new AppError(409, "Academic batch has not been assigned to this student");
+  const eligibleCourseIds = await curriculumCourseIds(student.academicBatch, student.currentSemesterNumber);
+  const eligibleCourseIdSet = new Set(eligibleCourseIds.map(String));
   const offeringIds = [...new Set(offeringIdValues)].map((id) => toObjectId(id, "offering id"));
   const offerings = await CourseOfferingModel.find({ _id: { $in: offeringIds }, status: "open" });
   if (offerings.length !== offeringIds.length) throw new AppError(400, "One or more course offerings are not open");
+  if (
+    !student.academicBatch ||
+    offerings.some((offering) => !offering.academicBatch?.equals(student.academicBatch))
+  ) {
+    throw new AppError(400, "One or more course offerings do not belong to your academic batch");
+  }
   const semesterIds = new Set(offerings.map((item) => item.semester.toString()));
   if (semesterIds.size !== 1) throw new AppError(400, "All selected courses must belong to the same semester");
   const semester = await SemesterModel.findOne({ _id: offerings[0]!.semester, status: "registration" });
@@ -138,7 +173,7 @@ export async function selfRegister(userId: Types.ObjectId, offeringIdValues: str
   }
   const courses = await CourseModel.find({ _id: { $in: offerings.map((item) => item.course) }, status: "active" });
   if (courses.length !== offerings.length || courses.some((course) =>
-    !course.program.equals(student.program) || course.semesterNumber !== student.currentSemesterNumber
+    !course.program.equals(student.program) || !eligibleCourseIdSet.has(course._id.toString())
   )) throw new AppError(400, "Selected courses are outside the student's curriculum semester");
   if (await EnrollmentModel.exists({ student: student._id, offering: { $in: offeringIds } })) {
     throw new AppError(409, "One or more selected courses are already registered");

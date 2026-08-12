@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { AppError } from "../../utils/AppError";
 import { escapeRegex, toObjectId } from "../../utils/mongo";
 import { getPagination, paginationMeta } from "../../utils/pagination";
+import { AcademicBatchModel } from "../academic-batch/academicBatch.model";
 import { RoleModel } from "../role/role.model";
 import { SemesterModel } from "../semester/semester.model";
 import { ProgramModel } from "../university-structure/program.model";
@@ -37,6 +38,7 @@ export async function listStudents(query: Record<string, unknown>) {
         populate: { path: "department", select: "name code" },
       })
       .populate("admissionSemester", "name code academicYear")
+      .populate("academicBatch", "code name admissionYear curriculumVersion status")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -56,6 +58,7 @@ export async function getStudent(id: string) {
     .populate("user", "firstName lastName email status")
     .populate({ path: "program", select: "name code department", populate: { path: "department", select: "name code" } })
     .populate("admissionSemester", "name code academicYear")
+    .populate("academicBatch", "code name admissionYear curriculumVersion status")
     .lean();
   if (!student) throw new AppError(404, "Student not found");
   return student;
@@ -66,6 +69,7 @@ export async function getStudentByUser(userId: string) {
     .populate("user", "firstName lastName email status")
     .populate({ path: "program", select: "name code department", populate: { path: "department", select: "name code" } })
     .populate("admissionSemester", "name code academicYear")
+    .populate("academicBatch", "code name admissionYear curriculumVersion status")
     .lean();
   if (!student) throw new AppError(404, "Student profile not found");
   return student;
@@ -75,16 +79,21 @@ export async function createStudent(input: Record<string, unknown>) {
   const studentId = String(input.studentId);
   const programId = toObjectId(String(input.programId), "program id");
   const semesterId = toObjectId(String(input.admissionSemesterId), "semester id");
+  const academicBatchId = toObjectId(String(input.academicBatchId), "academic batch id");
   if (await StudentModel.exists({ studentId })) {
     throw new AppError(409, "Student ID already exists");
   }
-  const [program, semester, studentRole] = await Promise.all([
+  const [program, semester, academicBatch, studentRole] = await Promise.all([
     ProgramModel.findOne({ _id: programId, status: "active" }),
     SemesterModel.findOne({ _id: semesterId, status: { $ne: "archived" } }),
+    AcademicBatchModel.findOne({ _id: academicBatchId, status: "active" }),
     RoleModel.findOne({ code: "student" }),
   ]);
   if (!program) throw new AppError(400, "Active program not found");
   if (!semester) throw new AppError(400, "Admission semester not found");
+  if (!academicBatch || !academicBatch.program.equals(programId)) {
+    throw new AppError(400, "Active academic batch does not belong to the selected program");
+  }
   if (!studentRole) throw new AppError(500, "Student role is not configured");
 
   let provisionedUserId: string | undefined;
@@ -121,6 +130,7 @@ export async function createStudent(input: Record<string, unknown>) {
       temporaryPassword: ____,
       programId: _____,
       admissionSemesterId: ______,
+      academicBatchId: _______,
       admissionApplicationId,
       ...data
     } = input;
@@ -129,6 +139,8 @@ export async function createStudent(input: Record<string, unknown>) {
       user: user._id,
       program: programId,
       admissionSemester: semesterId,
+      academicBatch: academicBatch._id,
+      batch: academicBatch.code,
       ...(admissionApplicationId
         ? {
             admissionApplication: toObjectId(
@@ -155,14 +167,33 @@ export async function updateStudent(id: string, input: Record<string, unknown>) 
   if (!student) throw new AppError(404, "Student not found");
   const user = await UserModel.findById(student.user);
   if (!user) throw new AppError(404, "Student user account not found");
+  const requestedProgramId = input.programId
+    ? toObjectId(String(input.programId), "program id")
+    : student.program;
+  if (input.programId && !input.academicBatchId) {
+    throw new AppError(400, "Academic batch is required when changing program");
+  }
   if (input.programId) {
     const program = await ProgramModel.findOne({
-      _id: toObjectId(String(input.programId), "program id"),
+      _id: requestedProgramId,
       status: "active",
     });
     if (!program) throw new AppError(400, "Active program not found");
     student.program = program._id;
     delete input.programId;
+  }
+  if (input.academicBatchId) {
+    const academicBatch = await AcademicBatchModel.findOne({
+      _id: toObjectId(String(input.academicBatchId), "academic batch id"),
+      program: requestedProgramId,
+      status: "active",
+    });
+    if (!academicBatch) {
+      throw new AppError(400, "Active academic batch does not belong to the selected program");
+    }
+    student.academicBatch = academicBatch._id;
+    student.batch = academicBatch.code;
+    delete input.academicBatchId;
   }
   if (input.firstName !== undefined) user.firstName = String(input.firstName);
   if (input.lastName !== undefined) user.lastName = String(input.lastName);

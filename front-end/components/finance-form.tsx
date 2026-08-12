@@ -109,7 +109,7 @@ export function InvoiceForm({
           }}
         />
       </Field>
-      <Field label="Semester" name="semesterId">
+      <Field label="Academic term" name="semesterId">
         <select id="semesterId" name="semesterId" className={selectClass} required defaultValue="">
           <option value="" disabled>
             Select semester

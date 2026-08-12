@@ -18,7 +18,7 @@ const courseSchema = new Schema(
     title: { type: String, required: true, trim: true, maxlength: 180 },
     description: { type: String, trim: true, maxlength: 2000 },
     credits: { type: Number, required: true, min: 0, max: 20 },
-    semesterNumber: { type: Number, required: true, min: 1, max: 30, default: 1, index: true },
+    semesterNumber: { type: Number, required: true, min: 1, default: 1, index: true },
     theoryHoursPerWeek: { type: Number, required: true, min: 0, max: 40, default: 0 },
     labHoursPerWeek: { type: Number, required: true, min: 0, max: 40, default: 0 },
     courseType: {

@@ -11,18 +11,22 @@ export const metadata: Metadata = { title: "Edit student" }
 
 type List<T> = { items: T[] }
 type ProgramOption = { _id: string; name: string; code: string }
+type BatchOption = { _id: string; code: string; name: string; curriculumVersion: string; program: { _id: string } | string }
 
 export default async function EditStudentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   let student: Student
   let programs: List<ProgramOption>
+  let batches: List<BatchOption>
   try {
-    const [studentResponse, programResponse] = await Promise.all([
+    const [studentResponse, programResponse, batchResponse] = await Promise.all([
       authenticatedRequest<{ student: Student }>(API_ENDPOINTS.students.detail(id)),
       authenticatedRequest<List<ProgramOption>>(withQuery(API_ENDPOINTS.academics.programs, { status: "active", limit: 100 })),
+      authenticatedRequest<List<BatchOption>>(withQuery(API_ENDPOINTS.academics.batches, { status: "active", limit: 100 })),
     ])
     student = studentResponse.data.student
     programs = programResponse.data
+    batches = batchResponse.data
   } catch (error) {
     if (error instanceof Error && error.message === "Student not found") notFound()
     throw error
@@ -33,7 +37,7 @@ export default async function EditStudentPage({ params }: { params: Promise<{ id
       description="Update academic, personal, guardian, and address information."
       backHref={`/dashboard/students/${id}`}
     >
-      <StudentForm student={student} programs={programs.items} />
+      <StudentForm student={student} programs={programs.items} batches={batches.items} />
     </StudentFormPage>
   )
 }

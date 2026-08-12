@@ -1,4 +1,4 @@
-import { API_ENDPOINTS } from "@/lib/api-endpoints"
+import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 import type { Metadata } from "next"
 import Link from "next/link"
 import {
@@ -39,6 +39,14 @@ export default async function AdmissionDetailsPage({
     throw error
   }
   const applicantName = `${application.applicant.firstName} ${application.applicant.lastName}`
+  type BatchOption = { _id: string; code: string; name: string; curriculumVersion: string }
+  const batches = application.status === "under_review"
+    ? (await authenticatedRequest<{ items: BatchOption[] }>(withQuery(API_ENDPOINTS.academics.batches, {
+        programId: application.program._id,
+        status: "active",
+        limit: 100,
+      }))).data.items
+    : []
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -155,7 +163,7 @@ export default async function AdmissionDetailsPage({
               <CardTitle>Review decision</CardTitle>
             </CardHeader>
             <CardContent>
-              <AdmissionActions id={application._id} status={application.status} />
+              <AdmissionActions id={application._id} status={application.status} batches={batches} />
             </CardContent>
           </Card>
         </div>

@@ -6,6 +6,7 @@ const courseOfferingSchema = new Schema(
     semester: { type: Schema.Types.ObjectId, ref: "Semester", required: true, index: true },
     teacher: { type: Schema.Types.ObjectId, ref: "Teacher", required: true, index: true },
     batch: { type: String, required: true, default: "Unassigned", trim: true, maxlength: 40, index: true },
+    academicBatch: { type: Schema.Types.ObjectId, ref: "AcademicBatch", required: true, index: true },
     section: { type: String, required: true, uppercase: true, trim: true, maxlength: 20 },
     capacity: { type: Number, required: true, min: 1, max: 1000 },
     deliveryMode: {
@@ -23,7 +24,7 @@ const courseOfferingSchema = new Schema(
   { timestamps: true, versionKey: false },
 );
 
-courseOfferingSchema.index({ course: 1, semester: 1, batch: 1, section: 1 }, { unique: true });
+courseOfferingSchema.index({ course: 1, semester: 1, academicBatch: 1, section: 1 }, { unique: true });
 courseOfferingSchema.index({ teacher: 1, semester: 1, status: 1 });
 courseOfferingSchema.index({ semester: 1, batch: 1, section: 1, status: 1 });
 export const CourseOfferingModel = model("CourseOffering", courseOfferingSchema);

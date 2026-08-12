@@ -37,6 +37,7 @@ function publicUser(user: {
   emailClaimedAt?: Date | null;
   status: string;
   roles: unknown[];
+  permissions?: string[];
   createdAt?: Date;
   phone?: string | null;
   avatarUrl?: string | null;
@@ -57,6 +58,7 @@ function publicUser(user: {
     canSetEmail: user.email.endsWith("@pending.unisphere.local") && !user.emailClaimedAt,
     status: user.status,
     roles: user.roles,
+    permissions: user.permissions ?? [],
     createdAt: user.createdAt,
     phone: user.phone ?? undefined,
     avatarUrl: user.avatarUrl ?? undefined,
@@ -160,7 +162,9 @@ export async function logout(req: Request, res: Response): Promise<Response> {
 export async function me(req: Request, res: Response): Promise<Response> {
   const user = await UserModel.findById(req.auth?.userId).populate("roles", "code name").lean();
   if (!user) throw new AppError(404, "User not found");
-  return sendSuccess(res, 200, "Current user retrieved", { user: publicUser(user) });
+  return sendSuccess(res, 200, "Current user retrieved", {
+    user: publicUser({ ...user, permissions: req.auth?.permissions ?? [] }),
+  });
 }
 
 export async function changePassword(req: Request, res: Response): Promise<Response> {

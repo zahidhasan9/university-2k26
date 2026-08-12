@@ -6,6 +6,7 @@ import { Provider as ReduxProvider } from "react-redux"
 
 import { makeStore } from "@/store"
 import { CACHE_POLICY } from "@/lib/query-policy"
+import { GlobalFeedback } from "@/components/ui/global-feedback"
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -27,7 +28,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   return (
     <ReduxProvider store={store}>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>{children}<GlobalFeedback /></QueryClientProvider>
     </ReduxProvider>
   )
 }

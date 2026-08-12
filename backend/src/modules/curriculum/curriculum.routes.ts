@@ -1,0 +1,11 @@
+import { Router } from "express";
+import { authenticate, authorize } from "../../middleware/authenticate";
+import { validate } from "../../middleware/validate";
+import { asyncHandler } from "../../utils/asyncHandler";
+import * as controller from "./curriculum.controller";
+import { curriculumCreateSchema, curriculumIdSchema, curriculumUpdateSchema } from "./curriculum.validation";
+export const curriculumRouter = Router(); curriculumRouter.use(authenticate);
+curriculumRouter.get("/", authorize("academic.read"), asyncHandler(controller.list));
+curriculumRouter.get("/:id", authorize("academic.read"), validate(curriculumIdSchema), asyncHandler(controller.getOne));
+curriculumRouter.post("/", authorize("academic.manage"), validate(curriculumCreateSchema), asyncHandler(controller.create));
+curriculumRouter.patch("/:id", authorize("academic.manage"), validate(curriculumUpdateSchema), asyncHandler(controller.update));

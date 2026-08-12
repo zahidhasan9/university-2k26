@@ -29,6 +29,7 @@ export type CurrentUser = {
   lastName: string
   email: string
   roles: Array<{ code?: string; name?: string }>
+  permissions: string[]
   avatarUrl?: string
 }
 
@@ -98,7 +99,7 @@ export function DashboardHeader({
             className="w-[264px] max-w-[88vw] border-0 bg-white p-0 pt-[72px]"
             showCloseButton
           >
-            <AppSidebar />
+            <AppSidebar permissions={initialUser?.permissions} roles={initialUser?.roles} />
           </SheetContent>
         </Sheet>
 

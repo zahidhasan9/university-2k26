@@ -4,6 +4,13 @@ export type Student = {
   _id: string
   studentId: string
   batch: string
+  academicBatch?: {
+    _id: string
+    code: string
+    name: string
+    curriculumVersion: string
+    status: string
+  }
   section: string
   user: {
     _id: string

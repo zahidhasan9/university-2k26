@@ -1,6 +1,8 @@
 import { AppError } from "../../utils/AppError";
 import { escapeRegex, toObjectId } from "../../utils/mongo";
 import { getPagination, paginationMeta } from "../../utils/pagination";
+import { AcademicBatchModel } from "../academic-batch/academicBatch.model";
+import { CurriculumModel } from "../curriculum/curriculum.model";
 import { EnrollmentModel } from "../enrollment/enrollment.model";
 import { SemesterModel } from "../semester/semester.model";
 import { TeacherModel } from "../teacher/teacher.model";
@@ -10,6 +12,7 @@ import { CourseOfferingModel } from "./courseOffering.model";
 const populate = [
   { path: "course", select: "code title credits program" },
   { path: "semester", select: "name code academicYear term status" },
+  { path: "academicBatch", select: "code name curriculumVersion program status" },
   {
     path: "teacher",
     select: "employeeId designation user department",
@@ -23,6 +26,7 @@ export async function listOfferings(query: Record<string, unknown>) {
   if (query.courseId) filter.course = toObjectId(String(query.courseId), "course id");
   if (query.semesterId) filter.semester = toObjectId(String(query.semesterId), "semester id");
   if (query.teacherId) filter.teacher = toObjectId(String(query.teacherId), "teacher id");
+  if (query.academicBatchId) filter.academicBatch = toObjectId(String(query.academicBatchId), "academic batch id");
   if (query.batch) filter.batch = String(query.batch);
   if (query.section) filter.section = String(query.section).toUpperCase();
   if (query.status) filter.status = query.status;
@@ -49,7 +53,7 @@ export async function createOffering(input: {
   courseId: string;
   semesterId: string;
   teacherId: string;
-  batch: string;
+  academicBatchId: string;
   section: string;
   capacity: number;
   deliveryMode: "in_person" | "online" | "hybrid";
@@ -57,22 +61,31 @@ export async function createOffering(input: {
   const courseId = toObjectId(input.courseId, "course id");
   const semesterId = toObjectId(input.semesterId, "semester id");
   const teacherId = toObjectId(input.teacherId, "teacher id");
-  const [course, semester, teacher] = await Promise.all([
+  const academicBatchId = toObjectId(input.academicBatchId, "academic batch id");
+  const [course, semester, teacher, academicBatch] = await Promise.all([
     CourseModel.findOne({ _id: courseId, status: "active" }),
     SemesterModel.findOne({ _id: semesterId, status: { $in: ["planned", "registration", "ongoing"] } }),
     TeacherModel.findOne({ _id: teacherId, status: "active" }),
+    AcademicBatchModel.findOne({ _id: academicBatchId, status: "active" }),
   ]);
   if (!course) throw new AppError(400, "Active course not found");
   if (!semester) throw new AppError(400, "Available semester not found");
   if (!teacher) throw new AppError(400, "Active teacher not found");
-  if (await CourseOfferingModel.exists({ course: courseId, semester: semesterId, section: input.section })) {
-    throw new AppError(409, "Course section already exists in this semester");
+  if (!academicBatch || !academicBatch.program.equals(course.program)) {
+    throw new AppError(400, "Active academic batch does not belong to the course program");
+  }
+  if (!academicBatch.curriculum || !await CurriculumModel.exists({ _id: academicBatch.curriculum, status: "active", "coursePlans.course": course._id })) {
+    throw new AppError(400, "Course is not included in the batch curriculum");
+  }
+  if (await CourseOfferingModel.exists({ course: courseId, semester: semesterId, academicBatch: academicBatchId, section: input.section })) {
+    throw new AppError(409, "Course section already exists for this batch and semester");
   }
   const offering = await CourseOfferingModel.create({
     course: courseId,
     semester: semesterId,
     teacher: teacherId,
-    batch: input.batch,
+    academicBatch: academicBatch._id,
+    batch: academicBatch.code,
     section: input.section,
     capacity: input.capacity,
     deliveryMode: input.deliveryMode,
@@ -99,6 +112,20 @@ export async function updateOffering(id: string, input: Record<string, unknown>)
     if (!teacher) throw new AppError(400, "Active teacher not found");
     offering.teacher = teacher._id;
     delete input.teacherId;
+  }
+  if (input.academicBatchId) {
+    const course = await CourseModel.findById(offering.course).select("program");
+    const academicBatch = await AcademicBatchModel.findOne({
+      _id: toObjectId(String(input.academicBatchId), "academic batch id"),
+      program: course?.program,
+      status: "active",
+    });
+    if (!academicBatch) {
+      throw new AppError(400, "Active academic batch does not belong to the course program");
+    }
+    offering.academicBatch = academicBatch._id;
+    offering.batch = academicBatch.code;
+    delete input.academicBatchId;
   }
   if (input.capacity) {
     const enrolled = await EnrollmentModel.countDocuments({ offering: offering._id, status: "enrolled" });

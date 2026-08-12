@@ -29,8 +29,10 @@ import {
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { hasAnyPermission } from "@/lib/access-policy"
+import { primaryRole, type SystemRole } from "@/lib/access-policy"
 
-type NavigationItem = { label: string; href: string; icon: LucideIcon }
+type NavigationItem = { label: string; href: string; icon: LucideIcon; permissions?: string[]; roles?: SystemRole[] }
 type NavigationGroup = { label: string; icon: LucideIcon; items: NavigationItem[] }
 
 const navigation: NavigationGroup[] = [
@@ -39,23 +41,23 @@ const navigation: NavigationGroup[] = [
     icon: LayoutDashboard,
     items: [
       { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
-      { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-      { label: "Reports", href: "/dashboard/reports", icon: FileText },
+      { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3, permissions: ["analytics.read"] },
+      { label: "Reports", href: "/dashboard/reports", icon: FileText, permissions: ["analytics.read"] },
     ],
   },
   {
     label: "University",
     icon: GraduationCap,
     items: [
-      { label: "Academics", href: "/dashboard/academics", icon: GraduationCap },
-      { label: "Students", href: "/dashboard/students", icon: Users },
-      { label: "Faculty & HR", href: "/dashboard/faculty", icon: Building2 },
-      { label: "Admissions", href: "/dashboard/admissions", icon: FileText },
-      { label: "Attendance", href: "/dashboard/attendance", icon: ClipboardCheck },
-      { label: "Exams & Results", href: "/dashboard/results", icon: BookOpen },
-      { label: "LMS", href: "/dashboard/lms", icon: GraduationCap },
-      { label: "Registration", href: "/dashboard/registration", icon: BookOpenCheck },
-      { label: "Research", href: "/dashboard/research", icon: FlaskConical },
+      { label: "Academics", href: "/dashboard/academics", icon: GraduationCap, permissions: ["structure.read", "academic.read"] },
+      { label: "Students", href: "/dashboard/students", icon: Users, permissions: ["students.read"] },
+      { label: "Faculty & HR", href: "/dashboard/faculty", icon: Building2, permissions: ["teachers.read", "hr.read"] },
+      { label: "Admissions", href: "/dashboard/admissions", icon: FileText, permissions: ["admissions.read"] },
+      { label: "Attendance", href: "/dashboard/attendance", icon: ClipboardCheck, permissions: ["attendance.read"] },
+      { label: "Exams & Results", href: "/dashboard/results", icon: BookOpen, permissions: ["exams.read", "results.read"] },
+      { label: "LMS", href: "/dashboard/lms", icon: GraduationCap, permissions: ["lms.read"] },
+      { label: "Registration", href: "/dashboard/registration", icon: BookOpenCheck, permissions: ["lms.read"], roles: ["student"] },
+      { label: "Research", href: "/dashboard/research", icon: FlaskConical, permissions: ["research.read", "thesis.read"] },
       { label: "Engagement", href: "/dashboard/engagement", icon: Sparkles },
     ],
   },
@@ -63,10 +65,10 @@ const navigation: NavigationGroup[] = [
     label: "Operations",
     icon: Building2,
     items: [
-      { label: "Finance", href: "/dashboard/finance", icon: CircleDollarSign },
-      { label: "Library", href: "/dashboard/library", icon: Library },
-      { label: "Facilities", href: "/dashboard/facilities", icon: Hotel },
-      { label: "Inventory", href: "/dashboard/inventory", icon: PackageOpen },
+      { label: "Finance", href: "/dashboard/finance", icon: CircleDollarSign, permissions: ["finance.read"] },
+      { label: "Library", href: "/dashboard/library", icon: Library, permissions: ["library.read"] },
+      { label: "Facilities", href: "/dashboard/facilities", icon: Hotel, permissions: ["facilities.read"] },
+      { label: "Inventory", href: "/dashboard/inventory", icon: PackageOpen, permissions: ["inventory.read"] },
       { label: "Communication", href: "/dashboard/communication", icon: MessageSquareText },
       { label: "Calendar", href: "/dashboard/calendar", icon: CalendarDays },
     ],
@@ -75,8 +77,8 @@ const navigation: NavigationGroup[] = [
     label: "System",
     icon: Settings,
     items: [
-      { label: "Administration", href: "/dashboard/settings", icon: ShieldCheck },
-      { label: "API Map", href: "/dashboard/settings/api-map", icon: FileCode2 },
+      { label: "Administration", href: "/dashboard/settings", icon: ShieldCheck, permissions: ["users.read", "roles.read"] },
+      { label: "API Map", href: "/dashboard/settings/api-map", icon: FileCode2, permissions: ["users.read"] },
     ],
   },
 ]
@@ -85,22 +87,27 @@ function isActiveRoute(pathname: string, href: string) {
   return pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`))
 }
 
-function routeGroup(pathname: string) {
-  const index = navigation.findIndex((group) =>
-    group.items.some((item) => isActiveRoute(pathname, item.href)),
-  )
-  return index < 0 ? 0 : index
-}
-
 export function AppSidebar({
   collapsed = false,
   onNavigate,
+  permissions = [],
+  roles = [],
 }: {
   collapsed?: boolean
   onNavigate?: () => void
+  permissions?: string[]
+  roles?: Array<{ code?: string }>
 }) {
   const pathname = usePathname()
-  const currentGroup = routeGroup(pathname)
+  const role = primaryRole(roles)
+  const visibleNavigation = navigation
+    .map((group) => ({ ...group, items: group.items.filter((item) =>
+      hasAnyPermission(permissions, item.permissions) && (!item.roles || (role !== "custom" && item.roles.includes(role))),
+    ) }))
+    .filter((group) => group.items.length)
+  const currentGroup = visibleNavigation.findIndex((group) =>
+    group.items.some((item) => isActiveRoute(pathname, item.href)),
+  )
   const [openGroup, setOpenGroup] = useState<number | null>(currentGroup)
 
   function toggleGroup(index: number) {
@@ -115,7 +122,7 @@ export function AppSidebar({
         className="sidebar-scrollbar flex h-full flex-col overflow-y-auto rounded-[24px] border border-slate-100 bg-white px-2 py-3 shadow-[0_10px_30px_rgba(30,41,59,0.06)]"
       >
         <div className="space-y-1">
-          {navigation.map((group, index) => {
+          {visibleNavigation.map((group, index) => {
             const Icon = group.icon
             const active = currentGroup === index
             const opened = openGroup === index && !collapsed

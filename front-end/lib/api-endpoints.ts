@@ -3,7 +3,15 @@
  * Paths are relative to the Express `/api` prefix.
  */
 export const API_ENDPOINTS = {
-  auth: { login: "/auth/login", logout: "/auth/logout", me: "/auth/me", refresh: "/auth/refresh", changePassword: "/auth/change-password", proxyLogin: "/api/auth/login", proxyLogout: "/api/auth/logout" },
+  auth: {
+    login: "/auth/login",
+    logout: "/auth/logout",
+    me: "/auth/me",
+    refresh: "/auth/refresh",
+    changePassword: "/auth/change-password",
+    proxyLogin: "/api/auth/login",
+    proxyLogout: "/api/auth/logout",
+  },
   analytics: {
     admin: "/analytics/admin",
     departments: "/analytics/departments",
@@ -31,6 +39,10 @@ export const API_ENDPOINTS = {
     courses: "/courses",
     semesters: "/semesters",
     offerings: "/course-offerings",
+    batches: "/academic-batches",
+    batchDetail: (id: string) => `/academic-batches/${id}`,
+    curricula: "/curricula",
+    curriculumDetail: (id: string) => `/curricula/${id}`,
     detail: (entity: string, id: string) => `/${entity}/${id}`,
   },
   students: {
@@ -61,7 +73,11 @@ export const API_ENDPOINTS = {
     close: (id: string) => `/attendance/${id}/close`,
     qr: (id: string) => `/attendance/${id}/qr`,
   },
-  exams: { list: "/exams", detail: (id: string) => `/exams/${id}`, marks: (id: string) => `/exams/${id}/marks` },
+  exams: {
+    list: "/exams",
+    detail: (id: string) => `/exams/${id}`,
+    marks: (id: string) => `/exams/${id}/marks`,
+  },
   results: {
     exams: "/exams",
     marks: (id: string) => `/exams/${id}/marks`,

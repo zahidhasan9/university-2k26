@@ -95,9 +95,9 @@ export const academicEntities: {
   },
   {
     key: "semesters",
-    label: "Semesters",
-    singular: "Semester",
-    description: "Academic terms and timelines",
+    label: "Academic Terms",
+    singular: "Academic Term",
+    description: "Teaching terms, registration windows, and timelines",
     shortcut: "06",
   },
 ]

@@ -23,7 +23,7 @@ export function DashboardShell({ children, currentUser }: { children: React.Reac
           sidebarCollapsed ? "w-[88px]" : "w-[264px]",
         )}
       >
-        <AppSidebar collapsed={sidebarCollapsed} />
+        <AppSidebar collapsed={sidebarCollapsed} permissions={currentUser.permissions} roles={currentUser.roles} />
       </div>
       <main
         className={cn(

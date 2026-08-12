@@ -72,7 +72,7 @@ export function FeeStructureForm({
         </select>
       </div>
       <div className="space-y-2">
-        <Label>Semester</Label>
+        <Label>Academic term</Label>
         <select name="semesterId" className={select} required defaultValue="">
           <option value="" disabled>
             Select semester

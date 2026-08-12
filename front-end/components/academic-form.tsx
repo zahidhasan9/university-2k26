@@ -158,11 +158,16 @@ export function AcademicForm({
     setSaving(true)
     setError("")
     try {
-      const response = await apiResponseRequest(editing && item ? API_ENDPOINTS.academics.detail(entity, item._id) : API_ENDPOINTS.academics[entity], {
-        method: editing ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
+      const response = await apiResponseRequest(
+        editing && item
+          ? API_ENDPOINTS.academics.detail(entity, item._id)
+          : API_ENDPOINTS.academics[entity],
+        {
+          method: editing ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      )
       const body = (await response.json()) as { message: string }
       if (!response.ok) throw new Error(body.message || "Record could not be saved")
       router.push(`/dashboard/academics/${entity}`)
@@ -224,7 +229,7 @@ export function AcademicForm({
           label={
             entity === "courses"
               ? "Course title"
-              : `${entity === "semesters" ? "Semester" : "Record"} name`
+              : `${entity === "semesters" ? "Academic term" : "Record"} name`
           }
           name={entity === "courses" ? "title" : "name"}
         >
@@ -318,7 +323,14 @@ export function AcademicForm({
               />
             </Field>
             <Field label="Total semesters" name="totalSemesters">
-              <Input id="totalSemesters" name="totalSemesters" type="number" min={1} max={30} required defaultValue={item?.totalSemesters ?? 8} />
+              <Input
+                id="totalSemesters"
+                name="totalSemesters"
+                type="number"
+                min={1}
+                required
+                defaultValue={item?.totalSemesters ?? 8}
+              />
             </Field>
           </>
         )}
@@ -352,13 +364,38 @@ export function AcademicForm({
               </select>
             </Field>
             <Field label="Curriculum semester" name="semesterNumber">
-              <Input id="semesterNumber" name="semesterNumber" type="number" min={1} max={30} required defaultValue={item?.semesterNumber ?? 1} />
+              <Input
+                id="semesterNumber"
+                name="semesterNumber"
+                type="number"
+                min={1}
+                required
+                defaultValue={item?.semesterNumber ?? 1}
+              />
             </Field>
             <Field label="Theory hours / week" name="theoryHoursPerWeek">
-              <Input id="theoryHoursPerWeek" name="theoryHoursPerWeek" type="number" min={0} max={40} step={0.5} required defaultValue={item?.theoryHoursPerWeek ?? 0} />
+              <Input
+                id="theoryHoursPerWeek"
+                name="theoryHoursPerWeek"
+                type="number"
+                min={0}
+                max={40}
+                step={0.5}
+                required
+                defaultValue={item?.theoryHoursPerWeek ?? 0}
+              />
             </Field>
             <Field label="Lab hours / week" name="labHoursPerWeek">
-              <Input id="labHoursPerWeek" name="labHoursPerWeek" type="number" min={0} max={40} step={0.5} required defaultValue={item?.labHoursPerWeek ?? 0} />
+              <Input
+                id="labHoursPerWeek"
+                name="labHoursPerWeek"
+                type="number"
+                min={0}
+                max={40}
+                step={0.5}
+                required
+                defaultValue={item?.labHoursPerWeek ?? 0}
+              />
             </Field>
           </>
         )}
@@ -389,7 +426,7 @@ export function AcademicForm({
                 ))}
               </select>
             </Field>
-            <Field label="Semester starts" name="startsAt">
+            <Field label="Academic term starts" name="startsAt">
               <Input
                 id="startsAt"
                 name="startsAt"
@@ -398,7 +435,7 @@ export function AcademicForm({
                 defaultValue={dateValue(item?.startsAt)}
               />
             </Field>
-            <Field label="Semester ends" name="endsAt">
+            <Field label="Academic term ends" name="endsAt">
               <Input
                 id="endsAt"
                 name="endsAt"

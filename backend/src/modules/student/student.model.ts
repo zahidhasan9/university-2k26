@@ -8,6 +8,7 @@ const studentSchema = new Schema(
     admissionSemester: { type: Schema.Types.ObjectId, ref: "Semester", required: true, index: true },
     admissionApplication: { type: Schema.Types.ObjectId, ref: "Admission", unique: true, sparse: true },
     batch: { type: String, required: true, default: "Unassigned", trim: true, maxlength: 40, index: true },
+    academicBatch: { type: Schema.Types.ObjectId, ref: "AcademicBatch", required: true, index: true },
     section: { type: String, required: true, default: "Unassigned", trim: true, maxlength: 20 },
     dateOfBirth: { type: Date },
     gender: { type: String, enum: ["male", "female", "other", "prefer_not_to_say"] },
@@ -26,7 +27,7 @@ const studentSchema = new Schema(
       country: { type: String, trim: true },
       postalCode: { type: String, trim: true },
     },
-    currentSemesterNumber: { type: Number, min: 1, max: 30, default: 1 },
+    currentSemesterNumber: { type: Number, min: 1, default: 1 },
     status: {
       type: String,
       enum: ["active", "graduated", "suspended", "withdrawn", "archived"],

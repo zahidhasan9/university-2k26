@@ -13,7 +13,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { AdmissionStatus } from "@/lib/admission-types"
 
-export function AdmissionActions({ id, status }: { id: string; status: AdmissionStatus }) {
+type BatchOption = { _id: string; code: string; name: string; curriculumVersion: string }
+
+export function AdmissionActions({ id, status, batches }: { id: string; status: AdmissionStatus; batches: BatchOption[] }) {
   const router = useRouter()
   const [loading, setLoading] = useState("")
   const [error, setError] = useState("")
@@ -49,10 +51,11 @@ export function AdmissionActions({ id, status }: { id: string; status: Admission
     const form = new FormData(event.currentTarget)
     const note = String(form.get(`${decision}Note`) ?? "").trim()
     const studentId = String(form.get("studentId") ?? "").trim()
+    const academicBatchId = String(form.get("academicBatchId") ?? "").trim()
     void send(
       "decision",
       decision === "approve"
-        ? { decision, studentId, ...(note ? { note } : {}) }
+        ? { decision, studentId, academicBatchId, ...(note ? { note } : {}) }
         : { decision, note },
       decision,
     )
@@ -112,6 +115,24 @@ export function AdmissionActions({ id, status }: { id: string; status: Admission
               />
             </div>
             <div>
+              <Label htmlFor="academicBatchId">Academic batch</Label>
+              <select
+                id="academicBatchId"
+                name="academicBatchId"
+                required
+                defaultValue=""
+                className="mt-2 h-9 w-full rounded-lg border bg-white px-3 text-sm"
+              >
+                <option value="" disabled>Select an active batch</option>
+                {batches.map((batch) => (
+                  <option key={batch._id} value={batch._id}>
+                    {batch.code} · {batch.name} ({batch.curriculumVersion})
+                  </option>
+                ))}
+              </select>
+              {!batches.length && <p className="mt-2 text-xs text-rose-700">Create an active batch for this programme before approval.</p>}
+            </div>
+            <div>
               <Label htmlFor="approveNote">Approval note</Label>
               <textarea
                 id="approveNote"
@@ -123,7 +144,7 @@ export function AdmissionActions({ id, status }: { id: string; status: Admission
             <Button
               type="submit"
               className="w-full bg-emerald-700 hover:bg-emerald-800"
-              disabled={Boolean(loading)}
+              disabled={Boolean(loading) || !batches.length}
             >
               {loading === "approve" ? <LoaderCircle className="animate-spin" /> : <CheckCircle2 />}{" "}
               Approve & create student

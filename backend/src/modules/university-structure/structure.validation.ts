@@ -62,7 +62,7 @@ export const programCreateSchema = z.object({
     ]),
     durationYears: z.number().min(0.5).max(10),
     totalCredits: z.number().min(1).max(400),
-    totalSemesters: z.number().int().min(1).max(30).default(8),
+    totalSemesters: z.number().int().min(1).default(8),
     description,
   }),
 });
@@ -73,7 +73,7 @@ export const courseCreateSchema = z.object({
     title: z.string().trim().min(2).max(180),
     description,
     credits: z.number().min(0).max(20),
-    semesterNumber: z.number().int().min(1).max(30).default(1),
+    semesterNumber: z.number().int().min(1).default(1),
     theoryHoursPerWeek: z.number().min(0).max(40).default(0),
     labHoursPerWeek: z.number().min(0).max(40).default(0),
     courseType: z
@@ -118,7 +118,7 @@ export const programUpdateSchema = z.object({
       .optional(),
     durationYears: z.number().min(0.5).max(10).optional(),
     totalCredits: z.number().min(1).max(400).optional(),
-    totalSemesters: z.number().int().min(1).max(30).optional(),
+    totalSemesters: z.number().int().min(1).optional(),
   }),
 });
 export const courseUpdateSchema = z.object({
@@ -130,7 +130,7 @@ export const courseUpdateSchema = z.object({
     status: status.optional(),
     programId: objectId.optional(),
     credits: z.number().min(0).max(20).optional(),
-    semesterNumber: z.number().int().min(1).max(30).optional(),
+    semesterNumber: z.number().int().min(1).optional(),
     theoryHoursPerWeek: z.number().min(0).max(40).optional(),
     labHoursPerWeek: z.number().min(0).max(40).optional(),
     courseType: z
