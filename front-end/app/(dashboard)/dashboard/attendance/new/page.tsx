@@ -5,11 +5,27 @@ import { AttendanceSessionForm } from "@/components/attendance-session-form"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { authenticatedRequest } from "@/lib/auth"
-type Offering = { _id: string; section: string; batch: string; course: { code: string; title: string }; teacher: { user: { firstName: string; lastName: string } }; semester: { name: string; academicYear: string } }
-type Routine = { _id: string; offering: string; dayOfWeek: string; startTime: string; endTime: string; room: string }
+type Offering = {
+  _id: string
+  section: string
+  batch: string
+  course: { code: string; title: string }
+  teacher: { user: { firstName: string; lastName: string } }
+  semester: { name: string; academicYear: string }
+}
+type Routine = {
+  _id: string
+  offering: string
+  dayOfWeek: string
+  startTime: string
+  endTime: string
+  room: string
+}
 export default async function NewAttendancePage() {
   const data = (
-    await authenticatedRequest<{ offerings: Offering[]; routines: Routine[] }>(API_ENDPOINTS.attendance.options)
+    await authenticatedRequest<{ offerings: Offering[]; routines: Routine[] }>(
+      API_ENDPOINTS.attendance.options,
+    )
   ).data
   return (
     <div className="mx-auto max-w-2xl space-y-6">

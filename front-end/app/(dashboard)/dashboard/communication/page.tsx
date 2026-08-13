@@ -44,8 +44,12 @@ export default async function CommunicationPage() {
   try {
     const data = await Promise.all([
       authenticatedRequest<{ notices: Notice[] }>(API_ENDPOINTS.communication.notices),
-      authenticatedRequest<{ conversations: Conversation[] }>(API_ENDPOINTS.communication.conversations),
-      authenticatedRequest<{ items: Notification[] }>(withQuery(API_ENDPOINTS.communication.notifications, { limit: 20 })),
+      authenticatedRequest<{ conversations: Conversation[] }>(
+        API_ENDPOINTS.communication.conversations,
+      ),
+      authenticatedRequest<{ items: Notification[] }>(
+        withQuery(API_ENDPOINTS.communication.notifications, { limit: 20 }),
+      ),
     ])
     notices = data[0].data.notices
     conversations = data[1].data.conversations

@@ -10,8 +10,9 @@ type Policy = {
   currency: string
 }
 export default async function LibraryPoliciesPage() {
-  const policies = (await authenticatedRequest<{ policies: Policy[] }>(API_ENDPOINTS.library.policies)).data
-    .policies
+  const policies = (
+    await authenticatedRequest<{ policies: Policy[] }>(API_ENDPOINTS.library.policies)
+  ).data.policies
   return (
     <LibraryFormShell
       title="Borrowing policies"

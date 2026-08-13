@@ -33,7 +33,8 @@ export default async function PayrollPage() {
   let runs: Run[] = [],
     error = ""
   try {
-    runs = (await authenticatedRequest<{ payrollRuns: Run[] }>(API_ENDPOINTS.hr.payroll)).data.payrollRuns
+    runs = (await authenticatedRequest<{ payrollRuns: Run[] }>(API_ENDPOINTS.hr.payroll)).data
+      .payrollRuns
   } catch (cause) {
     error = cause instanceof Error ? cause.message : "Payroll unavailable"
   }

@@ -4,7 +4,13 @@ import { authenticatedRequest } from "@/lib/auth"
 import { API_ENDPOINTS, withQuery } from "@/lib/api-endpoints"
 type Department = { _id: string; name: string; code: string }
 type Program = { _id: string; name: string; code: string; department: { _id: string } | string }
-type Curriculum = { _id: string; code: string; name: string; totalSemesters: number; program: { _id: string } | string }
+type Curriculum = {
+  _id: string
+  code: string
+  name: string
+  totalSemesters: number
+  program: { _id: string } | string
+}
 export default async function NewBatchPage({
   searchParams,
 }: {
@@ -18,7 +24,9 @@ export default async function NewBatchPage({
     authenticatedRequest<{ items: Program[] }>(
       withQuery(API_ENDPOINTS.academics.programs, { status: "active", limit: 100 }),
     ),
-    authenticatedRequest<{ items: Curriculum[] }>(withQuery(API_ENDPOINTS.academics.curricula, { status: "active", limit: 100 })),
+    authenticatedRequest<{ items: Curriculum[] }>(
+      withQuery(API_ENDPOINTS.academics.curricula, { status: "active", limit: 100 }),
+    ),
   ])
   const backHref = `/dashboard/academics/courses${departmentId ? `?departmentId=${departmentId}` : ""}`
   return (

@@ -67,7 +67,11 @@ export default async function AcademicsPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button variant="outline" className="bg-white" render={<Link href="/dashboard/results" />}>
+            <Button
+              variant="outline"
+              className="bg-white"
+              render={<Link href="/dashboard/results" />}
+            >
               Results workspace
             </Button>
             <Button render={<Link href="/dashboard/academics/courses" />}>
@@ -92,14 +96,37 @@ export default async function AcademicsPage() {
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          { label: "Faculties", value: totalByEntity.faculties, icon: Building2, tone: "text-blue-700 bg-blue-50" },
-          { label: "Departments", value: totalByEntity.departments, icon: Network, tone: "text-violet-700 bg-violet-50" },
-          { label: "Programmes", value: totalByEntity.programs, icon: GraduationCap, tone: "text-emerald-700 bg-emerald-50" },
-          { label: "Courses", value: totalByEntity.courses, icon: BookOpenCheck, tone: "text-amber-700 bg-amber-50" },
+          {
+            label: "Faculties",
+            value: totalByEntity.faculties,
+            icon: Building2,
+            tone: "text-blue-700 bg-blue-50",
+          },
+          {
+            label: "Departments",
+            value: totalByEntity.departments,
+            icon: Network,
+            tone: "text-violet-700 bg-violet-50",
+          },
+          {
+            label: "Programmes",
+            value: totalByEntity.programs,
+            icon: GraduationCap,
+            tone: "text-emerald-700 bg-emerald-50",
+          },
+          {
+            label: "Courses",
+            value: totalByEntity.courses,
+            icon: BookOpenCheck,
+            tone: "text-amber-700 bg-amber-50",
+          },
         ].map((item) => {
           const Icon = item.icon
           return (
-            <div key={item.label} className="flex items-center gap-4 rounded-xl border bg-white p-5 shadow-sm">
+            <div
+              key={item.label}
+              className="flex items-center gap-4 rounded-xl border bg-white p-5 shadow-sm"
+            >
               <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${item.tone}`}>
                 <Icon className="size-5" />
               </span>
@@ -116,9 +143,15 @@ export default async function AcademicsPage() {
         <div className="flex flex-col gap-3 border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-bold text-slate-950">Academic management</h2>
-            <p className="mt-1 text-sm text-slate-500">Select an area to view and manage its records.</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Select an area to view and manage its records.
+            </p>
           </div>
-          <Button variant="outline" size="sm" render={<Link href="/dashboard/academics/universities/new" />}>
+          <Button
+            variant="outline"
+            size="sm"
+            render={<Link href="/dashboard/academics/universities/new" />}
+          >
             <Plus /> Add university
           </Button>
         </div>
@@ -134,7 +167,9 @@ export default async function AcademicsPage() {
                 className="group rounded-xl border border-slate-200 p-5 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50/30 hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-4">
-                  <span className={`grid size-11 place-items-center rounded-xl ring-1 ${presentation.tone}`}>
+                  <span
+                    className={`grid size-11 place-items-center rounded-xl ring-1 ${presentation.tone}`}
+                  >
                     <Icon className="size-5" />
                   </span>
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-700">
@@ -142,7 +177,9 @@ export default async function AcademicsPage() {
                   </span>
                 </div>
                 <h3 className="mt-5 text-lg font-bold text-slate-900">{entity.label}</h3>
-                <p className="mt-1 min-h-10 text-sm leading-5 text-slate-500">{entity.description}</p>
+                <p className="mt-1 min-h-10 text-sm leading-5 text-slate-500">
+                  {entity.description}
+                </p>
                 <span className="mt-5 flex items-center gap-2 text-sm font-semibold text-blue-700">
                   Manage records
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
@@ -163,7 +200,9 @@ export default async function AcademicsPage() {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block font-bold text-slate-900">Curriculum workspace</span>
-            <span className="mt-1 block text-sm text-slate-600">Department → batch → semester courses</span>
+            <span className="mt-1 block text-sm text-slate-600">
+              Department → batch → semester courses
+            </span>
           </span>
           <ArrowRight className="size-5 text-blue-700 transition-transform group-hover:translate-x-1" />
         </Link>

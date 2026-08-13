@@ -33,7 +33,9 @@ export default async function Page() {
     error = ""
   try {
     const d = await Promise.all([
-      authenticatedRequest<{ items: Complaint[] }>(withQuery(API_ENDPOINTS.engagement.complaints, { limit: 100 })),
+      authenticatedRequest<{ items: Complaint[] }>(
+        withQuery(API_ENDPOINTS.engagement.complaints, { limit: 100 }),
+      ),
       authenticatedRequest<{ alumni: Alumni[] }>(API_ENDPOINTS.engagement.alumni),
     ])
     complaints = d[0].data.items

@@ -32,25 +32,43 @@ export default async function AdmissionDetailsPage({
   const { id } = await params
   let application: Admission
   try {
-    application = (await authenticatedRequest<{ application: Admission }>(API_ENDPOINTS.admissions.detail(id))).data
-      .application
+    application = (
+      await authenticatedRequest<{ application: Admission }>(API_ENDPOINTS.admissions.detail(id))
+    ).data.application
   } catch (error) {
     if (error instanceof Error && error.message === "Admission application not found") notFound()
     throw error
   }
   const applicantName = `${application.applicant.firstName} ${application.applicant.lastName}`
   type BatchOption = { _id: string; code: string; name: string; curriculumVersion: string }
-  type SectionOption = { _id: string; code: string; name: string; capacity: number; enrolledCount: number; academicBatch: { _id: string } | string }
-  const batches = application.status === "under_review"
-    ? (await authenticatedRequest<{ items: BatchOption[] }>(withQuery(API_ENDPOINTS.academics.batches, {
-        programId: application.program._id,
-        status: "active",
-        limit: 100,
-      }))).data.items
-    : []
-  const sections = application.status === "under_review"
-    ? (await authenticatedRequest<{ items: SectionOption[] }>(withQuery(API_ENDPOINTS.academics.sections, { status: "active", limit: 500 }))).data.items
-    : []
+  type SectionOption = {
+    _id: string
+    code: string
+    name: string
+    capacity: number
+    enrolledCount: number
+    academicBatch: { _id: string } | string
+  }
+  const batches =
+    application.status === "under_review"
+      ? (
+          await authenticatedRequest<{ items: BatchOption[] }>(
+            withQuery(API_ENDPOINTS.academics.batches, {
+              programId: application.program._id,
+              status: "active",
+              limit: 100,
+            }),
+          )
+        ).data.items
+      : []
+  const sections =
+    application.status === "under_review"
+      ? (
+          await authenticatedRequest<{ items: SectionOption[] }>(
+            withQuery(API_ENDPOINTS.academics.sections, { status: "active", limit: 500 }),
+          )
+        ).data.items
+      : []
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -167,7 +185,12 @@ export default async function AdmissionDetailsPage({
               <CardTitle>Review decision</CardTitle>
             </CardHeader>
             <CardContent>
-              <AdmissionActions id={application._id} status={application.status} batches={batches} sections={sections} />
+              <AdmissionActions
+                id={application._id}
+                status={application.status}
+                batches={batches}
+                sections={sections}
+              />
             </CardContent>
           </Card>
         </div>

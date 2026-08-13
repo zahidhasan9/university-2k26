@@ -25,7 +25,9 @@ type Result = {
 }
 export default async function OfferingResultsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const data = (await authenticatedRequest<{ results: Result[] }>(API_ENDPOINTS.results.offering(id))).data
+  const data = (
+    await authenticatedRequest<{ results: Result[] }>(API_ENDPOINTS.results.offering(id))
+  ).data
   const hasDraft = data.results.some((result) => result.status === "draft")
   return (
     <div className="mx-auto max-w-6xl space-y-6">

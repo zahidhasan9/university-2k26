@@ -27,8 +27,11 @@ export default async function EmployeesPage() {
   let employees: Employee[] = [],
     error = ""
   try {
-    employees = (await authenticatedRequest<{ items: Employee[] }>(withQuery(API_ENDPOINTS.hr.employees, { limit: 100 }))).data
-      .items
+    employees = (
+      await authenticatedRequest<{ items: Employee[] }>(
+        withQuery(API_ENDPOINTS.hr.employees, { limit: 100 }),
+      )
+    ).data.items
   } catch (cause) {
     error = cause instanceof Error ? cause.message : "Employees unavailable"
   }

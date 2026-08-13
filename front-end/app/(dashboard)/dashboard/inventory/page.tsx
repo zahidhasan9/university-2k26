@@ -45,8 +45,12 @@ export default async function InventoryPage() {
     error = ""
   try {
     const data = await Promise.all([
-      authenticatedRequest<{ items: Item[] }>(withQuery(API_ENDPOINTS.inventory.items, { limit: 100 })),
-      authenticatedRequest<{ items: Transaction[] }>(withQuery(API_ENDPOINTS.inventory.transactions, { limit: 20 })),
+      authenticatedRequest<{ items: Item[] }>(
+        withQuery(API_ENDPOINTS.inventory.items, { limit: 100 }),
+      ),
+      authenticatedRequest<{ items: Transaction[] }>(
+        withQuery(API_ENDPOINTS.inventory.transactions, { limit: 20 }),
+      ),
     ])
     items = data[0].data.items
     transactions = data[1].data.items

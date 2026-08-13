@@ -41,7 +41,9 @@ export default async function Page() {
     error = ""
   try {
     const d = await Promise.all([
-      authenticatedRequest<{ items: Project[] }>(withQuery(API_ENDPOINTS.research.projects, { limit: 50 })),
+      authenticatedRequest<{ items: Project[] }>(
+        withQuery(API_ENDPOINTS.research.projects, { limit: 50 }),
+      ),
       authenticatedRequest<{ publications: Publication[] }>(API_ENDPOINTS.research.publications),
       authenticatedRequest<{ theses: Thesis[] }>(API_ENDPOINTS.research.theses),
     ])

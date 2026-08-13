@@ -63,8 +63,13 @@ type Summary = {
   invoices: { _id: string; billedMinor: number; paidMinor: number; dueMinor: number }[]
 }
 const money = (amount: number, currency?: string | null) => {
-  const safeCurrency = typeof currency === "string" && /^[A-Z]{3}$/.test(currency) ? currency : "BDT"
-  return new Intl.NumberFormat("en-BD", { style: "currency", currency: safeCurrency, notation: "compact" }).format((Number.isFinite(amount) ? amount : 0) / 100)
+  const safeCurrency =
+    typeof currency === "string" && /^[A-Z]{3}$/.test(currency) ? currency : "BDT"
+  return new Intl.NumberFormat("en-BD", {
+    style: "currency",
+    currency: safeCurrency,
+    notation: "compact",
+  }).format((Number.isFinite(amount) ? amount : 0) / 100)
 }
 export default async function FinancePage() {
   let invoices: Invoice[] = [],
@@ -73,17 +78,24 @@ export default async function FinancePage() {
     summary: Summary | null = null,
     error = ""
   const responses = await Promise.allSettled([
-      authenticatedRequest<{ items: Invoice[] }>(withQuery(API_ENDPOINTS.finance.invoices, { limit: 10 })),
-      authenticatedRequest<{ items: Payment[] }>(withQuery(API_ENDPOINTS.finance.payments, { limit: 10 })),
-      authenticatedRequest<{ items: Expense[] }>(withQuery(API_ENDPOINTS.finance.expenses, { limit: 10 })),
-      authenticatedRequest<Summary>(API_ENDPOINTS.finance.summary),
-    ])
+    authenticatedRequest<{ items: Invoice[] }>(
+      withQuery(API_ENDPOINTS.finance.invoices, { limit: 10 }),
+    ),
+    authenticatedRequest<{ items: Payment[] }>(
+      withQuery(API_ENDPOINTS.finance.payments, { limit: 10 }),
+    ),
+    authenticatedRequest<{ items: Expense[] }>(
+      withQuery(API_ENDPOINTS.finance.expenses, { limit: 10 }),
+    ),
+    authenticatedRequest<Summary>(API_ENDPOINTS.finance.summary),
+  ])
   if (responses[0].status === "fulfilled") invoices = responses[0].value.data.items
   if (responses[1].status === "fulfilled") payments = responses[1].value.data.items
   if (responses[2].status === "fulfilled") expenses = responses[2].value.data.items
   if (responses[3].status === "fulfilled") summary = responses[3].value.data
   const failures = responses.filter((response) => response.status === "rejected")
-  if (failures.length) error = `${failures.length} finance data source${failures.length > 1 ? "s are" : " is"} temporarily unavailable. Available data is shown below.`
+  if (failures.length)
+    error = `${failures.length} finance data source${failures.length > 1 ? "s are" : " is"} temporarily unavailable. Available data is shown below.`
   const invoiceSummary = summary?.invoices[0],
     revenue = summary?.payments[0],
     expenseTotal = summary?.expenses[0]
@@ -185,9 +197,12 @@ export default async function FinancePage() {
                   </TableCell>
                   <TableCell>
                     <p className="font-medium">
-                      {invoice.student?.user?.firstName ?? "Unknown"} {invoice.student?.user?.lastName ?? "student"}
+                      {invoice.student?.user?.firstName ?? "Unknown"}{" "}
+                      {invoice.student?.user?.lastName ?? "student"}
                     </p>
-                    <p className="text-xs text-muted-foreground">{invoice.student?.studentId ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {invoice.student?.studentId ?? "—"}
+                    </p>
                   </TableCell>
                   <TableCell>{money(invoice.totalMinor, invoice.currency)}</TableCell>
                   <TableCell>{money(invoice.paidMinor, invoice.currency)}</TableCell>

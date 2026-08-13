@@ -38,8 +38,12 @@ export default async function Page() {
     error = ""
   try {
     const data = await Promise.all([
-      authenticatedRequest<{ items: Audit[] }>(withQuery(API_ENDPOINTS.audit.events, { limit: 50 })),
-      authenticatedRequest<{ items: Login[] }>(withQuery(API_ENDPOINTS.audit.logins, { limit: 50 })),
+      authenticatedRequest<{ items: Audit[] }>(
+        withQuery(API_ENDPOINTS.audit.events, { limit: 50 }),
+      ),
+      authenticatedRequest<{ items: Login[] }>(
+        withQuery(API_ENDPOINTS.audit.logins, { limit: 50 }),
+      ),
     ])
     logs = data[0].data.items
     logins = data[1].data.items

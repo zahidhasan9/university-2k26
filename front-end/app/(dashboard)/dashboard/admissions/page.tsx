@@ -42,7 +42,9 @@ export default async function AdmissionsPage({
   let result: AdmissionListData | null = null
   let error = ""
   try {
-    result = (await authenticatedRequest<AdmissionListData>(`${API_ENDPOINTS.admissions.list}?${query}`)).data
+    result = (
+      await authenticatedRequest<AdmissionListData>(`${API_ENDPOINTS.admissions.list}?${query}`)
+    ).data
   } catch (cause) {
     error = cause instanceof Error ? cause.message : "Applications could not be loaded"
   }

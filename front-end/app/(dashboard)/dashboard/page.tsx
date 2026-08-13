@@ -102,42 +102,114 @@ const panelClass =
 
 async function count(path: string) {
   try {
-    const data = (await authenticatedRequest<Record<string, unknown>>(withQuery(path, { limit: 1 }))).data
+    const data = (
+      await authenticatedRequest<Record<string, unknown>>(withQuery(path, { limit: 1 }))
+    ).data
     const pagination = data.pagination as { total?: number } | undefined
     if (typeof pagination?.total === "number") return pagination.total
     const collection = Object.values(data).find(Array.isArray)
     return collection?.length ?? 0
+  } catch {
+    return 0
   }
-  catch { return 0 }
 }
 
-async function roleMetrics(role: Exclude<SystemRole, "super_admin" | "university_admin"> | "custom"): Promise<DashboardMetric[]> {
+async function roleMetrics(
+  role: Exclude<SystemRole, "super_admin" | "university_admin"> | "custom",
+): Promise<DashboardMetric[]> {
   if (role === "teacher") {
-    const data = (await authenticatedRequest<{ summary: { activeOfferings: number; upcomingExams: number; publishedAssignments: number; activeThesisSupervisions: number } }>(API_ENDPOINTS.analytics.teacher)).data.summary
-    return [{ label: "Active courses", value: data.activeOfferings }, { label: "Upcoming exams", value: data.upcomingExams }, { label: "Assignments", value: data.publishedAssignments }, { label: "Thesis supervision", value: data.activeThesisSupervisions }]
+    const data = (
+      await authenticatedRequest<{
+        summary: {
+          activeOfferings: number
+          upcomingExams: number
+          publishedAssignments: number
+          activeThesisSupervisions: number
+        }
+      }>(API_ENDPOINTS.analytics.teacher)
+    ).data.summary
+    return [
+      { label: "Active courses", value: data.activeOfferings },
+      { label: "Upcoming exams", value: data.upcomingExams },
+      { label: "Assignments", value: data.publishedAssignments },
+      { label: "Thesis supervision", value: data.activeThesisSupervisions },
+    ]
   }
   if (role === "student") {
-    const data = (await authenticatedRequest<{ currentEnrollments: unknown[]; attendance: { percentage: number }; cgpa: number; finance: Array<{ dueMinor: number; _id: string }> }>(API_ENDPOINTS.analytics.student)).data
+    const data = (
+      await authenticatedRequest<{
+        currentEnrollments: unknown[]
+        attendance: { percentage: number }
+        cgpa: number
+        finance: Array<{ dueMinor: number; _id: string }>
+      }>(API_ENDPOINTS.analytics.student)
+    ).data
     const due = data.finance.reduce((sum, item) => sum + item.dueMinor, 0)
-    return [{ label: "Current courses", value: data.currentEnrollments.length }, { label: "Attendance", value: `${data.attendance.percentage}%` }, { label: "CGPA", value: data.cgpa.toFixed(2) }, { label: "Outstanding dues", value: new Intl.NumberFormat("en-BD", { style: "currency", currency: data.finance[0]?._id || "BDT", notation: "compact" }).format(due / 100) }]
+    return [
+      { label: "Current courses", value: data.currentEnrollments.length },
+      { label: "Attendance", value: `${data.attendance.percentage}%` },
+      { label: "CGPA", value: data.cgpa.toFixed(2) },
+      {
+        label: "Outstanding dues",
+        value: new Intl.NumberFormat("en-BD", {
+          style: "currency",
+          currency: data.finance[0]?._id || "BDT",
+          notation: "compact",
+        }).format(due / 100),
+      },
+    ]
   }
   const paths: Record<string, Array<[string, string]>> = {
-    registrar: [["Students", API_ENDPOINTS.students.list], ["Courses", API_ENDPOINTS.academics.courses], ["Exams", API_ENDPOINTS.exams.list], ["Offerings", API_ENDPOINTS.academics.offerings]],
-    department_head: [["Students", API_ENDPOINTS.students.list], ["Faculty", API_ENDPOINTS.teachers.list], ["Courses", API_ENDPOINTS.academics.courses], ["Offerings", API_ENDPOINTS.academics.offerings]],
-    accountant: [["Invoices", API_ENDPOINTS.finance.invoices], ["Payments", API_ENDPOINTS.finance.payments], ["Fee structures", API_ENDPOINTS.finance.structures], ["Expenses", API_ENDPOINTS.finance.expenses]],
-    librarian: [["Books", API_ENDPOINTS.library.books], ["Transactions", API_ENDPOINTS.library.transactions], ["Available copies", withQuery(API_ENDPOINTS.library.copies, { status: "available" })]],
-    hr_manager: [["Employees", API_ENDPOINTS.hr.employees], ["Teachers", API_ENDPOINTS.teachers.list]],
-    admission_officer: [["Applications", API_ENDPOINTS.admissions.list], ["Students", API_ENDPOINTS.students.list]],
+    registrar: [
+      ["Students", API_ENDPOINTS.students.list],
+      ["Courses", API_ENDPOINTS.academics.courses],
+      ["Exams", API_ENDPOINTS.exams.list],
+      ["Offerings", API_ENDPOINTS.academics.offerings],
+    ],
+    department_head: [
+      ["Students", API_ENDPOINTS.students.list],
+      ["Faculty", API_ENDPOINTS.teachers.list],
+      ["Courses", API_ENDPOINTS.academics.courses],
+      ["Offerings", API_ENDPOINTS.academics.offerings],
+    ],
+    accountant: [
+      ["Invoices", API_ENDPOINTS.finance.invoices],
+      ["Payments", API_ENDPOINTS.finance.payments],
+      ["Fee structures", API_ENDPOINTS.finance.structures],
+      ["Expenses", API_ENDPOINTS.finance.expenses],
+    ],
+    librarian: [
+      ["Books", API_ENDPOINTS.library.books],
+      ["Transactions", API_ENDPOINTS.library.transactions],
+      ["Available copies", withQuery(API_ENDPOINTS.library.copies, { status: "available" })],
+    ],
+    hr_manager: [
+      ["Employees", API_ENDPOINTS.hr.employees],
+      ["Teachers", API_ENDPOINTS.teachers.list],
+    ],
+    admission_officer: [
+      ["Applications", API_ENDPOINTS.admissions.list],
+      ["Students", API_ENDPOINTS.students.list],
+    ],
     custom: [],
   }
-  return Promise.all((paths[role] ?? []).map(async ([label, path]) => ({ label, value: await count(path) })))
+  return Promise.all(
+    (paths[role] ?? []).map(async ([label, path]) => ({ label, value: await count(path) })),
+  )
 }
 
 export default async function DashboardPage() {
-  const currentUser = (await authenticatedRequest<{ user: CurrentUser }>(API_ENDPOINTS.auth.me)).data.user
+  const currentUser = (await authenticatedRequest<{ user: CurrentUser }>(API_ENDPOINTS.auth.me))
+    .data.user
   const role = primaryRole(currentUser.roles)
   if (role !== "super_admin" && role !== "university_admin") {
-    return <RoleDashboard role={role} firstName={currentUser.firstName} metrics={await roleMetrics(role)} />
+    return (
+      <RoleDashboard
+        role={role}
+        firstName={currentUser.firstName}
+        metrics={await roleMetrics(role)}
+      />
+    )
   }
   const stats = await dashboardStats()
   const firstName = currentUser.firstName

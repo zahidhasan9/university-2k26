@@ -55,9 +55,11 @@ export default async function Page({
     posts: Post[] = [],
     error = ""
   try {
-    const workspace = (await authenticatedRequest<Workspace>(
-      withQuery(API_ENDPOINTS.lms.workspace, { offeringId: requestedOfferingId || undefined }),
-    )).data
+    const workspace = (
+      await authenticatedRequest<Workspace>(
+        withQuery(API_ENDPOINTS.lms.workspace, { offeringId: requestedOfferingId || undefined }),
+      )
+    ).data
     offerings = workspace.offerings
     selectedOffering = workspace.selectedOffering ?? undefined
     offeringId = selectedOffering?._id ?? ""
@@ -101,7 +103,8 @@ export default async function Page({
           <option value="">Select a course offering</option>
           {offerings.map((item) => (
             <option key={item._id} value={item._id}>
-              {item.course?.code || "Course"} — {item.course?.title || item._id} (Section {item.section})
+              {item.course?.code || "Course"} — {item.course?.title || item._id} (Section{" "}
+              {item.section})
             </option>
           ))}
         </select>
@@ -109,7 +112,8 @@ export default async function Page({
       </form>
       {selectedOffering && (
         <p className="text-sm text-muted-foreground">
-          Showing {selectedOffering.course?.code} — {selectedOffering.course?.title}, section {selectedOffering.section}
+          Showing {selectedOffering.course?.code} — {selectedOffering.course?.title}, section{" "}
+          {selectedOffering.section}
         </p>
       )}
       {!offeringId && !error && (

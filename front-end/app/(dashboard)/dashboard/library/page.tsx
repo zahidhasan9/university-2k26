@@ -55,8 +55,11 @@ type Policy = {
   currency: string
 }
 const money = (amount: number, currency?: string | null) => {
-  const safeCurrency = typeof currency === "string" && /^[A-Z]{3}$/.test(currency) ? currency : "BDT"
-  return new Intl.NumberFormat("en-BD", { style: "currency", currency: safeCurrency }).format((Number.isFinite(amount) ? amount : 0) / 100)
+  const safeCurrency =
+    typeof currency === "string" && /^[A-Z]{3}$/.test(currency) ? currency : "BDT"
+  return new Intl.NumberFormat("en-BD", { style: "currency", currency: safeCurrency }).format(
+    (Number.isFinite(amount) ? amount : 0) / 100,
+  )
 }
 export default async function LibraryPage() {
   let books: Book[] = [],
@@ -65,17 +68,20 @@ export default async function LibraryPage() {
     policies: Policy[] = [],
     error = ""
   const responses = await Promise.allSettled([
-      authenticatedRequest<{ items: Book[] }>(withQuery(API_ENDPOINTS.library.books, { limit: 12 })),
-      authenticatedRequest<{ copies: Copy[] }>(API_ENDPOINTS.library.copies),
-      authenticatedRequest<{ items: Transaction[] }>(withQuery(API_ENDPOINTS.library.transactions, { limit: 12 })),
-      authenticatedRequest<{ policies: Policy[] }>(API_ENDPOINTS.library.policies),
-    ])
+    authenticatedRequest<{ items: Book[] }>(withQuery(API_ENDPOINTS.library.books, { limit: 12 })),
+    authenticatedRequest<{ copies: Copy[] }>(API_ENDPOINTS.library.copies),
+    authenticatedRequest<{ items: Transaction[] }>(
+      withQuery(API_ENDPOINTS.library.transactions, { limit: 12 }),
+    ),
+    authenticatedRequest<{ policies: Policy[] }>(API_ENDPOINTS.library.policies),
+  ])
   if (responses[0].status === "fulfilled") books = responses[0].value.data.items ?? []
   if (responses[1].status === "fulfilled") copies = responses[1].value.data.copies ?? []
   if (responses[2].status === "fulfilled") transactions = responses[2].value.data.items ?? []
   if (responses[3].status === "fulfilled") policies = responses[3].value.data.policies ?? []
   const failures = responses.filter((response) => response.status === "rejected")
-  if (failures.length) error = `${failures.length} library data source${failures.length > 1 ? "s are" : " is"} temporarily unavailable. Available data is shown below.`
+  if (failures.length)
+    error = `${failures.length} library data source${failures.length > 1 ? "s are" : " is"} temporarily unavailable. Available data is shown below.`
   const available = copies.filter((copy) => copy.status === "available").length,
     issued = copies.filter((copy) => copy.status === "issued").length
   return (
@@ -139,7 +145,9 @@ export default async function LibraryPage() {
                 <TableRow key={book._id}>
                   <TableCell>
                     <p className="font-medium">{book.title}</p>
-                    <p className="text-xs text-muted-foreground">{book.authors?.join(", ") || "Author not recorded"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {book.authors?.join(", ") || "Author not recorded"}
+                    </p>
                   </TableCell>
                   <TableCell className="font-mono text-xs">{book.isbn ?? "—"}</TableCell>
                   <TableCell>
@@ -189,12 +197,15 @@ export default async function LibraryPage() {
                   <TableRow key={item._id}>
                     <TableCell>
                       <p className="font-mono text-xs font-semibold">{item.transactionNumber}</p>
-                      <p className="text-xs text-muted-foreground">{item.copy?.accessionNumber ?? "Copy unavailable"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.copy?.accessionNumber ?? "Copy unavailable"}
+                      </p>
                     </TableCell>
                     <TableCell>
                       <p className="font-medium">{item.book?.title ?? "Book unavailable"}</p>
                       <p className="text-xs text-muted-foreground">
-                        {item.borrower?.firstName ?? "Unknown"} {item.borrower?.lastName ?? "borrower"} · {item.borrowerType}
+                        {item.borrower?.firstName ?? "Unknown"}{" "}
+                        {item.borrower?.lastName ?? "borrower"} · {item.borrowerType}
                       </p>
                     </TableCell>
                     <TableCell
@@ -206,9 +217,7 @@ export default async function LibraryPage() {
                     >
                       {new Date(item.dueAt).toLocaleDateString()}
                     </TableCell>
-                    <TableCell>
-                      {money(item.fineMinor, item.currency)}
-                    </TableCell>
+                    <TableCell>{money(item.fineMinor, item.currency)}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{item.status}</Badge>
                     </TableCell>
@@ -233,8 +242,7 @@ export default async function LibraryPage() {
                   <Badge variant="secondary">{policy.maxActiveLoans} books</Badge>
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  {policy.loanDays} loan days ·{" "}
-                  {money(policy.finePerDayMinor, policy.currency)}{" "}
+                  {policy.loanDays} loan days · {money(policy.finePerDayMinor, policy.currency)}{" "}
                   fine/day
                 </p>
               </div>

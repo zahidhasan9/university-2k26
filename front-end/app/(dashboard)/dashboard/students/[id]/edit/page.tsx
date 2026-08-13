@@ -26,7 +26,17 @@ type SectionOption = {
   enrolledCount: number
   academicBatch: { _id: string } | string
 }
-type Waiver = { _id: string; name: string; type: "percentage" | "fixed"; value: number; currency: string; appliesTo: "tuition" | "all"; validFrom: string; validUntil: string; status: string }
+type Waiver = {
+  _id: string
+  name: string
+  type: "percentage" | "fixed"
+  value: number
+  currency: string
+  appliesTo: "tuition" | "all"
+  validFrom: string
+  validUntil: string
+  status: string
+}
 
 export default async function EditStudentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -36,19 +46,22 @@ export default async function EditStudentPage({ params }: { params: Promise<{ id
   let sections: List<SectionOption>
   let waivers: Waiver[]
   try {
-    const [studentResponse, programResponse, batchResponse, sectionResponse, waiverResponse] = await Promise.all([
-      authenticatedRequest<{ student: Student }>(API_ENDPOINTS.students.detail(id)),
-      authenticatedRequest<List<ProgramOption>>(
-        withQuery(API_ENDPOINTS.academics.programs, { status: "active", limit: 100 }),
-      ),
-      authenticatedRequest<List<BatchOption>>(
-        withQuery(API_ENDPOINTS.academics.batches, { status: "active", limit: 100 }),
-      ),
-      authenticatedRequest<List<SectionOption>>(
-        withQuery(API_ENDPOINTS.academics.sections, { status: "active", limit: 500 }),
-      ),
-      authenticatedRequest<{ waivers: Waiver[] }>(withQuery(API_ENDPOINTS.finance.waivers, { studentId: id })).catch(() => ({ data: { waivers: [] as Waiver[] } })),
-    ])
+    const [studentResponse, programResponse, batchResponse, sectionResponse, waiverResponse] =
+      await Promise.all([
+        authenticatedRequest<{ student: Student }>(API_ENDPOINTS.students.detail(id)),
+        authenticatedRequest<List<ProgramOption>>(
+          withQuery(API_ENDPOINTS.academics.programs, { status: "active", limit: 100 }),
+        ),
+        authenticatedRequest<List<BatchOption>>(
+          withQuery(API_ENDPOINTS.academics.batches, { status: "active", limit: 100 }),
+        ),
+        authenticatedRequest<List<SectionOption>>(
+          withQuery(API_ENDPOINTS.academics.sections, { status: "active", limit: 500 }),
+        ),
+        authenticatedRequest<{ waivers: Waiver[] }>(
+          withQuery(API_ENDPOINTS.finance.waivers, { studentId: id }),
+        ).catch(() => ({ data: { waivers: [] as Waiver[] } })),
+      ])
     student = studentResponse.data.student
     programs = programResponse.data
     batches = batchResponse.data

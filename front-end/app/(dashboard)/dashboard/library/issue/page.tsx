@@ -6,8 +6,12 @@ type Copy = { _id: string; accessionNumber: string; book: { title: string } }
 type User = { _id: string; firstName: string; lastName: string; email: string }
 export default async function IssueBookPage() {
   const [copies, users] = await Promise.all([
-    authenticatedRequest<{ copies: Copy[] }>(withQuery(API_ENDPOINTS.library.copies, { status: "available" })),
-    authenticatedRequest<{ items: User[] }>(withQuery(API_ENDPOINTS.users.list, { status: "active", limit: 100 })),
+    authenticatedRequest<{ copies: Copy[] }>(
+      withQuery(API_ENDPOINTS.library.copies, { status: "available" }),
+    ),
+    authenticatedRequest<{ items: User[] }>(
+      withQuery(API_ENDPOINTS.users.list, { status: "active", limit: 100 }),
+    ),
   ])
   return (
     <LibraryFormShell

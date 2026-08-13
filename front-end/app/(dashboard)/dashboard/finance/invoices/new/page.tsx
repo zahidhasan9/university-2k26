@@ -4,7 +4,9 @@ import { FinanceFormShell } from "@/components/finance-form-shell"
 import { authenticatedRequest } from "@/lib/auth"
 type Semester = { _id: string; name: string; academicYear: string }
 export default async function NewInvoicePage() {
-  const semesters = await authenticatedRequest<{ items: Semester[] }>(withQuery(API_ENDPOINTS.academics.semesters, { limit: 100 }))
+  const semesters = await authenticatedRequest<{ items: Semester[] }>(
+    withQuery(API_ENDPOINTS.academics.semesters, { limit: 100 }),
+  )
   return (
     <FinanceFormShell
       title="Issue invoice"

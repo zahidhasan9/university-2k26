@@ -26,8 +26,9 @@ export default async function AttendancePage() {
   let records: Attendance[] = [],
     error = ""
   try {
-    records = (await authenticatedRequest<{ attendance: Attendance[] }>(API_ENDPOINTS.hr.attendance)).data
-      .attendance
+    records = (
+      await authenticatedRequest<{ attendance: Attendance[] }>(API_ENDPOINTS.hr.attendance)
+    ).data.attendance
   } catch (cause) {
     error = cause instanceof Error ? cause.message : "Attendance unavailable"
   }

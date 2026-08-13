@@ -24,7 +24,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     error = ""
   try {
     const [conversations, history] = await Promise.all([
-      authenticatedRequest<{ conversations: Conversation[] }>(API_ENDPOINTS.communication.conversations),
+      authenticatedRequest<{ conversations: Conversation[] }>(
+        API_ENDPOINTS.communication.conversations,
+      ),
       authenticatedRequest<{ items: Message[] }>(
         `/communication/conversations/${id}/messages?limit=100`,
       ),

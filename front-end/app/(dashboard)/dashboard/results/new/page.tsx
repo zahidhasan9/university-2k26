@@ -13,7 +13,9 @@ type Offering = {
 }
 export default async function NewExamPage() {
   const offerings = (
-    await authenticatedRequest<{ items: Offering[] }>(withQuery(API_ENDPOINTS.academics.offerings, { limit: 100 }))
+    await authenticatedRequest<{ items: Offering[] }>(
+      withQuery(API_ENDPOINTS.academics.offerings, { limit: 100 }),
+    )
   ).data.items
   return (
     <div className="mx-auto max-w-3xl space-y-6">

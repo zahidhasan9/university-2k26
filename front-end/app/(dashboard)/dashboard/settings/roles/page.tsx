@@ -21,7 +21,9 @@ export default async function Page() {
   try {
     const data = await Promise.all([
       authenticatedRequest<{ items: Role[] }>(withQuery(API_ENDPOINTS.roles.list, { limit: 100 })),
-      authenticatedRequest<{ items: Permission[] }>(withQuery(API_ENDPOINTS.permissions.list, { limit: 250 })),
+      authenticatedRequest<{ items: Permission[] }>(
+        withQuery(API_ENDPOINTS.permissions.list, { limit: 250 }),
+      ),
     ])
     roles = data[0].data.items
     permissions = data[1].data.items
