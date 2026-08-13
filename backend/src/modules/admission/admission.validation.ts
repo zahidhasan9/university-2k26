@@ -12,12 +12,28 @@ const document = z.object({
   url: z.string().trim().url(),
   publicId: z.string().trim().max(200).optional(),
 });
+const personal = z.object({
+  phone: z.string().trim().min(5).max(30),
+  dateOfBirth: z.coerce.date().max(new Date(), "Date of birth cannot be in the future"),
+  gender: z.enum(["male", "female", "other", "prefer_not_to_say"]),
+  nationality: z.string().trim().min(2).max(80),
+  presentAddress: z.string().trim().min(5).max(500),
+  permanentAddress: z.string().trim().min(5).max(500),
+});
+const guardian = z.object({
+  name: z.string().trim().min(2).max(160),
+  relationship: z.string().trim().min(2).max(80),
+  phone: z.string().trim().min(5).max(30),
+  email: z.string().trim().email().max(160).optional().or(z.literal("")),
+});
 
 export const admissionIdSchema = z.object({ params: z.object({ id: objectId }) });
 export const admissionCreateSchema = z.object({
   body: z.object({
     programId: objectId,
     intakeSemesterId: objectId,
+    personal,
+    guardian,
     statement: z.string().trim().max(5000).optional(),
     previousEducation: z.array(education).max(20).default([]),
     documents: z.array(document).max(30).default([]),
@@ -28,6 +44,8 @@ export const admissionUpdateSchema = z.object({
   body: z
     .object({
       statement: z.string().trim().max(5000).optional(),
+      personal: personal.optional(),
+      guardian: guardian.optional(),
       previousEducation: z.array(education).max(20).optional(),
       documents: z.array(document).max(30).optional(),
     })

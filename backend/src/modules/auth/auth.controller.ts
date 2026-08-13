@@ -93,8 +93,15 @@ export async function register(req: Request, res: Response): Promise<Response> {
     resource: "user",
     resourceId: user._id.toString(),
   });
-
-  return sendSuccess(res, 201, "Registration successful", { user: publicUser(user) });
+  const [accessToken, refreshToken] = await Promise.all([
+    createAccessToken(user._id),
+    createRefreshToken(user._id, req),
+  ]);
+  res.cookie(env.COOKIE_NAME, refreshToken, cookieOptions);
+  return sendSuccess(res, 201, "Applicant account created", {
+    accessToken,
+    user: publicUser(user),
+  });
 }
 
 export async function login(req: Request, res: Response): Promise<Response> {

@@ -8,6 +8,9 @@ function auth(req: Request) {
   if (!req.auth) throw new AppError(401, "Authentication required");
   return req.auth;
 }
+export async function options(_req: Request, res: Response): Promise<Response> {
+  return sendSuccess(res, 200, "Admission options retrieved", await service.getAdmissionOptions());
+}
 export async function list(req: Request, res: Response): Promise<Response> {
   return sendSuccess(res, 200, "Admission applications retrieved", await service.listAdmissions(req.query));
 }

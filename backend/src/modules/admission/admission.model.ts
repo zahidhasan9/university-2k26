@@ -17,6 +17,20 @@ const admissionSchema = new Schema(
     applicant: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     program: { type: Schema.Types.ObjectId, ref: "Program", required: true, index: true },
     intakeSemester: { type: Schema.Types.ObjectId, ref: "Semester", required: true, index: true },
+    personal: {
+      phone: { type: String, required: true, trim: true, maxlength: 30 },
+      dateOfBirth: { type: Date, required: true },
+      gender: { type: String, enum: ["male", "female", "other", "prefer_not_to_say"], required: true },
+      nationality: { type: String, required: true, trim: true, maxlength: 80 },
+      presentAddress: { type: String, required: true, trim: true, maxlength: 500 },
+      permanentAddress: { type: String, required: true, trim: true, maxlength: 500 },
+    },
+    guardian: {
+      name: { type: String, required: true, trim: true, maxlength: 160 },
+      relationship: { type: String, required: true, trim: true, maxlength: 80 },
+      phone: { type: String, required: true, trim: true, maxlength: 30 },
+      email: { type: String, trim: true, lowercase: true, maxlength: 160 },
+    },
     statement: { type: String, trim: true, maxlength: 5000 },
     previousEducation: [
       {

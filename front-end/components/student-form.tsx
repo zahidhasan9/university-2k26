@@ -106,7 +106,17 @@ export function StudentForm({
   programs: Option[]
   batches: BatchOption[]
   sections: SectionOption[]
-  waivers?: Array<{ _id: string; name: string; type: "percentage" | "fixed"; value: number; currency: string; appliesTo: "tuition" | "all"; validFrom: string; validUntil: string; status: string }>
+  waivers?: Array<{
+    _id: string
+    name: string
+    type: "percentage" | "fixed"
+    value: number
+    currency: string
+    appliesTo: "tuition" | "all"
+    validFrom: string
+    validUntil: string
+    status: string
+  }>
   semesters?: Option[]
 }) {
   const router = useRouter()
@@ -1176,10 +1186,65 @@ export function StudentForm({
           description="Internal classification and operational requirements. Academic results remain system-generated."
         />
         <div className="grid gap-5 md:grid-cols-2">
-          {student && <div className="space-y-3 md:col-span-2">
-            <div className="flex flex-wrap items-center justify-between gap-3"><div><Label>Finance waiver</Label><p className="mt-1 text-xs text-muted-foreground">Approved by Finance and automatically applied when an eligible invoice is generated.</p></div><Button type="button" variant="outline" render={<a href={`/dashboard/finance/waivers/new?studentId=${student._id}`} />}>Manage waiver</Button></div>
-            {waivers.length ? <div className="overflow-x-auto rounded-lg border"><table className="min-w-[640px] w-full text-sm"><thead className="bg-muted/50 text-left"><tr><th className="p-3">Waiver</th><th className="p-3">Benefit</th><th className="p-3">Validity</th><th className="p-3">Status</th></tr></thead><tbody>{waivers.map((waiver) => <tr key={waiver._id} className="border-t"><td className="p-3 font-medium">{waiver.name}</td><td className="p-3">{waiver.type === "percentage" ? `${waiver.value}%` : new Intl.NumberFormat("en-BD", { style: "currency", currency: waiver.currency }).format(waiver.value / 100)} · {waiver.appliesTo === "all" ? "Entire invoice" : "Tuition only"}</td><td className="p-3 text-xs">{new Date(waiver.validFrom).toLocaleDateString("en-BD")} – {new Date(waiver.validUntil).toLocaleDateString("en-BD")}</td><td className="p-3 capitalize">{waiver.status}</td></tr>)}</tbody></table></div> : <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">No finance waiver assigned to this student.</p>}
-          </div>}
+          {student && (
+            <div className="space-y-3 md:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <Label>Finance waiver</Label>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Approved by Finance and automatically applied when an eligible invoice is
+                    generated.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  render={<a href={`/dashboard/finance/waivers/new?studentId=${student._id}`} />}
+                >
+                  Manage waiver
+                </Button>
+              </div>
+              {waivers.length ? (
+                <div className="overflow-x-auto rounded-lg border">
+                  <table className="min-w-[640px] w-full text-sm">
+                    <thead className="bg-muted/50 text-left">
+                      <tr>
+                        <th className="p-3">Waiver</th>
+                        <th className="p-3">Benefit</th>
+                        <th className="p-3">Validity</th>
+                        <th className="p-3">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {waivers.map((waiver) => (
+                        <tr key={waiver._id} className="border-t">
+                          <td className="p-3 font-medium">{waiver.name}</td>
+                          <td className="p-3">
+                            {waiver.type === "percentage"
+                              ? `${waiver.value}%`
+                              : new Intl.NumberFormat("en-BD", {
+                                  style: "currency",
+                                  currency: waiver.currency,
+                                }).format(waiver.value / 100)}{" "}
+                            · {waiver.appliesTo === "all" ? "Entire invoice" : "Tuition only"}
+                          </td>
+                          <td className="p-3 text-xs">
+                            {new Date(waiver.validFrom).toLocaleDateString("en-BD")} –{" "}
+                            {new Date(waiver.validUntil).toLocaleDateString("en-BD")}
+                          </td>
+                          <td className="p-3 capitalize">{waiver.status}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                  No finance waiver assigned to this student.
+                </p>
+              )}
+            </div>
+          )}
           <Field label="Residential status" name="residentialStatus">
             <select
               id="residentialStatus"

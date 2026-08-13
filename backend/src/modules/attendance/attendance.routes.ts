@@ -15,6 +15,7 @@ export const attendanceRouter = Router();
 attendanceRouter.use(authenticate);
 attendanceRouter.get("/mine", asyncHandler(controller.mine));
 attendanceRouter.post("/qr/check-in", validate(qrCheckInSchema), asyncHandler(controller.checkIn));
+attendanceRouter.get("/options", authorize("attendance.manage"), asyncHandler(controller.options));
 attendanceRouter.get("/", authorize("attendance.read"), asyncHandler(controller.list));
 attendanceRouter.post(
   "/",
@@ -39,6 +40,12 @@ attendanceRouter.post(
   authorize("attendance.manage"),
   validate(attendanceSessionIdSchema),
   asyncHandler(controller.close),
+);
+attendanceRouter.post(
+  "/:id/check-in/close",
+  authorize("attendance.manage"),
+  validate(attendanceSessionIdSchema),
+  asyncHandler(controller.closeCheckIn),
 );
 attendanceRouter.post(
   "/:id/qr",

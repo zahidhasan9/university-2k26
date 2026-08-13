@@ -15,6 +15,21 @@ const populate = [
   { path: "reviewedBy", select: "firstName lastName email" },
 ];
 
+export async function getAdmissionOptions() {
+  const [programs, intakes] = await Promise.all([
+    ProgramModel.find({ status: "active" })
+      .select("name code degreeType durationYears totalCredits department")
+      .populate("department", "name code")
+      .sort({ code: 1 })
+      .lean(),
+    SemesterModel.find({ status: { $in: ["planned", "registration"] } })
+      .select("name code academicYear term registrationEndsAt status")
+      .sort({ startsAt: 1 })
+      .lean(),
+  ]);
+  return { programs, intakes };
+}
+
 export async function listAdmissions(query: Record<string, unknown>) {
   const { page, limit, skip } = getPagination(query);
   const filter: Record<string, unknown> = {};

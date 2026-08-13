@@ -20,6 +20,9 @@ async function forward(request: Request, context: { params: Promise<{ path: stri
       method: request.method,
       headers: {
         Authorization: `Bearer ${token}`,
+        ...(request.headers.get("x-attendance-device")
+          ? { "X-Attendance-Device": request.headers.get("x-attendance-device") as string }
+          : {}),
         ...(request.headers.get("content-type")
           ? { "Content-Type": request.headers.get("content-type") as string }
           : {}),

@@ -5,6 +5,7 @@ import { Brand } from "@/components/brand"
 import { LoginForm } from "@/components/login-form"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
 
 export const metadata: Metadata = { title: "Sign in" }
 
@@ -55,6 +56,9 @@ export default function LoginPage() {
             </CardHeader>
             <CardContent className="px-0 sm:px-7">
               <LoginForm />
+              <p className="mt-5 text-center text-sm text-muted-foreground">
+                Applying for admission? <Link href="/admissions/apply" className="font-medium text-primary hover:underline">Create an applicant account</Link>
+              </p>
               <p className="mt-6 text-center text-xs leading-5 text-muted-foreground">
                 By continuing, you agree to the university&apos;s acceptable use and privacy
                 policies.

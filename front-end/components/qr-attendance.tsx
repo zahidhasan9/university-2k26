@@ -4,12 +4,13 @@ import { API_ENDPOINTS } from "@/lib/api-endpoints"
 
 import { apiResponseRequest } from "@/lib/http-client"
 import { useState } from "react"
-import { Copy, LoaderCircle, QrCode } from "lucide-react"
+import { Copy, LoaderCircle, QrCode, Square } from "lucide-react"
 import { Button } from "@/components/ui/button"
 export function QrAttendance({ sessionId, open }: { sessionId: string; open: boolean }) {
   const [loading, setLoading] = useState(false),
     [token, setToken] = useState(""),
     [expiresAt, setExpiresAt] = useState(""),
+    [checkInOpen, setCheckInOpen] = useState(false),
     [error, setError] = useState("")
   if (!open) return null
   async function generate() {
@@ -25,6 +26,15 @@ export function QrAttendance({ sessionId, open }: { sessionId: string; open: boo
     if (!response.ok) return setError(body.message)
     setToken(body.data.token)
     setExpiresAt(body.data.expiresAt)
+    setCheckInOpen(true)
+  }
+  async function closeCheckIn() {
+    setLoading(true); setError("")
+    const response = await apiResponseRequest(API_ENDPOINTS.attendance.closeCheckIn(sessionId), { method: "POST" })
+    const body = await response.json()
+    setLoading(false)
+    if (!response.ok) return setError(body.message)
+    setCheckInOpen(false); setToken("")
   }
   return (
     <div className="rounded-xl border bg-blue-50/50 p-4">
@@ -35,9 +45,9 @@ export function QrAttendance({ sessionId, open }: { sessionId: string; open: boo
             Generate a secure token valid for five minutes.
           </p>
         </div>
-        <Button onClick={generate} disabled={loading}>
+        <div className="flex gap-2"><Button onClick={generate} disabled={loading || checkInOpen}>
           {loading ? <LoaderCircle className="animate-spin" /> : <QrCode />}Generate
-        </Button>
+        </Button>{checkInOpen && <Button variant="destructive" onClick={closeCheckIn} disabled={loading}><Square /> Stop check-in</Button>}</div>
       </div>
       {token && (
         <div className="mt-4 rounded-lg bg-white p-3">

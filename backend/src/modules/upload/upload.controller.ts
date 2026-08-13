@@ -23,6 +23,17 @@ export async function studentDocument(req: Request, res: Response) {
   await writeAuditLog(req, { actor: req.auth!.userId, action: "student.document_upload", resource: "student-document", metadata: { storage: document.storage, key: document.key, mimeType: document.mimeType, size: document.size } });
   return sendSuccess(res, 201, `Document uploaded to ${document.storage} storage`, { document });
 }
+export async function admissionDocument(req: Request, res: Response) {
+  const requestOrigin = `${req.protocol}://${req.get("host")}`;
+  const document = await uploadDocument(req.file, { folder: "admission-documents", requestOrigin });
+  await writeAuditLog(req, {
+    actor: req.auth!.userId,
+    action: "admission.document_upload",
+    resource: "admission-document",
+    metadata: { storage: document.storage, key: document.key, mimeType: document.mimeType, size: document.size },
+  });
+  return sendSuccess(res, 201, `Document uploaded to ${document.storage} storage`, { document });
+}
 export async function studentProfileImage(req: Request, res: Response) {
   const requestOrigin = `${req.protocol}://${req.get("host")}`;
   const image = await uploadImage(req.file, { folder: "student-profile-images", requestOrigin });

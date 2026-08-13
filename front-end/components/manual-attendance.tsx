@@ -12,7 +12,7 @@ type Student = {
   studentId: string
   user: { firstName: string; lastName: string; email: string }
 }
-type Existing = { student: Student; status: string; note?: string }
+type Existing = { student: Student; status: string; note?: string; suspicious?: boolean; suspicionReasons?: string[]; repeatOffenceCount?: number; evidence?: { checkedInAt?: string } }
 export function ManualAttendance({
   sessionId,
   students,
@@ -75,6 +75,8 @@ export function ManualAttendance({
                 <p className="text-xs text-muted-foreground">
                   {student.studentId} · {student.user.email}
                 </p>
+                {record?.evidence?.checkedInAt && <p className="mt-1 text-xs text-muted-foreground">Checked in {new Date(record.evidence.checkedInAt).toLocaleTimeString()}</p>}
+                {record?.suspicious && <div className="mt-2 rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-800"><p className="font-semibold">Suspicious check-in · {record.repeatOffenceCount ?? 0} previous flag(s)</p>{record.suspicionReasons?.map((reason) => <p key={reason}>{reason}</p>)}</div>}
               </div>
               <select
                 name={`status-${student._id}`}
@@ -85,6 +87,7 @@ export function ManualAttendance({
                 <option value="absent">Absent</option>
                 <option value="late">Late</option>
                 <option value="excused">Excused</option>
+                <option value="invalid">Invalid / Cancelled</option>
               </select>
               <input
                 name={`note-${student._id}`}

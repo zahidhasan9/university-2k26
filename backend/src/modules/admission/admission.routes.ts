@@ -12,6 +12,7 @@ import {
 } from "./admission.validation";
 
 export const admissionRouter = Router();
+admissionRouter.get("/options", asyncHandler(controller.options));
 admissionRouter.use(authenticate);
 admissionRouter.get("/mine", asyncHandler(controller.listMine));
 admissionRouter.get("/", authorize("admissions.read"), asyncHandler(controller.list));

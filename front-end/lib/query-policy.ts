@@ -3,6 +3,7 @@ export const QUERY_KEYS = {
   notifications: { all: ["notifications"] as const, header: ["notifications", "header"] as const },
   academics: (entity: string, filters?: unknown) => ["academics", entity, filters] as const,
   students: (filters?: unknown) => ["students", filters] as const,
+  attendance: (resource: string, filters?: unknown) => ["attendance", resource, filters] as const,
   finance: (resource: string, filters?: unknown) => ["finance", resource, filters] as const,
   lms: (offeringId?: string) => ["lms", "workspace", offeringId] as const,
 } as const

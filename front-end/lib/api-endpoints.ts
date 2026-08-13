@@ -9,6 +9,8 @@ export const API_ENDPOINTS = {
     me: "/auth/me",
     refresh: "/auth/refresh",
     changePassword: "/auth/change-password",
+    register: "/auth/register",
+    proxyRegister: "/api/auth/register",
     proxyLogin: "/api/auth/login",
     proxyLogout: "/api/auth/logout",
   },
@@ -24,7 +26,7 @@ export const API_ENDPOINTS = {
     me: "/users/me",
     detail: (id: string) => `/users/${id}`,
   },
-  uploads: { profileImage: "/uploads/profile-image", studentProfileImage: "/uploads/student-profile-image", studentDocument: "/uploads/student-document" },
+  uploads: { profileImage: "/uploads/profile-image", admissionDocument: "/uploads/admission-document", studentProfileImage: "/uploads/student-profile-image", studentDocument: "/uploads/student-document" },
   roles: {
     list: "/roles",
     create: "/roles",
@@ -69,13 +71,20 @@ export const API_ENDPOINTS = {
   facultyAdvising: { list: "/faculty-advising", end: (id: string) => `/faculty-advising/${id}/end` },
   admissions: {
     list: "/admissions",
+    mine: "/admissions/mine",
+    options: "/admissions/options",
+    create: "/admissions",
     detail: (id: string) => `/admissions/${id}`,
     action: (id: string, action: string) => `/admissions/${id}/${action}`,
   },
   attendance: {
     sessions: "/attendance",
+    options: "/attendance/options",
+    mine: "/attendance/mine",
     records: (id: string) => `/attendance/${id}/records`,
     close: (id: string) => `/attendance/${id}/close`,
+    closeCheckIn: (id: string) => `/attendance/${id}/check-in/close`,
+    checkIn: "/attendance/qr/check-in",
     qr: (id: string) => `/attendance/${id}/qr`,
   },
   exams: {
@@ -238,6 +247,15 @@ export const PAGE_API_MAP: PageApiEntry[] = [
         endpoint: "/admissions/:id/:action",
         purpose: "Review, approve, or reject",
       },
+    ],
+  },
+  {
+    page: "/admissions/portal",
+    module: "Applicant admissions",
+    calls: [
+      { method: "GET/POST/PATCH", endpoint: "/admissions, /admissions/mine, /admissions/options", purpose: "Applicant drafts and intake options" },
+      { method: "POST", endpoint: "/admissions/:id/submit", purpose: "Submit an application for review" },
+      { method: "POST", endpoint: "/uploads/admission-document", purpose: "Upload an applicant document" },
     ],
   },
   {

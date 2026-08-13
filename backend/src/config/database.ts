@@ -35,7 +35,7 @@ export async function connectDatabase(): Promise<void> {
     const isSrvDnsFailure =
       error instanceof Error &&
       "code" in error &&
-      error.code === "ECONNREFUSED" &&
+      ["ECONNREFUSED", "ETIMEOUT", "ENOTFOUND", "ESERVFAIL"].includes(String(error.code)) &&
       error.message.includes("querySrv");
     const fallbackUri = isSrvDnsFailure
       ? atlasNonSrvFallback(env.MONGODB_URI)

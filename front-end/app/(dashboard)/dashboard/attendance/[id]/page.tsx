@@ -29,7 +29,7 @@ export default async function AttendanceRecordsPage({
   const { id } = await params
   const data = (
     await authenticatedRequest<{
-      session: { date: string; topic?: string; status: string; offering: { _id: string } }
+      session: { date: string; endsAt?: string; sessionNumber?: number; classType?: string; room?: string; topic?: string; status: string; offering: { _id: string } }
       records: RecordItem[]
     }>(`/attendance/${id}/records`)
   ).data
